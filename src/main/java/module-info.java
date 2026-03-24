@@ -1,8 +1,8 @@
-module com.example.localchat {
+module org.proptit.localchat {
     requires javafx.controls;
     requires javafx.fxml;
 
 
-    opens com.example.localchat to javafx.fxml;
-    exports com.example.localchat;
+    opens org.proptit.localchat to javafx.fxml;
+    exports org.proptit.localchat;
 }

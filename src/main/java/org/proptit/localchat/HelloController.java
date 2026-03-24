@@ -1,4 +1,4 @@
-package com.example.localchat;
+package org.proptit.localchat;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;

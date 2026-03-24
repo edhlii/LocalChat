@@ -1,4 +1,4 @@
-package com.example.localchat;
+package org.proptit.localchat;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
