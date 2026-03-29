@@ -18,6 +18,10 @@ public class User implements Serializable {
         this.nickname = nickname;
         this.role = role;
     }
+    public User(String userame)
+    {
+        this.userame = userame;
+    }
 
     public Integer getId() {
         return id;
