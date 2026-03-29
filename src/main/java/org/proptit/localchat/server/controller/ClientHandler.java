@@ -33,9 +33,7 @@ public class ClientHandler implements Runnable {
 
             Object receivedData;
             while ((receivedData = in.readObject()) != null) {
-                if (receivedData instanceof String) {
-                    server.broadcast(user.getNickname() + ": " + receivedData);
-                }
+                server.getChatService().sendToAll(receivedData);
             }
 
         } catch (IOException | ClassNotFoundException e) {

@@ -1,6 +1,7 @@
 package org.proptit.localchat.server.networks;
 
 import org.proptit.localchat.server.controller.ClientHandler;
+import org.proptit.localchat.server.services.ChatService;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -12,7 +13,16 @@ public class SocketServer implements Runnable {
     private static final int PORT = 1204;
     private final List<ClientHandler> clients = new ArrayList<>();
     private ServerSocket serverSocket;
+    private ChatService chatService;
     private boolean isRunning = true;
+
+    public SocketServer() {
+        this.chatService = new ChatService(this.clients);
+    }
+
+    public ChatService getChatService() {
+        return chatService;
+    }
 
     @Override
     public void run() {
@@ -52,4 +62,5 @@ public class SocketServer implements Runnable {
             e.printStackTrace();
         }
     }
+
 }
