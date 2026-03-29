@@ -12,7 +12,7 @@ public class Main {
         User u = dao.getUserByLogin("ducanh", "123");
 
         if (u != null) {
-            System.out.println("test conent DB ok");
+            System.out.println("test connect DB ok");
         }
         else
         {
