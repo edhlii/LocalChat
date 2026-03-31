@@ -33,7 +33,8 @@ public class ClientHandler implements Runnable {
 
             Object receivedData;
             while ((receivedData = in.readObject()) != null) {
-                server.getChatService().sendToAll(receivedData);
+                org.proptit.localchat.common.models.Message msg = (org.proptit.localchat.common.models.Message) receivedData;
+                server.getChatService().processMessage(this, msg);
             }
 
         } catch (IOException | ClassNotFoundException e) {
@@ -60,5 +61,9 @@ public class ClientHandler implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public User getUser() {
+        return this.user;
     }
 }
