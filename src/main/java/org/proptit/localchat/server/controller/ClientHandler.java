@@ -1,5 +1,6 @@
 package org.proptit.localchat.server.controller;
 
+import org.proptit.localchat.common.models.Message;
 import org.proptit.localchat.common.models.User;
 import org.proptit.localchat.server.networks.SocketServer;
 
@@ -33,7 +34,8 @@ public class ClientHandler implements Runnable {
 
             Object receivedData;
             while ((receivedData = in.readObject()) != null) {
-                server.getChatService().sendToAll(receivedData);
+                Message msg = (Message) receivedData;
+                server.getChatService().processMessage(this, msg);
             }
 
         } catch (IOException | ClassNotFoundException e) {
@@ -60,5 +62,9 @@ public class ClientHandler implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public User getUser() {
+        return this.user;
     }
 }

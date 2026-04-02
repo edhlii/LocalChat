@@ -1,7 +1,7 @@
 package org.proptit.localchat.client;
 
 import org.proptit.localchat.client.networks.SocketClient;
-import org.proptit.localchat.common.models.Message;
+import org.proptit.localchat.common.models.TextMessage;
 import org.proptit.localchat.common.models.User;
 
 import java.lang.reflect.Member;
@@ -11,7 +11,7 @@ public class ClientRun {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
 
-        User me = new User(0,"Vanq", "123", "test", "Member");
+        User me = new User(12, "vanq", "1204", "quangdz", "admin");
 
         SocketClient client = new SocketClient("127.0.0.1", 1204, me);
         new Thread(client).start();
@@ -19,7 +19,7 @@ public class ClientRun {
         while (true) {
             String txt = sc.nextLine();
             if(txt.equals("exit")) break;
-            client.sendData(new Message(me, txt));
+            client.sendData(TextMessage.createBroadcast(me, txt));
         }
     }
 }
