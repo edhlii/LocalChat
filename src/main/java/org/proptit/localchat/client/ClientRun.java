@@ -1,7 +1,7 @@
 package org.proptit.localchat.client;
 
 import org.proptit.localchat.client.networks.SocketClient;
-import org.proptit.localchat.common.models.Message;
+import org.proptit.localchat.common.models.TextMessage;
 import org.proptit.localchat.common.models.User;
 
 import java.util.Scanner;
@@ -18,7 +18,7 @@ public class ClientRun {
         while (true) {
             String txt = sc.nextLine();
             if(txt.equals("exit")) break;
-            client.sendData(Message.createBroadcast(me, txt));
+            client.sendData(TextMessage.createBroadcast(me, txt));
         }
     }
 }
