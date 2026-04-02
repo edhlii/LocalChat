@@ -2,7 +2,7 @@ package org.proptit.localchat.server.controller;
 
 import org.proptit.localchat.common.enums.TypeDataPacket;
 import org.proptit.localchat.common.models.DataPacket;
-import org.proptit.localchat.common.models.Message;
+import org.proptit.localchat.common.models.message.Message;
 import org.proptit.localchat.common.models.User;
 import org.proptit.localchat.server.networks.SocketServer;
 

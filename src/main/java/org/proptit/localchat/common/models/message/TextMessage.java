@@ -1,4 +1,6 @@
-package org.proptit.localchat.common.models;
+package org.proptit.localchat.common.models.message;
+
+import org.proptit.localchat.common.models.User;
 
 public class TextMessage extends Message {
     private String content;

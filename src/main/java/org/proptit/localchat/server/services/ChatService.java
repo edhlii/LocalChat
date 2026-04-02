@@ -1,6 +1,6 @@
 package org.proptit.localchat.server.services;
 
-import org.proptit.localchat.common.models.Message;
+import org.proptit.localchat.common.models.message.Message;
 import org.proptit.localchat.common.models.User;
 import org.proptit.localchat.server.controller.ClientHandler;
 
