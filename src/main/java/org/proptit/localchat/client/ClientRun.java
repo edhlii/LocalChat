@@ -1,6 +1,8 @@
 package org.proptit.localchat.client;
 
 import org.proptit.localchat.client.networks.SocketClient;
+import org.proptit.localchat.common.enums.TypeDataPacket;
+import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.TextMessage;
 import org.proptit.localchat.common.models.User;
 
@@ -19,7 +21,8 @@ public class ClientRun {
         while (true) {
             String txt = sc.nextLine();
             if(txt.equals("exit")) break;
-            client.sendData(TextMessage.createBroadcast(me, txt));
+            DataPacket data = new DataPacket(TypeDataPacket.CHAT_MESSAGE, TextMessage.createBroadcast(me, txt));
+            client.sendData(data);
         }
     }
 }
