@@ -4,6 +4,7 @@ import org.proptit.localchat.client.networks.SocketClient;
 import org.proptit.localchat.common.models.TextMessage;
 import org.proptit.localchat.common.models.User;
 
+import java.lang.reflect.Member;
 import java.util.Scanner;
 
 public class ClientRun {
