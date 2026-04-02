@@ -2,7 +2,9 @@ package org.proptit.localchat.common.models.message;
 
 import org.proptit.localchat.common.models.User;
 
-public class TextMessage extends Message {
+import java.io.Serializable;
+
+public class TextMessage extends Message implements Serializable {
     private String content;
 
     protected TextMessage(User sender, String content) {

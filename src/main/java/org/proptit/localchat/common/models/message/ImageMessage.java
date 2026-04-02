@@ -2,7 +2,9 @@ package org.proptit.localchat.common.models.message;
 
 import org.proptit.localchat.common.models.User;
 
-public class ImageMessage extends Message {
+import java.io.Serializable;
+
+public class ImageMessage extends Message implements Serializable {
     private byte[] imageData;
     private String fileName;
 

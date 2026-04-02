@@ -18,9 +18,10 @@ public class User implements Serializable {
         this.nickname = nickname;
         this.role = role;
     }
-    public User(String userame)
+    public User(String username)
     {
-        this.userame = userame;
+        this.userame = username;
+        this.role = "ADMIN";
     }
 
     public Integer getId() {
@@ -32,14 +33,18 @@ public class User implements Serializable {
     }
 
     public String getNickname() {
-        return nickname;
+        return nickname != null ? nickname : "Unknown";
     }
 
     public String getRole() {
         return role;
     }
 
+    public void setRole(String role) {
+        this.role = role;
+    }
+
     public boolean isAdmin() {
-        return this.role.equalsIgnoreCase("admin");
+        return "ADMIN".equalsIgnoreCase(this.role);
     }
 }

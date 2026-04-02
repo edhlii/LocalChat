@@ -1,27 +1,11 @@
 package org.proptit.localchat.client;
 
-import org.proptit.localchat.client.networks.SocketClient;
-import org.proptit.localchat.common.enums.TypeDataPacket;
-import org.proptit.localchat.common.models.DataPacket;
-import org.proptit.localchat.common.models.message.TextMessage;
-import org.proptit.localchat.common.models.User;
+import javafx.application.Application;
+import org.proptit.localchat.client.views.ChatWindow;
 
-import java.util.Scanner;
 
 public class ClientRun {
     public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-
-        User me = new User(12, "vanq", "1204", "quangdz", "admin");
-
-        SocketClient client = new SocketClient("127.0.0.1", 1204, me);
-        new Thread(client).start();
-
-        while (true) {
-            String txt = sc.nextLine();
-            if(txt.equals("exit")) break;
-            DataPacket data = new DataPacket(TypeDataPacket.CHAT_MESSAGE, TextMessage.createBroadcast(me, txt));
-            client.sendData(data);
-        }
+        Application.launch(ChatWindow.class, args);
     }
 }

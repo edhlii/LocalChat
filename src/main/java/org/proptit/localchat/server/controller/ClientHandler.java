@@ -36,14 +36,17 @@ public class ClientHandler implements Runnable {
 
             Object receivedData;
             while ((receivedData = in.readObject()) != null) {
-                DataPacket data = (DataPacket)receivedData;
-                switch (data.getTypeDataPacket())
-                {
-                    case TypeDataPacket.CHAT_MESSAGE:
-                        server.getChatService().processMessage(this, (Message) data.getData());
-                        break;
-                }
+                if (receivedData instanceof DataPacket packet) {
+                    System.out.println("SERVER NHẬN: Bắt được 1 gói hàng từ Client! Loại: " + packet.getTypeDataPacket());
+                    switch (packet.getTypeDataPacket()) {
+                        case CHAT_MESSAGE:
+                            Message msg = (Message) packet.getData();
+                            server.getChatService().processMessage(this, msg);
+                            break;
 
+                        // Sau này LOGIN thì xử lý ở đây
+                    }
+                }
             }
 
         } catch (IOException | ClassNotFoundException e) {
