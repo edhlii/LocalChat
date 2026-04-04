@@ -4,6 +4,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -12,6 +13,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 import org.proptit.localchat.client.networks.SocketClient;
 import org.proptit.localchat.common.enums.TypeDataPacket;
 import org.proptit.localchat.common.models.DataPacket;
@@ -79,7 +81,7 @@ public class ChatWindowController {
 
         if (!isMe) {
             Label lblSender = new Label(senderName);
-            lblSender.setStyle("-fx-font-size: 11px; -fx-text-fill: #65676B; -fx-padding: 0 0 0 5px;"); // Màu xám nhẹ
+            lblSender.setStyle("-fx-font-size: 11px; -fx-text-fill: #65676B; -fx-padding: 0 0 0 5px;");
             messageGroup.getChildren().add(lblSender);
             messageGroup.setAlignment(Pos.TOP_LEFT);
         } else {
@@ -98,14 +100,26 @@ public class ChatWindowController {
         vboxMessage.getChildren().add(hboxContainer);
     }
 
-    private void addImageToScreen(Image img, boolean isMe) {
+    private void addImageToScreen(Image img, String senderName, boolean isMe) {
         ImageView imageView = new ImageView(img);
         imageView.setFitWidth(250);
         imageView.setPreserveRatio(true);
 
-        HBox hboxContainer = new HBox(imageView);
-        hboxContainer.setPadding(new Insets(5, 10, 5, 10));
+        VBox messageGroup = new VBox(3);
 
+        if (!isMe) {
+            Label lblSender = new Label(senderName);
+            lblSender.setStyle("-fx-font-size: 11px; -fx-text-fill: #65676B; -fx-padding: 0 0 0 5px;");
+            messageGroup.getChildren().add(lblSender);
+            messageGroup.setAlignment(Pos.TOP_LEFT);
+        } else {
+            messageGroup.setAlignment(Pos.TOP_RIGHT);
+        }
+
+        messageGroup.getChildren().add(imageView);
+
+        HBox hboxContainer = new HBox(messageGroup);
+        hboxContainer.setPadding(new Insets(5, 10, 5, 10));
         if (isMe) {
             hboxContainer.setAlignment(Pos.CENTER_RIGHT);
         } else {
@@ -115,15 +129,30 @@ public class ChatWindowController {
     }
 
     public void receiveMessage(Message msg) {
+        String senderName = msg.getSender().getNickname();
         if (msg instanceof ImageMessage) {
             ImageMessage imgMsg = (ImageMessage) msg;
             Image img = new Image(new ByteArrayInputStream(imgMsg.getImageData()));
-            addImageToScreen(img, false);
+            addImageToScreen(img, senderName,false);
         } else {
-            String senderName = msg.getSender().getNickname();
             String content = msg.toString();
 
             addMessageToScreen(content, senderName, false);
+        }
+    }
+
+    @FXML
+    void onFileButtonClick(ActionEvent event) {
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+
+        byte[] imageBytes = FileUtils.chooseImageAndReadBytes(stage);
+
+        if (imageBytes != null) {
+            ImageMessage imgMsg = ImageMessage.createBroadcast(me, imageBytes, "image");
+
+            addImageToScreen(FileUtils.bytesToImage(imageBytes), "Me",true);
+
+            client.sendData(new DataPacket(TypeDataPacket.CHAT_MESSAGE, imgMsg));
         }
     }
 }

@@ -35,6 +35,7 @@ public class ImageMessage extends Message implements Serializable {
         return fileName;
     }
 
+
     public String toString() {
         return "[" + timestamp + "] " + sender.getNickname() + " đã gửi một ảnh: " + fileName;
     }

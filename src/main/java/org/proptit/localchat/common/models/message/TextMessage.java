@@ -26,6 +26,6 @@ public class TextMessage extends Message implements Serializable {
     }
 
     public String toString() {
-        return "[" + timestamp + "] " + sender.getNickname() + ": " + content;
+        return "[" + timestamp + "] " + ": " + content;
     }
 }
