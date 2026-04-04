@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<HBox alignment="CENTER" prefHeight="720.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.proptit.localchat.client.controller.LoginController">
+   <children>
+      <VBox alignment="CENTER" prefHeight="720.0" prefWidth="743.0" style="-fx-background-color: #0d1a5f;">
+         <children>
+            <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Connect">
+               <font>
+                  <Font name="Roboto Condensed Light" size="63.0" />
+               </font>
+            </Text>
+            <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="&amp;">
+               <font>
+                  <Font name="Roboto Condensed Light" size="63.0" />
+               </font>
+            </Text>
+            <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Work">
+               <font>
+                  <Font name="Roboto Condensed Light" size="63.0" />
+               </font>
+            </Text>
+            <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="&amp;">
+               <font>
+                  <Font name="Roboto Condensed Light" size="63.0" />
+               </font>
+            </Text>
+            <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Handsome">
+               <font>
+                  <Font name="Roboto Condensed Light" size="63.0" />
+               </font>
+            </Text>
+         </children>
+      </VBox>
+      <VBox alignment="CENTER" prefHeight="400.0" prefWidth="1280.0" spacing="15.0" style="-fx-background-color: white;">
+         <ImageView fitHeight="345.0" fitWidth="655.0" pickOnBounds="true" preserveRatio="true">
+            <image>
+               <Image url="@Logo.png" />
+            </image>
+         </ImageView>
+      
+                <Label text="Welcome to Local Chat." textFill="#0d1a5f" textOverrun="CLIP">
+              <font>
+               <Font name="Roboto Condensed Regular" size="18.0" />
+            </font>
+          </Label>
+      
+                <TextField fx:id="txtUsername" maxWidth="200" promptText="Username" />
+          <PasswordField fx:id="txtPassword" maxWidth="200.0" prefWidth="259.0" promptText="Password" />
+      
+                <Button onAction="#onLoginButtonClick" style="-fx-background-color: #0d1a5f;" text="LOGIN" textFill="WHITE">
+            <font>
+               <Font name="System Bold" size="12.0" />
+            </font>
+         </Button>
+          <Label fx:id="lblMessage" textFill="#341ea1" />
+      </VBox>
+   </children>
+</HBox>

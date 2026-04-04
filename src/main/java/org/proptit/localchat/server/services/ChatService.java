@@ -19,11 +19,13 @@ public class ChatService {
         User sender = senderHandler.getUser();
 
         if (msg.isBroadcast()) {
-            if (sender.isAdmin()) {
+            if (sender.isManager()) {
                 sendAll(senderHandler, msg);
             } else {
-                senderHandler.sendMessage("System: You do not have permission to send the entire message!");
+                System.out.println("System: You do not have permission to send the entire message!");
+
             }
+            //sendAll(senderHandler, msg);
             return;
         }
 

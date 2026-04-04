@@ -4,7 +4,9 @@ import org.proptit.localchat.common.enums.TypeDataPacket;
 import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.message.Message;
 import org.proptit.localchat.common.models.User;
+import org.proptit.localchat.server.dao.UserDao;
 import org.proptit.localchat.server.networks.SocketServer;
+import org.proptit.localchat.server.services.AuthService;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -29,25 +31,25 @@ public class ClientHandler implements Runnable {
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
 
-            this.user = (User) in.readObject();
-            System.out.println("Log: " + user.getNickname() + " has connected!");
-
-            server.broadcast(user.getNickname() + " joined the chat!");
+            AuthService authService = new AuthService(new UserDao());
 
             Object receivedData;
-            while ((receivedData = in.readObject()) != null) {
-                if (receivedData instanceof DataPacket packet) {
-                    System.out.println("SERVER NHẬN: Bắt được 1 gói hàng từ Client! Loại: " + packet.getTypeDataPacket());
-                    switch (packet.getTypeDataPacket()) {
-                        case CHAT_MESSAGE:
-                            Message msg = (Message) packet.getData();
-                            server.getChatService().processMessage(this, msg);
-                            break;
-
-                        // Sau này LOGIN thì xử lý ở đây
-                    }
+            while ((receivedData = in.readObject()) != null)
+            {
+                DataPacket data = (DataPacket)receivedData;
+                switch (data.getTypeDataPacket())
+                {
+                    case TypeDataPacket.LOGIN_REQUEST:
+                        authService.handleLogin(this, (User)data.getData());
+                        break;
+                    case TypeDataPacket.CHAT_MESSAGE:
+                        System.out.println("hello");
+                        Message msg = (Message) data.getData();
+                        server.getChatService().processMessage(this, msg);
+                        break;
                 }
             }
+
 
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Log: Connection lost with " + (user != null ? user.getNickname() : "unknown"));
@@ -77,5 +79,13 @@ public class ClientHandler implements Runnable {
 
     public User getUser() {
         return this.user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public SocketServer getServer() {
+        return server;
     }
 }

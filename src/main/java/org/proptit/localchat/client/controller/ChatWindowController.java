@@ -21,12 +21,21 @@ import org.proptit.localchat.common.models.User;
 import org.proptit.localchat.common.models.message.ImageMessage;
 import org.proptit.localchat.common.models.message.Message;
 import org.proptit.localchat.common.models.message.TextMessage;
+import org.proptit.localchat.common.utils.FileUtils;
 
 import java.io.ByteArrayInputStream;
 
 public class ChatWindowController {
     private SocketClient client;
     private User me;
+
+    public void setClient(SocketClient client) {
+        this.client = client;
+    }
+
+    public void setMe(User me) {
+        this.me = me;
+    }
 
     @FXML
     private TextArea messageInput;

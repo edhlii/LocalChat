@@ -1,4 +1,4 @@
-package org.proptit.localchat.client.controller;
+package org.proptit.localchat.common.utils;
 
 import javafx.scene.image.Image;
 import javafx.stage.FileChooser;

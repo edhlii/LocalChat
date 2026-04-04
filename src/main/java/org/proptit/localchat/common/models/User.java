@@ -21,7 +21,6 @@ public class User implements Serializable {
     public User(String username)
     {
         this.userame = username;
-        this.role = "ADMIN";
     }
 
     public Integer getId() {
@@ -36,6 +35,19 @@ public class User implements Serializable {
         return nickname != null ? nickname : "Unknown";
     }
 
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public User(String userame, String password) {
+        this.password = password;
+        this.userame = userame;
+    }
+
     public String getRole() {
         return role;
     }
@@ -44,7 +56,7 @@ public class User implements Serializable {
         this.role = role;
     }
 
-    public boolean isAdmin() {
-        return "ADMIN".equalsIgnoreCase(this.role);
+    public boolean isManager() {
+        return "MANAGER".equalsIgnoreCase(this.role);
     }
 }
