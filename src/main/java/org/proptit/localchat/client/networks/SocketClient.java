@@ -1,5 +1,8 @@
 package org.proptit.localchat.client.networks;
 
+import org.proptit.localchat.client.controller.LoginController;
+import org.proptit.localchat.common.enums.TypeDataPacket;
+import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.User;
 
 import java.io.IOException;
@@ -16,6 +19,8 @@ public class SocketClient implements Runnable {
     private User user;
     private boolean isRunning = true;
 
+    private LoginController loginController;
+
     public SocketClient(String host, int port, User user) {
         this.host = host;
         this.port = port;
@@ -26,22 +31,36 @@ public class SocketClient implements Runnable {
     public void run() {
         try {
             socket = new Socket(host, port);
-
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
 
-            out.writeObject(user);
-            out.flush();
+            if (user != null) {
+                sendData(user);
+            }
 
             Object response;
             while (isRunning && (response = in.readObject()) != null) {
-                System.out.println("Server: " + response);
+                handleServerPacket((DataPacket) response);
             }
 
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Can not connect to Server: " + e.getMessage());
         } finally {
             closeEverything();
+        }
+    }
+
+    private void handleServerPacket(DataPacket data) {
+
+
+        switch (data.getTypeDataPacket()) {
+            case TypeDataPacket.LOGIN_SUCCESS:
+                this.user = (User) data.getData();
+                loginController.handleLoginResult(true, this.user);
+                break;
+            case TypeDataPacket.LOGIN_FAILED:
+                loginController.handleLoginResult(false, data.getData());
+                break;
         }
     }
 
@@ -56,6 +75,10 @@ public class SocketClient implements Runnable {
         }
     }
 
+    public void setLoginController(LoginController loginController) {
+        this.loginController = loginController;
+    }
+
     private void closeEverything() {
         try {
             isRunning = false;
@@ -66,4 +89,5 @@ public class SocketClient implements Runnable {
             e.printStackTrace();
         }
     }
+
 }

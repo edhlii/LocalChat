@@ -35,6 +35,19 @@ public class User implements Serializable {
         return nickname;
     }
 
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public User(String userame, String password) {
+        this.password = password;
+        this.userame = userame;
+    }
+
     public String getRole() {
         return role;
     }
