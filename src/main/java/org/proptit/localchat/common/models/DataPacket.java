@@ -21,9 +21,7 @@ public class DataPacket implements Serializable {
     public void setData(Object data) {
         this.data = data;
     }
-
-
-
+    
     public TypeDataPacket getTypeDataPacket() { return typeDataPacket; }
     public Object getData() { return data; }
 

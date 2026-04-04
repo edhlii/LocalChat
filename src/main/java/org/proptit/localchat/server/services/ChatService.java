@@ -1,5 +1,7 @@
 package org.proptit.localchat.server.services;
 
+import org.proptit.localchat.common.enums.TypeDataPacket;
+import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.message.Message;
 import org.proptit.localchat.common.models.User;
 import org.proptit.localchat.server.controller.ClientHandler;
@@ -18,7 +20,7 @@ public class ChatService {
 
         if (msg.isBroadcast()) {
             if (sender.isAdmin()) {
-                sendAll("[GLOBAL] " + msg.toString());
+                sendAll(senderHandler, msg);
             } else {
                 senderHandler.sendMessage("System: You do not have permission to send the entire message!");
             }
@@ -28,20 +30,26 @@ public class ChatService {
         if (msg.getReceiverNickname() != null) {
             sendPrivate(msg);
         } else {
-            sendAll(msg.toString());
+            sendAll(senderHandler, msg);
         }
     }
 
-    public void sendAll(Object message) {
+    public void sendAll(ClientHandler senderHandler, Message msg) {
+        DataPacket packet = new DataPacket(TypeDataPacket.CHAT_MESSAGE, msg);
+        System.out.println("SERVER PHÁT: Đang gửi tin nhắn này cho " + clients.size() + " người!");
         for (ClientHandler client : clients) {
-            client.sendMessage(message.toString());
+            if (client != senderHandler) {
+                client.sendMessage(packet);
+            }
         }
     }
 
     private void sendPrivate(Message msg) {
+        DataPacket packet = new DataPacket(TypeDataPacket.CHAT_MESSAGE, msg);
+
         for (ClientHandler client : clients) {
             if (client.getUser().getNickname().equalsIgnoreCase(msg.getReceiverNickname())) {
-                client.sendMessage(msg.toString());
+                client.sendMessage(packet);
                 return;
             }
         }
