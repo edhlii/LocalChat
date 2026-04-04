@@ -24,4 +24,8 @@ public abstract class Message implements Serializable {
     public String getReceiverNickname() {
         return receiverNickname;
     }
+
+    public User getSender() {
+        return sender;
+    }
 }

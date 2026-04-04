@@ -31,25 +31,25 @@ public class ClientHandler implements Runnable {
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
 
-
             AuthService authService = new AuthService(new UserDao());
 
-
-
             Object receivedData;
-            while ((receivedData = in.readObject()) != null) {
+            while ((receivedData = in.readObject()) != null)
+            {
                 DataPacket data = (DataPacket)receivedData;
                 switch (data.getTypeDataPacket())
                 {
-                    case TypeDataPacket.CHAT_MESSAGE:
-                        server.getChatService().processMessage(this, (Message) data.getData());
-                        break;
                     case TypeDataPacket.LOGIN_REQUEST:
                         authService.handleLogin(this, (User)data.getData());
                         break;
+                    case TypeDataPacket.CHAT_MESSAGE:
+                        System.out.println("hello");
+                        Message msg = (Message) data.getData();
+                        server.getChatService().processMessage(this, msg);
+                        break;
                 }
-
             }
+
 
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Log: Connection lost with " + (user != null ? user.getNickname() : "unknown"));

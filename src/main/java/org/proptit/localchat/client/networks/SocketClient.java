@@ -1,14 +1,19 @@
 package org.proptit.localchat.client.networks;
 
+
 import org.proptit.localchat.client.controller.LoginController;
 import org.proptit.localchat.common.enums.TypeDataPacket;
+import javafx.application.Platform;
+import org.proptit.localchat.client.controller.ChatWindowController;
 import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.User;
+import org.proptit.localchat.common.models.message.Message;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 public class SocketClient implements Runnable {
     private String host;
@@ -18,6 +23,7 @@ public class SocketClient implements Runnable {
     private ObjectOutputStream out;
     private User user;
     private boolean isRunning = true;
+    private ChatWindowController controller;
 
     private LoginController loginController;
 
@@ -34,6 +40,7 @@ public class SocketClient implements Runnable {
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
 
+
             if (user != null) {
                 sendData(user);
             }
@@ -42,25 +49,34 @@ public class SocketClient implements Runnable {
             while (isRunning && (response = in.readObject()) != null) {
                 handleServerPacket((DataPacket) response);
             }
-
-        } catch (IOException | ClassNotFoundException e) {
+        }
+        catch (IOException | ClassNotFoundException e) {
             System.err.println("Can not connect to Server: " + e.getMessage());
         } finally {
             closeEverything();
         }
     }
 
-    private void handleServerPacket(DataPacket data) {
-
-
+        private void handleServerPacket(DataPacket data) {
         switch (data.getTypeDataPacket()) {
             case TypeDataPacket.LOGIN_SUCCESS:
                 this.user = (User) data.getData();
+
                 loginController.handleLoginResult(true, this.user);
                 break;
             case TypeDataPacket.LOGIN_FAILED:
                 loginController.handleLoginResult(false, data.getData());
                 break;
+            case TypeDataPacket.CHAT_MESSAGE:
+                Message msg = (Message) data.getData();
+                if (controller != null) {
+                    Platform.runLater(() -> {
+                        controller.receiveMessage(msg);
+                    });
+                } else {
+                    System.out.println("The interface is not ready yet: " + msg.toString());
+                }
+            break;
         }
     }
 
@@ -90,4 +106,7 @@ public class SocketClient implements Runnable {
         }
     }
 
+    public void setController(ChatWindowController controller) {
+        this.controller = controller;
+    }
 }

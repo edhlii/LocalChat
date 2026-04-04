@@ -3,6 +3,7 @@ package org.proptit.localchat.client.controller;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
@@ -44,9 +45,18 @@ public class LoginController {
                 try {
                     Stage stage = (Stage) txtUsername.getScene().getWindow();
                     FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/proptit/localchat/chat_window.fxml"));
-                    Scene scene = new Scene(loader.load());
-                    stage.setScene(scene);
+                    Parent root = loader.load();
+                    ChatWindowController chatWindowController = loader.getController();
+
+                    chatWindowController.setClient(socketClient);
+                    chatWindowController.setMe((User)data);
+                    socketClient.setController(chatWindowController);
+
+
+
+                    stage.setScene(new Scene(root));
                     stage.setTitle("LocalChat - " + ((User)data).getNickname());
+
                 } catch (IOException e) { e.printStackTrace(); }
             } else {
                 lblMessage.setText("Login failed");

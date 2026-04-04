@@ -12,4 +12,5 @@ CREATE TABLE users (
 INSERT INTO users (username, password, nickname, role) 
 VALUES ('ducanh', '123', 'Duc Anh', 'MANAGER'),
 		('vanquang', '123', 'Quang', 'MEMBER'),
-		('dinhhieu', '123', 'Hieu', 'MEMBER');
+		('dinhhieu', '123', 'Hieu', 'MEMBER'),
+		VALUES ('vantoan', '123', 'Van Toan', 'MANAGER'),
