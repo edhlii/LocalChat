@@ -34,7 +34,7 @@
                                 <HBox prefHeight="74.0" prefWidth="894.0" BorderPane.alignment="CENTER">
                                     <children>
                                         <TextArea fx:id="messageInput" prefHeight="74.0" prefWidth="722.0" promptText="Type a message..." />
-                              <Button mnemonicParsing="false" prefHeight="74.0" prefWidth="139.0" text="File" onAction="#onFileButtonClick" />
+                              <Button mnemonicParsing="false" onAction="#onFileButtonClick" prefHeight="74.0" prefWidth="139.0" text="File" />
                                         <Button fx:id="sendMessageButton" mnemonicParsing="false" onAction="#onSendButtonClick" prefHeight="74.0" prefWidth="144.0" text="Send" />
                                     </children>
                                 </HBox>

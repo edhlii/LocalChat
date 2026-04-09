@@ -14,7 +14,7 @@ public class FileUtils {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Chọn ảnh để gửi");
         fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.gif")
+                // new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.gif", "*.MP4")
         );
         File selectedFile = fileChooser.showOpenDialog(stage);
         if (selectedFile != null) {

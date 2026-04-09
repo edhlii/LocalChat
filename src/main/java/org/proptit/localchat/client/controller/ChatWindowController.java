@@ -18,6 +18,7 @@ import org.proptit.localchat.client.networks.SocketClient;
 import org.proptit.localchat.common.enums.TypeDataPacket;
 import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.User;
+import org.proptit.localchat.common.models.message.FileMessage;
 import org.proptit.localchat.common.models.message.ImageMessage;
 import org.proptit.localchat.common.models.message.Message;
 import org.proptit.localchat.common.models.message.TextMessage;
@@ -137,19 +138,6 @@ public class ChatWindowController {
         vboxMessage.getChildren().add(hboxContainer);
     }
 
-    public void receiveMessage(Message msg) {
-        String senderName = msg.getSender().getNickname();
-        if (msg instanceof ImageMessage) {
-            ImageMessage imgMsg = (ImageMessage) msg;
-            Image img = new Image(new ByteArrayInputStream(imgMsg.getImageData()));
-            addImageToScreen(img, senderName,false);
-        } else {
-            String content = msg.toString();
-
-            addMessageToScreen(content, senderName, false);
-        }
-    }
-
     @FXML
     void onFileButtonClick(ActionEvent event) {
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
@@ -164,4 +152,22 @@ public class ChatWindowController {
             client.sendData(new DataPacket(TypeDataPacket.CHAT_MESSAGE, imgMsg));
         }
     }
+
+    public void receiveMessage(Message msg) {
+        String senderName = msg.getSender().getNickname();
+        if (msg instanceof ImageMessage) {
+            ImageMessage imgMsg = (ImageMessage) msg;
+            Image img = new Image(new ByteArrayInputStream(imgMsg.getImageData()));
+            addImageToScreen(img, senderName,false);
+        } else if(msg instanceof TextMessage) {
+            String content = msg.toString();
+
+            addMessageToScreen(content, senderName, false);
+        }
+        else {
+            FileMessage fileMsg = (FileMessage) msg;
+            // addFileBoxToScreen(fileMsg.getFileName(), fileMsg.getFileData(), fileMsg.getSender().getNickname(), false);
+        }
+    }
+
 }
