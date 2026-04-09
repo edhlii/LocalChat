@@ -2,9 +2,9 @@ package org.proptit.localchat.client.networks;
 
 
 import org.proptit.localchat.client.controller.LoginController;
+import org.proptit.localchat.client.controller.MainWindowController;
 import org.proptit.localchat.common.enums.TypeDataPacket;
 import javafx.application.Platform;
-import org.proptit.localchat.client.controller.ChatWindowController;
 import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.User;
 import org.proptit.localchat.common.models.message.Message;
@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.net.UnknownHostException;
 
 public class SocketClient implements Runnable {
     private String host;
@@ -23,7 +22,7 @@ public class SocketClient implements Runnable {
     private ObjectOutputStream out;
     private User user;
     private boolean isRunning = true;
-    private ChatWindowController controller;
+    private MainWindowController controller;
 
     private LoginController loginController;
 
@@ -106,7 +105,7 @@ public class SocketClient implements Runnable {
         }
     }
 
-    public void setController(ChatWindowController controller) {
+    public void setController(MainWindowController controller) {
         this.controller = controller;
     }
 }

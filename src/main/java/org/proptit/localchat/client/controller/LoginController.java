@@ -44,13 +44,13 @@ public class LoginController {
             if (success) {
                 try {
                     Stage stage = (Stage) txtUsername.getScene().getWindow();
-                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/proptit/localchat/chat_window.fxml"));
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/proptit/localchat/main_window.fxml"));
                     Parent root = loader.load();
-                    ChatWindowController chatWindowController = loader.getController();
-
-                    chatWindowController.setClient(socketClient);
-                    chatWindowController.setMe((User)data);
-                    socketClient.setController(chatWindowController);
+                    MainWindowController mainWindowController = loader.getController();
+                    mainWindowController.setupUI(socketClient, (User) data);
+                    mainWindowController.setClient(socketClient);
+                    mainWindowController.setMe((User)data);
+                    socketClient.setController(mainWindowController);
 
 
 
