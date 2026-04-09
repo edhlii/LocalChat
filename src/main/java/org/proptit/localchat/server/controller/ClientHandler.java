@@ -64,7 +64,7 @@ public class ClientHandler implements Runnable {
                         {
                             user.setPassword(PasswordUtils.hashPassword(user.getPassword()));
                             userDao.addUser(user);
-                            DataPacket errorPacket = new DataPacket(TypeDataPacket.ADD_ACCOUNT_SUCCESS, user);
+                            DataPacket errorPacket = new DataPacket(TypeDataPacket.ADD_ACCOUNT_SUCCESS, userDao.findByUsername(user.getUsername()));
                             sendData(errorPacket);
                         }
                         else
