@@ -36,25 +36,6 @@
 
         <StackPane HBox.hgrow="ALWAYS">
             <children>
-
-                <AnchorPane fx:id="memberManagerArea" prefWidth="1145.0" style="-fx-background-color: #6699FF;">
-                    <children>
-                        <Label layoutX="427.0" layoutY="23.0" text="Member Management" textFill="WHITE">
-                            <font>
-                                <Font name="System Bold" size="24.0" />
-                            </font>
-                        </Label>
-                        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" layoutX="38.0" layoutY="75.0" prefHeight="550.0" prefWidth="1070.0" AnchorPane.bottomAnchor="95.0" AnchorPane.leftAnchor="38.0" AnchorPane.rightAnchor="37.0" AnchorPane.topAnchor="75.0">
-                            <content>
-                                <VBox fx:id="vboxMemberList" spacing="5.0" style="-fx-padding: 10;" />
-                            </content>
-                        </ScrollPane>
-                        <Button fx:id="btnAddMember" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-background-radius: 100; -fx-background-color: white;" text="➕" AnchorPane.bottomAnchor="20.0" AnchorPane.rightAnchor="30.0">
-                            <font>
-                                <Font size="24.0" />
-                            </font></Button>
-                    </children>
-                </AnchorPane>
                 <SplitPane fx:id="chatAreaContainer" dividerPositions="0.3" prefHeight="720.0" prefWidth="1145.0" style="-fx-background-color: transparent;">
                     <items>
                         <AnchorPane fx:id="sidebarArea" minWidth="250.0" prefWidth="300.0" style="-fx-background-color: #f4f4f4;">
@@ -91,6 +72,25 @@
                         </AnchorPane>
                     </items>
                 </SplitPane>
+
+                <AnchorPane fx:id="memberManagerArea" prefWidth="1145.0" style="-fx-background-color: #6699FF;">
+                    <children>
+                        <Label layoutX="427.0" layoutY="23.0" text="Member Management" textFill="WHITE">
+                            <font>
+                                <Font name="System Bold" size="24.0" />
+                            </font>
+                        </Label>
+                        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" layoutX="38.0" layoutY="75.0" prefHeight="550.0" prefWidth="1070.0" style="-fx-background-radius:: 20;" AnchorPane.bottomAnchor="95.0" AnchorPane.leftAnchor="38.0" AnchorPane.rightAnchor="37.0" AnchorPane.topAnchor="75.0">
+                            <content>
+                                <VBox fx:id="vboxMemberList" prefHeight="79.0" prefWidth="1113.0" spacing="5.0" style="-fx-padding: 10;" />
+                            </content>
+                        </ScrollPane>
+                        <Button fx:id="btnAddMember" mnemonicParsing="false" onAction="#onAddMemberClick" prefHeight="60.0" prefWidth="60.0" style="-fx-background-radius: 100; -fx-background-color: white;" text="➕" AnchorPane.bottomAnchor="20.0" AnchorPane.rightAnchor="30.0">
+                            <font>
+                                <Font size="24.0" />
+                            </font></Button>
+                    </children>
+                </AnchorPane>
             </children>
         </StackPane>
     </children>

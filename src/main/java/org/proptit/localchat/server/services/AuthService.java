@@ -3,6 +3,7 @@ package org.proptit.localchat.server.services;
 import org.proptit.localchat.common.enums.TypeDataPacket;
 import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.User;
+import org.proptit.localchat.common.utils.PasswordUtils;
 import org.proptit.localchat.server.controller.ClientHandler;
 import org.proptit.localchat.server.dao.UserDao;
 
@@ -16,13 +17,14 @@ public class AuthService {
 
     public void handleLogin(ClientHandler handler, User loginInfo) {
 
-        User validatedUser = userDao.getUserByLogin(loginInfo.getUserame(), loginInfo.getPassword());
-
-        if (validatedUser != null) {
+        User validatedUser = userDao.findByUsername(loginInfo.getUsername());
+        if(validatedUser != null && PasswordUtils.checkPassword(loginInfo.getPassword(), validatedUser.getPassword()))
+        {
             handler.setUser(validatedUser);
-            handler.sendMessage(new DataPacket(TypeDataPacket.LOGIN_SUCCESS, validatedUser));
-        } else {
-            handler.sendMessage(new DataPacket(TypeDataPacket.LOGIN_FAILED, null));
+            handler.sendData(new DataPacket(TypeDataPacket.LOGIN_SUCCESS, validatedUser));
+        }
+        else {
+            handler.sendData(new DataPacket(TypeDataPacket.LOGIN_FAILED, null));
         }
     }
 }

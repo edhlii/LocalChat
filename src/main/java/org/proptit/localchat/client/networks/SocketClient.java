@@ -1,6 +1,7 @@
 package org.proptit.localchat.client.networks;
 
 
+import javafx.scene.control.Alert;
 import org.proptit.localchat.client.controller.LoginController;
 import org.proptit.localchat.client.controller.MainWindowController;
 import org.proptit.localchat.common.enums.TypeDataPacket;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.List;
 
 public class SocketClient implements Runnable {
     private String host;
@@ -75,7 +77,27 @@ public class SocketClient implements Runnable {
                 } else {
                     System.out.println("The interface is not ready yet: " + msg.toString());
                 }
-            break;
+                break;
+            case TypeDataPacket.RETURN_ALL_USERS:
+                controller.updateMemberList((List<User>) data.getData());
+                break;
+            case TypeDataPacket.ADD_ACCOUNT_SUCCESS:
+                User user = (User)data.getData();
+                Platform.runLater(() -> {
+                    controller.addMemberToUI(user);
+                });
+                break;
+
+            case TypeDataPacket.ADD_ACCOUNT_FAILURE:
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Create account failure...");
+                    alert.setHeaderText(null);
+                    alert.setGraphic(null);
+                    alert.showAndWait();
+                });
+                break;
+
         }
     }
 
@@ -108,4 +130,6 @@ public class SocketClient implements Runnable {
     public void setController(MainWindowController controller) {
         this.controller = controller;
     }
+
+
 }

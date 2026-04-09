@@ -46,7 +46,7 @@ public class SocketServer implements Runnable {
 
     public void broadcast(Object message) {
         for (ClientHandler client : clients) {
-            client.sendMessage(message);
+            client.sendData(message);
         }
     }
 
