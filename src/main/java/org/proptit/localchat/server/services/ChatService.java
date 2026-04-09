@@ -41,7 +41,7 @@ public class ChatService {
         System.out.println("SERVER PHÁT: Đang gửi tin nhắn này cho " + clients.size() + " người!");
         for (ClientHandler client : clients) {
             if (client != senderHandler) {
-                client.sendMessage(packet);
+                client.sendData(packet);
             }
         }
     }
@@ -51,7 +51,7 @@ public class ChatService {
 
         for (ClientHandler client : clients) {
             if (client.getUser().getNickname().equalsIgnoreCase(msg.getReceiverNickname())) {
-                client.sendMessage(packet);
+                client.sendData(packet);
                 return;
             }
         }

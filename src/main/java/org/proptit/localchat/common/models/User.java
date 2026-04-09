@@ -27,7 +27,7 @@ public class User implements Serializable {
         return id;
     }
 
-    public String getUserame() {
+    public String getUsername() {
         return userame;
     }
 
@@ -59,4 +59,17 @@ public class User implements Serializable {
     public boolean isManager() {
         return "MANAGER".equalsIgnoreCase(this.role);
     }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public void setUserame(String userame) {
+        this.userame = userame;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
 }

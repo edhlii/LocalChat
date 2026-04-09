@@ -4,6 +4,7 @@ import org.proptit.localchat.common.enums.TypeDataPacket;
 import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.message.Message;
 import org.proptit.localchat.common.models.User;
+import org.proptit.localchat.common.utils.PasswordUtils;
 import org.proptit.localchat.server.dao.UserDao;
 import org.proptit.localchat.server.networks.SocketServer;
 import org.proptit.localchat.server.services.AuthService;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.List;
 
 public class ClientHandler implements Runnable {
     private Socket socket;
@@ -19,6 +21,7 @@ public class ClientHandler implements Runnable {
     private ObjectOutputStream out;
     private ObjectInputStream in;
     private User user;
+    private UserDao userDao = new UserDao();
 
     public ClientHandler(Socket socket, SocketServer server) {
         this.socket = socket;
@@ -43,10 +46,33 @@ public class ClientHandler implements Runnable {
                         authService.handleLogin(this, (User)data.getData());
                         break;
                     case TypeDataPacket.CHAT_MESSAGE:
-                        System.out.println("hello");
                         Message msg = (Message) data.getData();
                         server.getChatService().processMessage(this, msg);
                         break;
+                    case TypeDataPacket.GET_ALL_USERS:
+                        List<User> allUsers = userDao.getAllUsers();
+                        DataPacket responseData = new DataPacket(TypeDataPacket.RETURN_ALL_USERS, allUsers);
+                        sendData(responseData);
+                        break;
+                    case TypeDataPacket.DELETE_USER_REQUEST:
+                        int id = (int)data.getData();
+                        userDao.deleteUser(id);
+                        break;
+                    case TypeDataPacket.ADD_USER_REQUEST:
+                        User user = (User)data.getData();
+                        if(userDao.findByUsername(user.getUsername()) == null)
+                        {
+                            user.setPassword(PasswordUtils.hashPassword(user.getPassword()));
+                            userDao.addUser(user);
+                            DataPacket errorPacket = new DataPacket(TypeDataPacket.ADD_ACCOUNT_SUCCESS, user);
+                            sendData(errorPacket);
+                        }
+                        else
+                        {
+                            DataPacket errorPacket = new DataPacket(TypeDataPacket.ADD_ACCOUNT_FAILURE, null);
+                            sendData(errorPacket);
+                        }
+
                 }
             }
 
@@ -58,7 +84,7 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    public void sendMessage(Object obj) {
+    public void sendData(Object obj) {
         try {
             out.writeObject(obj);
             out.flush();
