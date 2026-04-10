@@ -1,14 +1,12 @@
 package org.proptit.localchat.client.controller;
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -24,51 +22,62 @@ import org.proptit.localchat.common.models.message.TextMessage;
 import org.proptit.localchat.common.utils.FileUtils;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-public class ChatWindowController {
+public class ChatController {
     private SocketClient client;
     private User me;
+    private List<User> onlineUsers = new ArrayList<>();
+    private final Map<String, User> conversationUserMap = new HashMap<>();
+    private User selectedConversationUser;
 
-    public void setClient(SocketClient client) {
+    @FXML private VBox vboxMessage;
+    @FXML private ScrollPane scrollPane;
+    @FXML private TextArea messageInput;
+    @FXML private ListView<String> lvOnlinePeople;
+    @FXML private ListView<String> lvChatList;
+    @FXML private Button sendMessageAllButton;
+
+    public void init(SocketClient client, User me) {
         this.client = client;
-    }
-
-    public void setMe(User me) {
         this.me = me;
-    }
 
-    @FXML
-    private TextArea messageInput;
-    @FXML
-    private ScrollPane scrollPane;
-    @FXML
-    private Button sendMessageButton;
-    @FXML
-    private VBox vboxMessage;
-    @FXML
-    public void initialize() {
         vboxMessage.heightProperty().addListener((observable, oldValue, newValue) -> {
             scrollPane.setVvalue((Double) newValue);
         });
-    }
 
-    public void setupNetwork(SocketClient client,User user) {
-        this.client = client;
-        this.me = user;
+        if (lvChatList != null) {
+            lvChatList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+                selectedConversationUser = conversationUserMap.get(newValue);
+                clearMessageArea();
+            });
+        }
     }
 
     @FXML
     void onSendButtonClick(ActionEvent event) {
         String messageText = messageInput.getText();
         if (!messageText.trim().isEmpty()) {
-            addMessageToScreen(messageText, "Me", true);
-            Message msg = TextMessage.createBroadcast(me, messageText);
+            boolean isSendAll = event.getSource() == sendMessageAllButton;
+            Message msg;
+
+            if (!isSendAll && selectedConversationUser != null) {
+                msg = TextMessage.createPrivate(me, selectedConversationUser.getNickname(), messageText);
+                addMessageToScreen(messageText, "Me -> " + selectedConversationUser.getNickname(), true);
+            } else {
+                msg = TextMessage.createBroadcast(me, messageText);
+                addMessageToScreen(messageText, "Me", true);
+            }
+
             DataPacket packet = new DataPacket(TypeDataPacket.CHAT_MESSAGE, msg);
             if (client != null) {
-                System.out.println("CLIENT GỬI: Đã đóng gói và bắt đầu gửi đi...");
+                System.out.println("CLIENT GUI: Da dong goi va bat dau gui di...");
                 client.sendData(packet);
-            }
-            else {
+            } else {
                 System.out.println("Don't connect to internet");
             }
             messageInput.clear();
@@ -137,15 +146,20 @@ public class ChatWindowController {
         vboxMessage.getChildren().add(hboxContainer);
     }
 
+    private void clearMessageArea() {
+        if (vboxMessage != null) {
+            vboxMessage.getChildren().clear();
+        }
+    }
+
     public void receiveMessage(Message msg) {
         String senderName = msg.getSender().getNickname();
         if (msg instanceof ImageMessage) {
             ImageMessage imgMsg = (ImageMessage) msg;
             Image img = new Image(new ByteArrayInputStream(imgMsg.getImageData()));
-            addImageToScreen(img, senderName,false);
+            addImageToScreen(img, senderName, false);
         } else {
             String content = msg.toString();
-
             addMessageToScreen(content, senderName, false);
         }
     }
@@ -157,11 +171,70 @@ public class ChatWindowController {
         byte[] imageBytes = FileUtils.chooseImageAndReadBytes(stage);
 
         if (imageBytes != null) {
-            ImageMessage imgMsg = ImageMessage.createBroadcast(me, imageBytes, "image");
-
-            addImageToScreen(FileUtils.bytesToImage(imageBytes), "Me",true);
-
+            ImageMessage imgMsg;
+            if (selectedConversationUser != null) {
+                imgMsg = ImageMessage.createPrivate(me, selectedConversationUser.getNickname(), imageBytes, "image");
+            } else {
+                imgMsg = ImageMessage.createBroadcast(me, imageBytes, "image");
+            }
+            addImageToScreen(FileUtils.bytesToImage(imageBytes), "Me", true);
             client.sendData(new DataPacket(TypeDataPacket.CHAT_MESSAGE, imgMsg));
         }
     }
+
+
+    public void updateOnlinePeople(List<User> users) {
+        Platform.runLater(() -> {
+            if (lvOnlinePeople == null || lvChatList == null) {
+                return;
+            }
+
+            onlineUsers = users == null ? new ArrayList<>() : new ArrayList<>(users);
+
+            lvOnlinePeople.getItems().clear();
+            lvChatList.getItems().clear();
+            conversationUserMap.clear();
+
+            if (onlineUsers.isEmpty()) {
+                lvOnlinePeople.getItems().add("No one online");
+                lvChatList.getItems().add("No conversations");
+                selectedConversationUser = null;
+                return;
+            }
+
+            List<String> onlineNames = onlineUsers.stream()
+                    .map(user -> user.getNickname() + " (@" + user.getUsername() + ")")
+                    .collect(Collectors.toList());
+            lvOnlinePeople.getItems().addAll(onlineNames);
+
+            List<User> availableConversations = onlineUsers.stream()
+                    .filter(user -> me == null || !user.getUsername().equalsIgnoreCase(me.getUsername()))
+                    .collect(Collectors.toList());
+
+            if (availableConversations.isEmpty()) {
+                lvChatList.getItems().add("No conversations");
+                selectedConversationUser = null;
+                return;
+            }
+
+            for (User user : availableConversations) {
+                String label = user.getNickname() + " (@" + user.getUsername() + ")";
+                conversationUserMap.put(label, user);
+                lvChatList.getItems().add(label);
+            }
+
+            if (selectedConversationUser != null) {
+                String selectedUsername = selectedConversationUser.getUsername();
+                boolean stillOnline = availableConversations.stream()
+                        .anyMatch(user -> user.getUsername().equalsIgnoreCase(selectedUsername));
+                if (!stillOnline) {
+                    selectedConversationUser = null;
+                    lvChatList.getSelectionModel().clearSelection();
+                }
+            }
+        });
+    }
+
+
+
 }

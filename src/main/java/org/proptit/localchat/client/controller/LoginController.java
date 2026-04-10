@@ -47,7 +47,7 @@ public class LoginController {
                     FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/proptit/localchat/main_window.fxml"));
                     Parent root = loader.load();
                     MainWindowController mainWindowController = loader.getController();
-                    mainWindowController.setupUI(socketClient, (User) data);
+                    mainWindowController.setup(socketClient, (User) data);
                     mainWindowController.setClient(socketClient);
                     mainWindowController.setMe((User)data);
                     socketClient.setController(mainWindowController);

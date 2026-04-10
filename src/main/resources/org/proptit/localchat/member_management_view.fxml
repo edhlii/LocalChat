@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.text.Font?>
+<AnchorPane fx:id="memberManagerArea" prefWidth="1145.0" style="-fx-background-color: #6699FF;"
+            xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.proptit.localchat.client.controller.MemberManagementController">
+    <children>
+        <Label layoutX="427.0" layoutY="23.0" text="Member Management" textFill="WHITE">
+            <font>
+                <Font name="System Bold" size="24.0" />
+            </font>
+        </Label>
+        <TextField fx:id="txtSearchPeople" layoutX="38.0" layoutY="75.0" prefHeight="38.0" prefWidth="320.0" promptText="Search people by username or nickname..." AnchorPane.leftAnchor="38.0" AnchorPane.topAnchor="75.0" />
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" layoutX="38.0" layoutY="125.0" prefHeight="500.0" prefWidth="1070.0" style="-fx-background-radius:: 20;" AnchorPane.bottomAnchor="95.0" AnchorPane.leftAnchor="38.0" AnchorPane.rightAnchor="37.0" AnchorPane.topAnchor="125.0">
+            <content>
+                <VBox fx:id="vboxMemberList" prefHeight="79.0" prefWidth="1113.0" spacing="5.0" style="-fx-padding: 10;" />
+            </content>
+        </ScrollPane>
+        <Button fx:id="btnAddMember" mnemonicParsing="false" onAction="#onAddMemberClick" prefHeight="60.0" prefWidth="60.0" style="-fx-background-radius: 100; -fx-background-color: white;" text="➕" AnchorPane.bottomAnchor="20.0" AnchorPane.rightAnchor="30.0">
+            <font>
+                <Font size="24.0" />
+            </font></Button>
+    </children>
+</AnchorPane>
+
+

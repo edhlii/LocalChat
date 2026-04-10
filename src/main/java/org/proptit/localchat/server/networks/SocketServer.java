@@ -1,6 +1,8 @@
 package org.proptit.localchat.server.networks;
 
 import org.proptit.localchat.server.controller.ClientHandler;
+import org.proptit.localchat.common.enums.TypeDataPacket;
+import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.server.services.ChatService;
 
 import java.io.IOException;
@@ -8,6 +10,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SocketServer implements Runnable {
     private static final int PORT = 1204;
@@ -52,6 +55,20 @@ public class SocketServer implements Runnable {
 
     public void removeClient(ClientHandler handler) {
         clients.remove(handler);
+        broadcastOnlineUsers();
+    }
+
+    public List<org.proptit.localchat.common.models.User> getOnlineUsers() {
+        return clients.stream()
+                .map(ClientHandler::getUser)
+                .filter(user -> user != null)
+                .collect(Collectors.toList());
+    }
+
+    public void broadcastOnlineUsers() {
+        List<org.proptit.localchat.common.models.User> onlineUsers = getOnlineUsers();
+        DataPacket packet = new DataPacket(TypeDataPacket.RETURN_ONLINE_USERS, onlineUsers);
+        broadcast(packet);
     }
 
     private void stopServer() {

@@ -81,6 +81,11 @@ public class SocketClient implements Runnable {
             case TypeDataPacket.RETURN_ALL_USERS:
                 controller.updateMemberList((List<User>) data.getData());
                 break;
+            case TypeDataPacket.RETURN_ONLINE_USERS:
+                if (controller != null) {
+                    controller.updateOnlinePeople((List<User>) data.getData());
+                }
+                break;
             case TypeDataPacket.ADD_ACCOUNT_SUCCESS:
                 User user = (User)data.getData();
                 Platform.runLater(() -> {
