@@ -53,6 +53,7 @@ public class ChatController {
         if (lvChatList != null) {
             lvChatList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
                 selectedConversationUser = conversationUserMap.get(newValue);
+                clearMessageArea();
             });
         }
     }
@@ -143,6 +144,12 @@ public class ChatController {
             hboxContainer.setAlignment(Pos.CENTER_LEFT);
         }
         vboxMessage.getChildren().add(hboxContainer);
+    }
+
+    private void clearMessageArea() {
+        if (vboxMessage != null) {
+            vboxMessage.getChildren().clear();
+        }
     }
 
     public void receiveMessage(Message msg) {
