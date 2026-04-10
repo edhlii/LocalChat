@@ -27,6 +27,7 @@ public class AuthService {
         {
             handler.setUser(validatedUser);
             handler.sendData(new DataPacket(TypeDataPacket.LOGIN_SUCCESS, validatedUser));
+            handler.getServer().broadcastOnlineUsers();
         }
         else {
             handler.sendData(new DataPacket(TypeDataPacket.LOGIN_FAILED, null));
