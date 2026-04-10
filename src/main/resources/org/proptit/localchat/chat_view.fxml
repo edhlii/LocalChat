@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.geometry.Insets?>
+<SplitPane fx:id="chatArea" dividerPositions="0.3" prefHeight="720.0" prefWidth="1145.0"
+           style="-fx-background-color: transparent;"
+           xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="org.proptit.localchat.client.controller.ChatController">
+    <items>
+        <AnchorPane fx:id="sidebarArea" minWidth="250.0" prefWidth="300.0" style="-fx-background-color: #f4f4f4;">
+            <children>
+                <VBox spacing="8.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                    <children>
+                        <Label style="-fx-font-weight: bold; -fx-padding: 12 12 0 12;" text="Online People" />
+                        <ListView fx:id="lvOnlinePeople" prefHeight="180.0" VBox.vgrow="NEVER" />
+                        <Label style="-fx-font-weight: bold; -fx-padding: 8 12 0 12;" text="Conversations" />
+                        <ListView fx:id="lvChatList" VBox.vgrow="ALWAYS" />
+                    </children>
+                </VBox>
+            </children>
+        </AnchorPane>
+
+        <AnchorPane style="-fx-background-color: white;">
+            <children>
+                <BorderPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                    <center>
+                        <ScrollPane fx:id="scrollPane" fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;">
+                            <content>
+                                <VBox fx:id="vboxMessage" spacing="10.0" style="-fx-background-color: transparent;">
+                                    <padding>
+                                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                    </padding></VBox>
+                            </content>
+                        </ScrollPane>
+                    </center>
+                    <bottom>
+                        <HBox alignment="CENTER" prefHeight="80.0" spacing="10.0" style="-fx-padding: 10;">
+                            <children>
+                                <TextArea fx:id="messageInput" prefHeight="29.0" prefWidth="537.0" promptText="Type a message..." HBox.hgrow="ALWAYS" />
+                                <Button mnemonicParsing="false" onAction="#onFileButtonClick" prefHeight="60.0" prefWidth="70.0" text="File" />
+                                <Button fx:id="sendMessageButton" mnemonicParsing="false" onAction="#onSendButtonClick" prefHeight="60.0" prefWidth="70.0" text="Send" />
+                                <Button fx:id="sendMessageAllButton" mnemonicParsing="false" onAction="#onSendButtonClick" prefHeight="60.0" prefWidth="70.0" text="Send All" />
+                            </children>
+                        </HBox>
+                    </bottom>
+                </BorderPane>
+            </children>
+        </AnchorPane>
+    </items>
+</SplitPane>
