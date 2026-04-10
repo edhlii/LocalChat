@@ -11,17 +11,22 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.proptit.localchat.client.networks.SocketClient;
 import org.proptit.localchat.common.enums.TypeDataPacket;
 import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.User;
+import org.proptit.localchat.common.models.message.FileMessage;
 import org.proptit.localchat.common.models.message.ImageMessage;
 import org.proptit.localchat.common.models.message.Message;
 import org.proptit.localchat.common.models.message.TextMessage;
 import org.proptit.localchat.common.utils.FileUtils;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -153,36 +158,131 @@ public class ChatController {
     }
 
     public void receiveMessage(Message msg) {
-        String senderName = msg.getSender().getNickname();
-        if (msg instanceof ImageMessage) {
-            ImageMessage imgMsg = (ImageMessage) msg;
-            Image img = new Image(new ByteArrayInputStream(imgMsg.getImageData()));
-            addImageToScreen(img, senderName, false);
-        } else {
-            String content = msg.toString();
-            addMessageToScreen(content, senderName, false);
-        }
+        Platform.runLater(() -> {
+            String senderName = msg.getSender().getNickname();
+
+            if (msg instanceof ImageMessage) {
+                ImageMessage imgMsg = (ImageMessage) msg;
+                Image img = new Image(new ByteArrayInputStream(imgMsg.getImageData()));
+                addImageToScreen(img, senderName, false);
+
+            } else if (msg instanceof FileMessage) {
+                FileMessage fileMsg = (FileMessage) msg;
+                addFileToScreen(fileMsg.getFileName(), fileMsg.getFileData(), senderName, false);
+            } else {
+                String content = msg.toString();
+                addMessageToScreen(content, senderName, false);
+            }
+        });
     }
 
     @FXML
     void onFileButtonClick(ActionEvent event) {
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
 
-        byte[] imageBytes = FileUtils.chooseImageAndReadBytes(stage);
+        File file = FileUtils.chooseFile(stage);
 
-        if (imageBytes != null) {
-            ImageMessage imgMsg;
-            if (selectedConversationUser != null) {
-                imgMsg = ImageMessage.createPrivate(me, selectedConversationUser.getNickname(), imageBytes, "image");
-            } else {
-                imgMsg = ImageMessage.createBroadcast(me, imageBytes, "image");
+        if (file != null) {
+            try {
+                byte[] fileBytes = Files.readAllBytes(file.toPath());
+                String fileName = file.getName();
+
+                String extension = "";
+                int i = fileName.lastIndexOf('.');
+                if (i > 0) {
+                    extension = fileName.substring(i + 1).toLowerCase();
+                }
+
+                boolean isImage = extension.matches("(png|jpg|jpeg|gif)");
+
+                Message msg;
+                if (isImage) {
+                    if (selectedConversationUser != null) {
+                        msg = ImageMessage.createPrivate(me, selectedConversationUser.getNickname(), fileBytes, extension);
+                    } else {
+                        msg = ImageMessage.createBroadcast(me, fileBytes, extension);
+                    }
+                    addImageToScreen(new Image(new ByteArrayInputStream(fileBytes)), "Me", true);
+                } else {
+                    if (selectedConversationUser != null) {
+                        msg = FileMessage.createPrivate(me, selectedConversationUser.getNickname(), fileBytes, fileName, extension);
+                    } else {
+                        msg = FileMessage.createBroadcast(me, fileBytes, fileName, extension);
+                    }
+                    addFileToScreen(fileName, fileBytes, "Me", true);
+                }
+
+                client.sendData(new DataPacket(TypeDataPacket.CHAT_MESSAGE, msg));
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.out.println("Lỗi khi đọc file!");
             }
-            addImageToScreen(FileUtils.bytesToImage(imageBytes), "Me", true);
-            client.sendData(new DataPacket(TypeDataPacket.CHAT_MESSAGE, imgMsg));
         }
     }
 
+    private void addFileToScreen(String fileName, byte[] fileData, String senderName, boolean isMe) {
+        VBox messageGroup = new VBox(3);
 
+        if (!isMe) {
+            Label lblSender = new Label(senderName);
+            lblSender.setStyle("-fx-font-size: 11px; -fx-text-fill: #65676B; -fx-padding: 0 0 0 5px;");
+            messageGroup.getChildren().add(lblSender);
+            messageGroup.setAlignment(Pos.TOP_LEFT);
+        } else {
+            messageGroup.setAlignment(Pos.TOP_RIGHT);
+        }
+
+        HBox fileBox = new HBox(10);
+        fileBox.setAlignment(Pos.CENTER_LEFT);
+        fileBox.setStyle("-fx-background-color: #F0F2F5; -fx-background-radius: 10px; -fx-padding: 10px; -fx-border-color: #CCD0D5; -fx-border-radius: 10px;");
+
+        Label lblFileName = new Label(fileName);
+        lblFileName.setWrapText(true);
+        lblFileName.setMaxWidth(200);
+        lblFileName.setStyle("-fx-font-weight: bold; -fx-text-fill: #050505;");
+
+        Button btnDownload = new Button("Tải về");
+        btnDownload.setStyle("-fx-background-color: #0084FF; -fx-text-fill: white; -fx-background-radius: 5px; -fx-cursor: hand;");
+
+        btnDownload.setOnAction(e -> downloadFile(fileName, fileData));
+
+        fileBox.getChildren().addAll(lblFileName, btnDownload);
+        messageGroup.getChildren().add(fileBox);
+
+        HBox hboxContainer = new HBox(messageGroup);
+        hboxContainer.setPadding(new Insets(5, 10, 5, 10));
+        if (isMe) {
+            hboxContainer.setAlignment(Pos.CENTER_RIGHT);
+        } else {
+            hboxContainer.setAlignment(Pos.CENTER_LEFT);
+        }
+        Platform.runLater(() -> {
+            vboxMessage.getChildren().add(hboxContainer);
+        });
+    }
+    private void downloadFile(String defaultFileName, byte[] fileData) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Lưu file");
+        fileChooser.setInitialFileName(defaultFileName);
+
+        Stage stage = (Stage) vboxMessage.getScene().getWindow();
+        File saveFile = fileChooser.showSaveDialog(stage);
+
+        if (saveFile != null) {
+            try {
+                Files.write(saveFile.toPath(), fileData);
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Đã lưu file thành công!");
+                alert.setHeaderText(null);
+                alert.show();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                Alert alert = new Alert(Alert.AlertType.ERROR, "Lỗi khi lưu file!");
+                alert.setHeaderText(null);
+                alert.show();
+            }
+        }
+    }
     public void updateOnlinePeople(List<User> users) {
         Platform.runLater(() -> {
             if (lvOnlinePeople == null || lvChatList == null) {

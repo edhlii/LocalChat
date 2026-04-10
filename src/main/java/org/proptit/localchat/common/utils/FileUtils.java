@@ -10,21 +10,26 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 public class FileUtils {
-    public static byte[] chooseImageAndReadBytes(Stage stage) {
+//    public static byte[] chooseImageAndReadBytes(Stage stage) {
+//        FileChooser fileChooser = new FileChooser();
+//        fileChooser.setTitle("Chọn ảnh để gửi");
+//        fileChooser.getExtensionFilters().addAll(
+//                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.gif")
+//        );
+//        File selectedFile = fileChooser.showOpenDialog(stage);
+//        if (selectedFile != null) {
+//            try {
+//                return Files.readAllBytes(selectedFile.toPath());
+//            } catch (IOException e) {
+//                System.err.println("Lỗi khi đọc file: " + e.getMessage());
+//            }
+//        }
+//        return null;
+//    }
+    public static File chooseFile(Stage stage) {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Chọn ảnh để gửi");
-        fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.gif")
-        );
-        File selectedFile = fileChooser.showOpenDialog(stage);
-        if (selectedFile != null) {
-            try {
-                return Files.readAllBytes(selectedFile.toPath());
-            } catch (IOException e) {
-                System.err.println("Lỗi khi đọc file: " + e.getMessage());
-            }
-        }
-        return null;
+        fileChooser.setTitle("Chọn file để gửi");
+        return fileChooser.showOpenDialog(stage);
     }
 
     public static Image bytesToImage(byte[] imageData) {
