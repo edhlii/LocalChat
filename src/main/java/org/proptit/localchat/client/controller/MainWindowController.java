@@ -21,11 +21,15 @@ import org.proptit.localchat.common.models.message.TextMessage;
 import org.proptit.localchat.common.utils.FileUtils;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
 
 public class MainWindowController {
     private SocketClient client;
     private User me;
+    private List<User> allMembers = new ArrayList<>();
 
     public void setClient(SocketClient client) {
         this.client = client;
@@ -35,31 +39,35 @@ public class MainWindowController {
         this.me = me;
     }
 
-
     @FXML private SplitPane chatAreaContainer;
     @FXML private AnchorPane memberManagerArea;
     @FXML private VBox vboxMessage;
     @FXML private VBox vboxMemberList;
     @FXML private ScrollPane scrollPane;
     @FXML private TextArea messageInput;
+    @FXML private TextField txtSearchPeople;
+    @FXML private ListView<String> lvOnlinePeople;
 
     @FXML private Button sendMessageAllButton;
     @FXML private Button btnAddMember;
-
     @FXML private Button sendMessageButton;
-
     @FXML private Button btnNavMembers;
 
     @FXML
     public void initialize() {
-
         showChatArea();
         vboxMessage.heightProperty().addListener((observable, oldValue, newValue) -> {
             scrollPane.setVvalue((Double) newValue);
         });
+
+        if (txtSearchPeople != null) {
+            txtSearchPeople.textProperty().addListener((observable, oldValue, newValue) -> {
+                renderMemberListByKeyword(newValue);
+            });
+        }
     }
 
-    public void setupUI(SocketClient client,User user) {
+    public void setupUI(SocketClient client, User user) {
         this.client = client;
         this.me = user;
         boolean isManager = me.isManager();
@@ -72,29 +80,48 @@ public class MainWindowController {
 
         btnAddMember.setVisible(isManager);
         btnAddMember.setManaged(isManager);
+
+        client.sendData(new DataPacket(TypeDataPacket.GET_ONLINE_USERS, null));
     }
+
     @FXML
     void onNavMembersClick(ActionEvent event) {
         showMemberManagerArea();
         client.sendData(new DataPacket(TypeDataPacket.GET_ALL_USERS, null));
+        client.sendData(new DataPacket(TypeDataPacket.GET_ONLINE_USERS, null));
     }
 
     public void updateMemberList(List<User> users) {
         Platform.runLater(() -> {
-            vboxMemberList.getChildren().clear();
-            for (User user : users) {
-                addMemberToUI(user);
+            allMembers = users == null ? new ArrayList<>() : new ArrayList<>(users);
+            renderMemberListByKeyword(txtSearchPeople != null ? txtSearchPeople.getText() : "");
+        });
+    }
+
+    public void updateOnlinePeople(List<User> users) {
+        Platform.runLater(() -> {
+            if (lvOnlinePeople == null) {
+                return;
             }
+
+            lvOnlinePeople.getItems().clear();
+            if (users == null || users.isEmpty()) {
+                lvOnlinePeople.getItems().add("No one online");
+                return;
+            }
+
+            List<String> onlineNames = users.stream()
+                    .map(user -> user.getNickname() + " (@" + user.getUsername() + ")")
+                    .collect(Collectors.toList());
+            lvOnlinePeople.getItems().addAll(onlineNames);
         });
     }
 
     @FXML
     void onNavChatClick(ActionEvent event) {
         showChatArea();
+        client.sendData(new DataPacket(TypeDataPacket.GET_ONLINE_USERS, null));
     }
-
-    @FXML
-
 
     private void showChatArea() {
         chatAreaContainer.setVisible(true);
@@ -110,7 +137,6 @@ public class MainWindowController {
         chatAreaContainer.setManaged(false);
     }
 
-
     @FXML
     void onSendButtonClick(ActionEvent event) {
         String messageText = messageInput.getText();
@@ -119,10 +145,9 @@ public class MainWindowController {
             Message msg = TextMessage.createBroadcast(me, messageText);
             DataPacket packet = new DataPacket(TypeDataPacket.CHAT_MESSAGE, msg);
             if (client != null) {
-                System.out.println("CLIENT GỬI: Đã đóng gói và bắt đầu gửi đi...");
+                System.out.println("CLIENT GUI: Da dong goi va bat dau gui di...");
                 client.sendData(packet);
-            }
-            else {
+            } else {
                 System.out.println("Don't connect to internet");
             }
             messageInput.clear();
@@ -196,10 +221,9 @@ public class MainWindowController {
         if (msg instanceof ImageMessage) {
             ImageMessage imgMsg = (ImageMessage) msg;
             Image img = new Image(new ByteArrayInputStream(imgMsg.getImageData()));
-            addImageToScreen(img, senderName,false);
+            addImageToScreen(img, senderName, false);
         } else {
             String content = msg.toString();
-
             addMessageToScreen(content, senderName, false);
         }
     }
@@ -212,15 +236,12 @@ public class MainWindowController {
 
         if (imageBytes != null) {
             ImageMessage imgMsg = ImageMessage.createBroadcast(me, imageBytes, "image");
-
-            addImageToScreen(FileUtils.bytesToImage(imageBytes), "Me",true);
-
+            addImageToScreen(FileUtils.bytesToImage(imageBytes), "Me", true);
             client.sendData(new DataPacket(TypeDataPacket.CHAT_MESSAGE, imgMsg));
         }
     }
 
     public void addMemberToUI(User user) {
-
         HBox memberItem = new HBox(20);
         memberItem.setAlignment(Pos.CENTER_LEFT);
         memberItem.setPadding(new Insets(10, 15, 10, 15));
@@ -229,18 +250,17 @@ public class MainWindowController {
         if (user.getUsername().equals(me.getUsername())) {
             memberItem.setStyle("-fx-background-color: #e3f2fd; -fx-background-radius: 10; ");
         } else {
-
             memberItem.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
         }
 
-
         Label lblCircle = new Label("\uD83D\uDC64");
-        lblCircle.setMinWidth(45); lblCircle.setMaxWidth(45);
-        lblCircle.setMinHeight(45); lblCircle.setMaxHeight(45);
+        lblCircle.setMinWidth(45);
+        lblCircle.setMaxWidth(45);
+        lblCircle.setMinHeight(45);
+        lblCircle.setMaxHeight(45);
         lblCircle.setAlignment(Pos.CENTER);
         lblCircle.setStyle("-fx-background-color: #0d1a5f; -fx-text-fill: white; " +
                 "-fx-background-radius: 30; -fx-font-weight: bold; -fx-font-size: 20px;");
-
 
         VBox infoMemBox = new VBox(2);
         Label lblNickname = new Label(user.getNickname());
@@ -249,28 +269,19 @@ public class MainWindowController {
         Label lblUsername = new Label("Username: " + user.getUsername());
         lblUsername.setStyle("-fx-text-fill: #7f8c8d; -fx-font-size: 12px;");
 
-
         infoMemBox.getChildren().addAll(lblNickname, lblUsername);
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-
         memberItem.getChildren().addAll(lblCircle, infoMemBox);
-
-
-
-
 
         if (user.getRole().equalsIgnoreCase("MEMBER")) {
             Button btnDelete = new Button("X");
             btnDelete.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
 
-
             btnDelete.setOnAction(e -> {
-
                 Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-
 
                 confirm.setTitle("Do you want to delete this account?");
                 confirm.setHeaderText(null);
@@ -279,42 +290,44 @@ public class MainWindowController {
                 ButtonType btnNo = new ButtonType("NO", ButtonBar.ButtonData.NO);
                 confirm.getButtonTypes().setAll(btnYes, btnNo);
 
-
                 if (confirm.showAndWait().get() == btnYes) {
                     client.sendData(new DataPacket(TypeDataPacket.DELETE_USER_REQUEST, user.getId()));
                     vboxMemberList.getChildren().remove(memberItem);
                 }
             });
 
-
             memberItem.getChildren().addAll(spacer, btnDelete);
-        }
-        else
-        {
+        } else {
             Label lblBadge = new Label(user.getRole());
             lblBadge.setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold; -fx-font-size: 10px; -fx-padding: 2;");
             memberItem.getChildren().addAll(spacer, lblBadge);
         }
 
-
-
-
         vboxMemberList.getChildren().add(memberItem);
+    }
 
+    private void renderMemberListByKeyword(String keyword) {
+        String normalizedKeyword = keyword == null ? "" : keyword.trim().toLowerCase(Locale.ROOT);
+        vboxMemberList.getChildren().clear();
 
+        for (User user : allMembers) {
+            String username = user.getUsername() == null ? "" : user.getUsername().toLowerCase(Locale.ROOT);
+            String nickname = user.getNickname() == null ? "" : user.getNickname().toLowerCase(Locale.ROOT);
+
+            if (normalizedKeyword.isEmpty() || username.contains(normalizedKeyword) || nickname.contains(normalizedKeyword)) {
+                addMemberToUI(user);
+            }
+        }
     }
 
     @FXML
     void onAddMemberClick(ActionEvent event) {
-
         Dialog<User> dialog = new Dialog<>();
         dialog.setTitle("Add New Account");
         dialog.setHeaderText(null);
 
-
         ButtonType btnAddType = new ButtonType("Create", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(btnAddType, ButtonType.CANCEL);
-
 
         GridPane grid = new GridPane();
         grid.setHgap(15);
@@ -335,18 +348,19 @@ public class MainWindowController {
         cbRole.setValue("MEMBER");
         cbRole.setMaxWidth(Double.MAX_VALUE);
 
-
-        grid.add(new Label("Username:"), 0, 0); grid.add(txtUser, 1, 0);
-        grid.add(new Label("Password:"), 0, 1); grid.add(txtPass, 1, 1);
-        grid.add(new Label("Nickname:"), 0, 2); grid.add(txtNick, 1, 2);
-        grid.add(new Label("Role:"), 0, 3);     grid.add(cbRole, 1, 3);
+        grid.add(new Label("Username:"), 0, 0);
+        grid.add(txtUser, 1, 0);
+        grid.add(new Label("Password:"), 0, 1);
+        grid.add(txtPass, 1, 1);
+        grid.add(new Label("Nickname:"), 0, 2);
+        grid.add(txtNick, 1, 2);
+        grid.add(new Label("Role:"), 0, 3);
+        grid.add(cbRole, 1, 3);
 
         dialog.getDialogPane().setContent(grid);
 
-
         Node btnCreate = dialog.getDialogPane().lookupButton(btnAddType);
         btnCreate.setDisable(true);
-
 
         javafx.beans.value.ChangeListener<String> validationListener = (observable, oldValue, newValue) -> {
             boolean isInvalid = txtUser.getText().trim().isEmpty()
@@ -359,8 +373,6 @@ public class MainWindowController {
         txtPass.textProperty().addListener(validationListener);
         txtNick.textProperty().addListener(validationListener);
 
-
-
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == btnAddType) {
                 return new User(0, txtUser.getText().trim(), txtPass.getText(),
@@ -369,13 +381,8 @@ public class MainWindowController {
             return null;
         });
 
-
         dialog.showAndWait().ifPresent(newUser -> {
             client.sendData(new DataPacket(TypeDataPacket.ADD_USER_REQUEST, newUser));
-
         });
     }
-
-
-
 }

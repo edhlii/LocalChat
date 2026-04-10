@@ -54,6 +54,10 @@ public class ClientHandler implements Runnable {
                         DataPacket responseData = new DataPacket(TypeDataPacket.RETURN_ALL_USERS, allUsers);
                         sendData(responseData);
                         break;
+                    case TypeDataPacket.GET_ONLINE_USERS:
+                        List<User> onlineUsers = server.getOnlineUsers();
+                        sendData(new DataPacket(TypeDataPacket.RETURN_ONLINE_USERS, onlineUsers));
+                        break;
                     case TypeDataPacket.DELETE_USER_REQUEST:
                         int id = (int)data.getData();
                         userDao.deleteUser(id);
@@ -95,6 +99,7 @@ public class ClientHandler implements Runnable {
 
     private void closeEverything() {
         try {
+            server.removeClient(this);
             if (in != null) in.close();
             if (out != null) out.close();
             if (socket != null) socket.close();

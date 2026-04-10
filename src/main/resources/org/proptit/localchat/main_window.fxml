@@ -6,6 +6,7 @@
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
@@ -40,7 +41,14 @@
                     <items>
                         <AnchorPane fx:id="sidebarArea" minWidth="250.0" prefWidth="300.0" style="-fx-background-color: #f4f4f4;">
                             <children>
-                                <ListView fx:id="lvChatList" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                                <VBox spacing="8.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                    <children>
+                                        <Label style="-fx-font-weight: bold; -fx-padding: 12 12 0 12;" text="Online People" />
+                                        <ListView fx:id="lvOnlinePeople" prefHeight="180.0" VBox.vgrow="NEVER" />
+                                        <Label style="-fx-font-weight: bold; -fx-padding: 8 12 0 12;" text="Conversations" />
+                                        <ListView fx:id="lvChatList" VBox.vgrow="ALWAYS" />
+                                    </children>
+                                </VBox>
                             </children>
                         </AnchorPane>
 
@@ -80,7 +88,8 @@
                                 <Font name="System Bold" size="24.0" />
                             </font>
                         </Label>
-                        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" layoutX="38.0" layoutY="75.0" prefHeight="550.0" prefWidth="1070.0" style="-fx-background-radius:: 20;" AnchorPane.bottomAnchor="95.0" AnchorPane.leftAnchor="38.0" AnchorPane.rightAnchor="37.0" AnchorPane.topAnchor="75.0">
+                        <TextField fx:id="txtSearchPeople" layoutX="38.0" layoutY="75.0" prefHeight="38.0" prefWidth="320.0" promptText="Search people by username or nickname..." AnchorPane.leftAnchor="38.0" AnchorPane.topAnchor="75.0" />
+                        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" layoutX="38.0" layoutY="125.0" prefHeight="500.0" prefWidth="1070.0" style="-fx-background-radius:: 20;" AnchorPane.bottomAnchor="95.0" AnchorPane.leftAnchor="38.0" AnchorPane.rightAnchor="37.0" AnchorPane.topAnchor="125.0">
                             <content>
                                 <VBox fx:id="vboxMemberList" prefHeight="79.0" prefWidth="1113.0" spacing="5.0" style="-fx-padding: 10;" />
                             </content>

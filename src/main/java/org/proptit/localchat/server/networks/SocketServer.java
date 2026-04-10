@@ -8,6 +8,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SocketServer implements Runnable {
     private static final int PORT = 1204;
@@ -52,6 +53,13 @@ public class SocketServer implements Runnable {
 
     public void removeClient(ClientHandler handler) {
         clients.remove(handler);
+    }
+
+    public List<org.proptit.localchat.common.models.User> getOnlineUsers() {
+        return clients.stream()
+                .map(ClientHandler::getUser)
+                .filter(user -> user != null)
+                .collect(Collectors.toList());
     }
 
     private void stopServer() {

@@ -17,6 +17,11 @@ public class AuthService {
 
     public void handleLogin(ClientHandler handler, User loginInfo) {
 
+        if (loginInfo == null || loginInfo.getUsername() == null || loginInfo.getPassword() == null) {
+            handler.sendData(new DataPacket(TypeDataPacket.LOGIN_FAILED, "Missing username or password"));
+            return;
+        }
+
         User validatedUser = userDao.findByUsername(loginInfo.getUsername());
         if(validatedUser != null && PasswordUtils.checkPassword(loginInfo.getPassword(), validatedUser.getPassword()))
         {
