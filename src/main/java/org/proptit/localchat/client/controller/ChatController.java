@@ -56,6 +56,11 @@ public class ChatController {
                 clearMessageArea();
             });
         }
+        boolean isManager = me.isManager();
+        if (sendMessageAllButton != null) {
+            sendMessageAllButton.setVisible(isManager);
+            sendMessageAllButton.setManaged(isManager);
+        }
     }
 
     @FXML
