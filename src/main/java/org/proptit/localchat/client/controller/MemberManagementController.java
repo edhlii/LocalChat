@@ -1,6 +1,7 @@
 package org.proptit.localchat.client.controller;
 
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -135,14 +136,14 @@ public class MemberManagementController {
         grid.setVgap(20);
         grid.setPadding(new Insets(20, 30, 10, 30));
 
-        TextField txtUser = new TextField();
-        txtUser.setPromptText("Enter username...");
+        TextField txtUsername = new TextField();
+        txtUsername.setPromptText("Enter username...");
 
-        TextField txtPass = new TextField();
-        txtPass.setPromptText("Enter password...");
+        TextField txtPassword = new TextField();
+        txtPassword.setPromptText("Enter password...");
 
-        TextField txtNick = new TextField();
-        txtNick.setPromptText("Enter nickname...");
+        TextField txtNickname = new TextField();
+        txtNickname.setPromptText("Enter nickname...");
 
         ComboBox<String> cbRole = new ComboBox<>();
         cbRole.getItems().addAll("MEMBER", "MANAGER");
@@ -150,11 +151,11 @@ public class MemberManagementController {
         cbRole.setMaxWidth(Double.MAX_VALUE);
 
         grid.add(new Label("Username:"), 0, 0);
-        grid.add(txtUser, 1, 0);
+        grid.add(txtUsername, 1, 0);
         grid.add(new Label("Password:"), 0, 1);
-        grid.add(txtPass, 1, 1);
+        grid.add(txtPassword, 1, 1);
         grid.add(new Label("Nickname:"), 0, 2);
-        grid.add(txtNick, 1, 2);
+        grid.add(txtNickname, 1, 2);
         grid.add(new Label("Role:"), 0, 3);
         grid.add(cbRole, 1, 3);
 
@@ -163,21 +164,29 @@ public class MemberManagementController {
         Node btnCreate = dialog.getDialogPane().lookupButton(btnAddType);
         btnCreate.setDisable(true);
 
-        javafx.beans.value.ChangeListener<String> validationListener = (observable, oldValue, newValue) -> {
-            boolean isInvalid = txtUser.getText().trim().isEmpty()
-                    || txtPass.getText().isEmpty()
-                    || txtNick.getText().isEmpty();
-            btnCreate.setDisable(isInvalid);
+        String usernameRegex = "^[a-zA-Z0-9._]+";
+
+        ChangeListener<String> validationListener = (observable, oldValue, newValue) -> {
+
+            String username = txtUsername.getText().trim();
+            String password = txtPassword.getText().trim();
+            String nickname = txtNickname.getText().trim();
+
+            boolean isValid = !username.isEmpty()
+                            && username.matches(usernameRegex)
+                            && !password.isEmpty()
+                            && !nickname.isEmpty();
+            btnCreate.setDisable(!isValid);
         };
 
-        txtUser.textProperty().addListener(validationListener);
-        txtPass.textProperty().addListener(validationListener);
-        txtNick.textProperty().addListener(validationListener);
+        txtUsername.textProperty().addListener(validationListener);
+        txtPassword.textProperty().addListener(validationListener);
+        txtNickname.textProperty().addListener(validationListener);
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == btnAddType) {
-                return new User(0, txtUser.getText().trim(), txtPass.getText(),
-                        txtNick.getText().trim(), cbRole.getValue());
+                return new User(0, txtUsername.getText().trim(), txtPassword.getText().trim(),
+                        txtNickname.getText().trim(), cbRole.getValue());
             }
             return null;
         });

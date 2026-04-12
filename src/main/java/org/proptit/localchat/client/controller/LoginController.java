@@ -30,8 +30,8 @@ public class LoginController {
 
     @FXML
     void onLoginButtonClick() {
-        String username = txtUsername.getText();
-        String password = txtPassword.getText();
+        String username = txtUsername.getText().trim();
+        String password = txtPassword.getText().trim();
 
 
         User loginUser = new User(username, password);
