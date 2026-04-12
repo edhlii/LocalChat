@@ -18,7 +18,7 @@ public class AuthService {
     public void handleLogin(ClientHandler handler, User loginInfo) {
 
         if (loginInfo == null || loginInfo.getUsername() == null || loginInfo.getPassword() == null) {
-            handler.sendData(new DataPacket(TypeDataPacket.LOGIN_FAILED, "Missing username or password"));
+            handler.sendData(new DataPacket(TypeDataPacket.LOGIN_FAILED, null));
             return;
         }
 

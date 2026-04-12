@@ -32,13 +32,10 @@ public class MainWindowController {
     @FXML private SplitPane chatArea;
     @FXML private AnchorPane memberManagerArea;
 
-
     @FXML private Button btnNavMembers;
 
-    @FXML
-    private ChatController chatAreaController;
-    @FXML
-    private MemberManagementController memberManagerAreaController;
+    @FXML private ChatController chatAreaController;
+    @FXML private MemberManagementController memberManagerAreaController;
 
 
     private SocketClient client;
