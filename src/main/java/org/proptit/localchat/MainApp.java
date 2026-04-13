@@ -20,7 +20,10 @@ public class MainApp extends Application {
         client.setLoginController(loginController);
         loginController.setSocketClient(client);
 
-        new Thread(client).start();
+        Thread clientThread = new Thread(client);
+        // kill thread sau khi dong chuong trinh.
+        clientThread.setDaemon(true);
+        clientThread.start();
 
         stage.setTitle("LocalChat.");
         stage.setScene(scene);
