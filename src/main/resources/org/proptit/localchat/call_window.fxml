@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+
+<StackPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <ImageView fitHeight="308.0" fitWidth="494.0" pickOnBounds="true" preserveRatio="true" />
+      <VBox pickOnBounds="false" prefHeight="200.0" prefWidth="100.0" StackPane.alignment="TOP_CENTER">
+         <children>
+            <Label prefHeight="42.0" prefWidth="82.0" text="Contact name" />
+         </children>
+      </VBox>
+   </children>
+</StackPane>
