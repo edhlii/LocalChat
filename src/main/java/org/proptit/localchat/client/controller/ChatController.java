@@ -46,6 +46,7 @@ public class ChatController {
     @FXML private ListView<String> lvOnlinePeople;
     @FXML private ListView<String> lvChatList;
     @FXML private Button sendMessageAllButton;
+    @FXML public Label contactNameTopBar;
 
     public void init(SocketClient client, User me) {
         this.client = client;
@@ -55,9 +56,11 @@ public class ChatController {
             scrollPane.setVvalue((Double) newValue);
         });
 
+        // get the target conversation user.
         if (lvChatList != null) {
             lvChatList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
                 selectedConversationUser = conversationUserMap.get(newValue);
+                contactNameTopBar.setText(selectedConversationUser.getNickname());
                 clearMessageArea();
             });
         }

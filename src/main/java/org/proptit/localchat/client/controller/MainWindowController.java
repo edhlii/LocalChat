@@ -29,13 +29,18 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class MainWindowController {
-    @FXML private SplitPane chatArea;
-    @FXML private AnchorPane memberManagerArea;
+    @FXML
+    private SplitPane chatArea;
+    @FXML
+    private AnchorPane memberManagerArea;
 
-    @FXML private Button btnNavMembers;
+    @FXML
+    private Button btnNavMembers;
 
-    @FXML private ChatController chatAreaController;
-    @FXML private MemberManagementController memberManagerAreaController;
+    @FXML
+    private ChatController chatAreaController;
+    @FXML
+    private MemberManagementController memberManagerAreaController;
 
 
     private SocketClient client;
@@ -78,9 +83,7 @@ public class MainWindowController {
 
     public void addMemberToUI(User user) {
         memberManagerAreaController.addMemberToUI(user);
-
     }
-
 
 
     @FXML
