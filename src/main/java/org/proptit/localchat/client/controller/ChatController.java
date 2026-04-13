@@ -341,5 +341,9 @@ public class ChatController {
     }
 
 
+    public void onCallButtonClick(ActionEvent actionEvent) {
+    }
 
+    public void onVideoCallButtonClick(ActionEvent actionEvent) {
+    }
 }
