@@ -3,9 +3,12 @@ package org.proptit.localchat.client.controller;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -40,13 +43,20 @@ public class ChatController {
     private final Map<String, User> conversationUserMap = new HashMap<>();
     private User selectedConversationUser;
 
-    @FXML private VBox vboxMessage;
-    @FXML private ScrollPane scrollPane;
-    @FXML private TextArea messageInput;
-    @FXML private ListView<String> lvOnlinePeople;
-    @FXML private ListView<String> lvChatList;
-    @FXML private Button sendMessageAllButton;
-    @FXML public Label contactNameTopBar;
+    @FXML
+    private VBox vboxMessage;
+    @FXML
+    private ScrollPane scrollPane;
+    @FXML
+    private TextArea messageInput;
+    @FXML
+    private ListView<String> lvOnlinePeople;
+    @FXML
+    private ListView<String> lvChatList;
+    @FXML
+    private Button sendMessageAllButton;
+    @FXML
+    public Label contactNameTopBar;
 
     public void init(SocketClient client, User me) {
         this.client = client;
@@ -269,6 +279,7 @@ public class ChatController {
             vboxMessage.getChildren().add(hboxContainer);
         });
     }
+
     private void downloadFile(String defaultFileName, byte[] fileData) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Lưu file");
@@ -291,6 +302,7 @@ public class ChatController {
             }
         }
     }
+
     public void updateOnlinePeople(List<User> users) {
         Platform.runLater(() -> {
             if (lvOnlinePeople == null || lvChatList == null) {
@@ -345,6 +357,30 @@ public class ChatController {
 
 
     public void onCallButtonClick(ActionEvent actionEvent) {
+        if (selectedConversationUser == null) {
+            Alert alert = new Alert(Alert.AlertType.WARNING, "Please select a user to start a call.");
+            alert.setHeaderText(null);
+            alert.show();
+            return;
+        }
+
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/proptit/localchat/call_window.fxml"));
+            Parent root = loader.load();
+
+            CallWindowController callWindowController = loader.getController();
+            callWindowController.init(selectedConversationUser);
+
+            Stage stage = new Stage();
+            stage.setTitle("Call - " + selectedConversationUser.getNickname());
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Alert alert = new Alert(Alert.AlertType.ERROR, "Unable to open call window.");
+            alert.setHeaderText(null);
+            alert.show();
+        }
     }
 
     public void onVideoCallButtonClick(ActionEvent actionEvent) {
