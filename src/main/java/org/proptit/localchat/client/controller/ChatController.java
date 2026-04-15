@@ -20,6 +20,7 @@ import org.proptit.localchat.client.networks.SocketClient;
 import org.proptit.localchat.common.enums.TypeDataPacket;
 import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.User;
+import org.proptit.localchat.common.models.call.CallSignal;
 import org.proptit.localchat.common.models.message.FileMessage;
 import org.proptit.localchat.common.models.message.ImageMessage;
 import org.proptit.localchat.common.models.message.Message;
@@ -29,6 +30,7 @@ import org.proptit.localchat.common.utils.FileUtils;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,12 +38,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class ChatController {
+public class ChatController implements ChatCallView {
     private SocketClient client;
     private User me;
     private List<User> onlineUsers = new ArrayList<>();
     private final Map<String, User> conversationUserMap = new HashMap<>();
     private User selectedConversationUser;
+    private ChatCallManager callManager;
+    private Stage callStage;
+    private CallWindowController callWindowController;
 
     @FXML
     private VBox vboxMessage;
@@ -61,6 +66,7 @@ public class ChatController {
     public void init(SocketClient client, User me) {
         this.client = client;
         this.me = me;
+        this.callManager = new ChatCallManager(client, me, this);
 
         vboxMessage.heightProperty().addListener((observable, oldValue, newValue) -> {
             scrollPane.setVvalue((Double) newValue);
@@ -357,29 +363,125 @@ public class ChatController {
 
 
     public void onCallButtonClick(ActionEvent actionEvent) {
-        if (selectedConversationUser == null) {
-            Alert alert = new Alert(Alert.AlertType.WARNING, "Please select a user to start a call.");
-            alert.setHeaderText(null);
-            alert.show();
-            return;
+        if (callManager != null) {
+            callManager.startOutgoingCall(selectedConversationUser);
         }
+    }
 
+    public void receiveCallSignal(CallSignal signal) {
+        if (callManager != null) {
+            callManager.receiveCallSignal(signal);
+        }
+    }
+
+    @Override
+    public void showCallWindow(User peer, String statusText) {
         try {
+            if (callStage != null && callStage.isShowing()) {
+                if (callWindowController != null) {
+                    callWindowController.init(peer);
+                    callWindowController.updateCallStatus(statusText);
+                    callWindowController.setMicMuted(false);
+                }
+                callStage.toFront();
+                return;
+            }
+
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/proptit/localchat/call_window.fxml"));
             Parent root = loader.load();
 
-            CallWindowController callWindowController = loader.getController();
-            callWindowController.init(selectedConversationUser);
+            callWindowController = loader.getController();
+            callWindowController.init(peer);
+            callWindowController.updateCallStatus(statusText);
+            callWindowController.setMicMuted(false);
+            callWindowController.setOnMuteChanged(muted -> {
+                if (callManager != null) {
+                    callManager.setMuted(muted);
+                }
+            });
+            callWindowController.setOnEndCall(() -> {
+                if (callManager != null) {
+                    callManager.endCall(true);
+                }
+            });
 
-            Stage stage = new Stage();
-            stage.setTitle("Call - " + selectedConversationUser.getNickname());
-            stage.setScene(new Scene(root));
-            stage.show();
+            callStage = new Stage();
+            callStage.setTitle("Call - " + peer.getNickname());
+            callStage.setScene(new Scene(root));
+            callStage.setOnCloseRequest(event -> {
+                event.consume();
+                if (callManager != null) {
+                    callManager.endCall(true);
+                }
+                closeCallWindow();
+            });
+            callStage.show();
         } catch (IOException e) {
             e.printStackTrace();
-            Alert alert = new Alert(Alert.AlertType.ERROR, "Unable to open call window.");
-            alert.setHeaderText(null);
-            alert.show();
+            showError("Unable to open call window.");
+        }
+    }
+
+    @Override
+    public void showInfo(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, message);
+        alert.setHeaderText(null);
+        alert.show();
+    }
+
+    @Override
+    public void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR, message);
+        alert.setHeaderText(null);
+        alert.show();
+    }
+
+    @Override
+    public boolean confirmIncomingCall(User caller) {
+        Alert confirm = new Alert(
+                Alert.AlertType.CONFIRMATION,
+                caller.getNickname() + " is calling you.",
+                ButtonType.YES,
+                ButtonType.NO
+        );
+        confirm.setTitle("Incoming Call");
+        confirm.setHeaderText("Accept voice call?");
+        return confirm.showAndWait().orElse(ButtonType.NO) == ButtonType.YES;
+    }
+
+    @Override
+    public User resolveUser(String username, String nickname) {
+        if (username != null) {
+            for (User onlineUser : onlineUsers) {
+                if (onlineUser.getUsername().equalsIgnoreCase(username)) {
+                    return onlineUser;
+                }
+            }
+        }
+
+        User user = new User(username);
+        user.setNickname(nickname != null && !nickname.isBlank() ? nickname : username);
+        return user;
+    }
+
+    @Override
+    public String resolveLocalAddress() {
+        try {
+            return InetAddress.getLocalHost().getHostAddress();
+        } catch (Exception ex) {
+            return "127.0.0.1";
+        }
+    }
+
+    @Override
+    public void closeCallWindow() {
+        if (callStage != null) {
+            callStage.setOnCloseRequest(null);
+            if (callStage.isShowing()) {
+                callStage.close();
+            }
+            callStage = null;
+            callWindowController = null;
         }
     }
 

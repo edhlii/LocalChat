@@ -2,6 +2,7 @@ package org.proptit.localchat.server.controller;
 
 import org.proptit.localchat.common.enums.TypeDataPacket;
 import org.proptit.localchat.common.models.DataPacket;
+import org.proptit.localchat.common.models.call.CallSignal;
 import org.proptit.localchat.common.models.message.Message;
 import org.proptit.localchat.common.models.User;
 import org.proptit.localchat.common.utils.PasswordUtils;
@@ -76,6 +77,11 @@ public class ClientHandler implements Runnable {
                             DataPacket errorPacket = new DataPacket(TypeDataPacket.ADD_ACCOUNT_FAILURE, null);
                             sendData(errorPacket);
                         }
+                        break;
+                    case TypeDataPacket.CALL_SIGNAL:
+                        CallSignal signal = (CallSignal) data.getData();
+                        server.forwardCallSignal(signal);
+                        break;
 
                 }
             }

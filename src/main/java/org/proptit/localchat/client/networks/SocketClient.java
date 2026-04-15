@@ -8,6 +8,7 @@ import org.proptit.localchat.common.enums.TypeDataPacket;
 import javafx.application.Platform;
 import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.User;
+import org.proptit.localchat.common.models.call.CallSignal;
 import org.proptit.localchat.common.models.message.Message;
 
 import java.io.IOException;
@@ -101,6 +102,12 @@ public class SocketClient implements Runnable {
                     alert.setGraphic(null);
                     alert.showAndWait();
                 });
+                break;
+            case TypeDataPacket.CALL_SIGNAL:
+                if (controller != null) {
+                    CallSignal signal = (CallSignal) data.getData();
+                    Platform.runLater(() -> controller.receiveCallSignal(signal));
+                }
                 break;
 
         }

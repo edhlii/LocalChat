@@ -15,6 +15,7 @@ import org.proptit.localchat.client.networks.SocketClient;
 import org.proptit.localchat.common.enums.TypeDataPacket;
 import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.User;
+import org.proptit.localchat.common.models.call.CallSignal;
 import org.proptit.localchat.common.models.message.ImageMessage;
 import org.proptit.localchat.common.models.message.Message;
 import org.proptit.localchat.common.models.message.TextMessage;
@@ -83,6 +84,10 @@ public class MainWindowController {
 
     public void addMemberToUI(User user) {
         memberManagerAreaController.addMemberToUI(user);
+    }
+
+    public void receiveCallSignal(CallSignal signal) {
+        chatAreaController.receiveCallSignal(signal);
     }
 
 

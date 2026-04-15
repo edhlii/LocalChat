@@ -3,6 +3,7 @@ package org.proptit.localchat.server.networks;
 import org.proptit.localchat.server.controller.ClientHandler;
 import org.proptit.localchat.common.enums.TypeDataPacket;
 import org.proptit.localchat.common.models.DataPacket;
+import org.proptit.localchat.common.models.call.CallSignal;
 import org.proptit.localchat.server.services.ChatService;
 
 import java.io.IOException;
@@ -69,6 +70,20 @@ public class SocketServer implements Runnable {
         List<org.proptit.localchat.common.models.User> onlineUsers = getOnlineUsers();
         DataPacket packet = new DataPacket(TypeDataPacket.RETURN_ONLINE_USERS, onlineUsers);
         broadcast(packet);
+    }
+
+    public void forwardCallSignal(CallSignal signal) {
+        if (signal == null || signal.getToUsername() == null) {
+            return;
+        }
+
+        DataPacket packet = new DataPacket(TypeDataPacket.CALL_SIGNAL, signal);
+        for (ClientHandler client : clients) {
+            if (client.getUser() != null && signal.getToUsername().equalsIgnoreCase(client.getUser().getUsername())) {
+                client.sendData(packet);
+                return;
+            }
+        }
     }
 
     private void stopServer() {
