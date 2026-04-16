@@ -7,5 +7,7 @@ public enum CallAction implements Serializable {
     ACCEPT,
     REJECT,
     READY,
-    HANGUP
+    HANGUP,
+    SHARE_START,
+    SHARE_STOP
 }

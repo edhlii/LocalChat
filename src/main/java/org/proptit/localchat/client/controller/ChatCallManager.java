@@ -1,7 +1,6 @@
 package org.proptit.localchat.client.controller;
 
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
+import org.proptit.localchat.client.networks.ScreenShareSession;
 import org.proptit.localchat.client.networks.SocketClient;
 import org.proptit.localchat.client.networks.VoiceCallSession;
 import org.proptit.localchat.common.enums.TypeDataPacket;
@@ -10,7 +9,6 @@ import org.proptit.localchat.common.models.User;
 import org.proptit.localchat.common.models.call.CallAction;
 import org.proptit.localchat.common.models.call.CallSignal;
 
-import java.util.List;
 import java.util.UUID;
 
 public class ChatCallManager {
@@ -19,11 +17,15 @@ public class ChatCallManager {
     private final ChatCallView view;
 
     private VoiceCallSession voiceCallSession;
+    private ScreenShareSession screenShareSession;
     private String activeCallId;
     private User activeCallPeer;
     private String outgoingCallId;
     private User outgoingCallPeer;
     private boolean isEndingCall;
+    private String remoteMediaHost;
+    private int remoteScreenPort;
+    private boolean localScreenSharing;
 
     public ChatCallManager(SocketClient client, User me, ChatCallView view) {
         this.client = client;
@@ -54,7 +56,8 @@ public class ChatCallManager {
                 me.getNickname(),
                 selectedConversationUser.getUsername(),
                 null,
-                0
+            0,
+            0
         ));
     }
 
@@ -79,6 +82,12 @@ public class ChatCallManager {
             case HANGUP:
                 handleRemoteHangup(signal);
                 break;
+            case SHARE_START:
+                handleRemoteShareStarted(signal);
+                break;
+            case SHARE_STOP:
+                handleRemoteShareStopped(signal);
+                break;
             default:
                 break;
         }
@@ -94,6 +103,38 @@ public class ChatCallManager {
         cleanupCallState(notifyPeer);
     }
 
+    public void setScreenSharing(boolean sharing) {
+        if (activeCallId == null || activeCallPeer == null) {
+            view.updateScreenShareButton(false);
+            return;
+        }
+
+        if (sharing) {
+            if (screenShareSession == null || remoteMediaHost == null || remoteMediaHost.isBlank() || remoteScreenPort <= 0) {
+                view.showInfo("Screen sharing is not ready yet.");
+                view.updateScreenShareButton(false);
+                return;
+            }
+
+            screenShareSession.startSending(remoteMediaHost, remoteScreenPort);
+            localScreenSharing = true;
+            sendCallSignal(new CallSignal(
+                    activeCallId,
+                    CallAction.SHARE_START,
+                    me.getUsername(),
+                    me.getNickname(),
+                    activeCallPeer.getUsername(),
+                    null,
+                    0,
+                    0
+            ));
+            view.updateCallStatus("Connected - Sharing screen");
+            return;
+        }
+
+        stopLocalScreenShare(true);
+    }
+
     private void handleIncomingInvite(CallSignal signal) {
         if (activeCallId != null || outgoingCallId != null) {
             sendCallSignal(new CallSignal(
@@ -103,6 +144,7 @@ public class ChatCallManager {
                     me.getNickname(),
                     signal.getFromUsername(),
                     null,
+                    0,
                     0
             ));
             return;
@@ -118,6 +160,7 @@ public class ChatCallManager {
                     me.getNickname(),
                     signal.getFromUsername(),
                     null,
+                    0,
                     0
             ));
             return;
@@ -125,6 +168,7 @@ public class ChatCallManager {
 
         try {
             int udpPort = ensureVoiceSessionOpened();
+                int screenPort = ensureScreenSessionOpened();
             activeCallId = signal.getCallId();
             activeCallPeer = caller;
             view.showCallWindow(caller, "Connecting...");
@@ -135,12 +179,13 @@ public class ChatCallManager {
                     me.getNickname(),
                     signal.getFromUsername(),
                     view.resolveLocalAddress(),
-                    udpPort
+                        udpPort,
+                        screenPort
             ));
         } catch (Exception ex) {
             ex.printStackTrace();
             cleanupCallState(false);
-            view.showError("Unable to access microphone/speaker.");
+                    view.showError("Unable to access call devices.");
             sendCallSignal(new CallSignal(
                     signal.getCallId(),
                     CallAction.REJECT,
@@ -148,7 +193,8 @@ public class ChatCallManager {
                     me.getNickname(),
                     signal.getFromUsername(),
                     null,
-                    0
+                        0,
+                        0
             ));
         }
     }
@@ -164,10 +210,13 @@ public class ChatCallManager {
 
         try {
             int udpPort = ensureVoiceSessionOpened();
+            int screenPort = ensureScreenSessionOpened();
             activeCallId = outgoingCallId;
             activeCallPeer = peer;
             outgoingCallId = null;
             outgoingCallPeer = null;
+            remoteMediaHost = signal.getHost();
+            remoteScreenPort = signal.getScreenUdpPort();
 
             view.showCallWindow(peer, "Connecting...");
             sendCallSignal(new CallSignal(
@@ -177,7 +226,8 @@ public class ChatCallManager {
                     me.getNickname(),
                     signal.getFromUsername(),
                     view.resolveLocalAddress(),
-                    udpPort
+                    udpPort,
+                    screenPort
             ));
 
             startVoiceStreaming(signal.getHost(), signal.getUdpPort());
@@ -193,6 +243,8 @@ public class ChatCallManager {
             return;
         }
 
+        remoteMediaHost = signal.getHost();
+        remoteScreenPort = signal.getScreenUdpPort();
         startVoiceStreaming(signal.getHost(), signal.getUdpPort());
     }
 
@@ -218,6 +270,23 @@ public class ChatCallManager {
         view.closeCallWindow();
     }
 
+    private void handleRemoteShareStarted(CallSignal signal) {
+        if (activeCallId == null || !activeCallId.equals(signal.getCallId())) {
+            return;
+        }
+
+        view.updateCallStatus("Connected - Remote is sharing");
+    }
+
+    private void handleRemoteShareStopped(CallSignal signal) {
+        if (activeCallId == null || !activeCallId.equals(signal.getCallId())) {
+            return;
+        }
+
+        view.clearRemoteScreenFrame();
+        view.updateCallStatus("Connected");
+    }
+
     private void startVoiceStreaming(String host, int port) {
         if (voiceCallSession == null || host == null || host.isBlank() || port <= 0) {
             return;
@@ -226,6 +295,7 @@ public class ChatCallManager {
         try {
             voiceCallSession.start(host, port);
             view.showCallWindow(activeCallPeer != null ? activeCallPeer : outgoingCallPeer, "Connected");
+            view.updateCallStatus("Connected");
         } catch (Exception ex) {
             ex.printStackTrace();
             view.showError("Unable to start audio stream.");
@@ -238,6 +308,40 @@ public class ChatCallManager {
             voiceCallSession = new VoiceCallSession();
         }
         return voiceCallSession.open();
+    }
+
+    private int ensureScreenSessionOpened() throws Exception {
+        if (screenShareSession == null) {
+            screenShareSession = new ScreenShareSession();
+        }
+        return screenShareSession.open(view::showRemoteScreenFrame);
+    }
+
+    private void stopLocalScreenShare(boolean notifyPeer) {
+        if (!localScreenSharing) {
+            view.updateScreenShareButton(false);
+            return;
+        }
+
+        if (screenShareSession != null) {
+            screenShareSession.stopSending();
+        }
+        localScreenSharing = false;
+        view.updateScreenShareButton(false);
+        view.updateCallStatus("Connected");
+
+        if (notifyPeer && activeCallId != null && activeCallPeer != null) {
+            sendCallSignal(new CallSignal(
+                    activeCallId,
+                    CallAction.SHARE_STOP,
+                    me.getUsername(),
+                    me.getNickname(),
+                    activeCallPeer.getUsername(),
+                    null,
+                    0,
+                    0
+            ));
+        }
     }
 
     private void cleanupCallState(boolean notifyPeer) {
@@ -260,9 +364,17 @@ public class ChatCallManager {
                             me.getNickname(),
                             target,
                             null,
+                            0,
                             0
                     ));
                 }
+            }
+
+            stopLocalScreenShare(false);
+
+            if (screenShareSession != null) {
+                screenShareSession.stop();
+                screenShareSession = null;
             }
 
             if (voiceCallSession != null) {
@@ -270,10 +382,15 @@ public class ChatCallManager {
                 voiceCallSession = null;
             }
 
+            remoteMediaHost = null;
+            remoteScreenPort = 0;
+            localScreenSharing = false;
             activeCallId = null;
             activeCallPeer = null;
             outgoingCallId = null;
             outgoingCallPeer = null;
+            view.clearRemoteScreenFrame();
+            view.updateScreenShareButton(false);
             view.closeCallWindow();
         } finally {
             isEndingCall = false;

@@ -42,8 +42,9 @@
          <children>
             <Pane fx:id="remoteVideoPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: rgba(0, 0, 0, 0.30); -fx-background-radius: 14; -fx-border-color: rgba(255, 255, 255, 0.10); -fx-border-radius: 14;">
                <children>
+                  <ImageView fx:id="remoteScreenImageView" fitHeight="600.0" fitWidth="1020.0" pickOnBounds="true" preserveRatio="true" visible="false" />
                   <ImageView fitHeight="84.0" fitWidth="84.0" layoutX="580.0" layoutY="238.0" opacity="0.45" pickOnBounds="true" preserveRatio="true" />
-                  <Label layoutX="533.0" layoutY="332.0" text="Remote video stream" textFill="#d9e4ff" />
+                  <Label fx:id="remoteVideoPlaceholderLabel" layoutX="533.0" layoutY="332.0" text="Remote video stream" textFill="#d9e4ff" />
                </children>
             </Pane>
 

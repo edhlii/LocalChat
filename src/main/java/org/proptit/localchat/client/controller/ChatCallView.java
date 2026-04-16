@@ -5,6 +5,14 @@ import org.proptit.localchat.common.models.User;
 public interface ChatCallView {
     void showCallWindow(User peer, String statusText);
 
+    void updateCallStatus(String statusText);
+
+    void updateScreenShareButton(boolean sharing);
+
+    void showRemoteScreenFrame(byte[] frameBytes);
+
+    void clearRemoteScreenFrame();
+
     void showInfo(String message);
 
     void showError(String message);

@@ -12,8 +12,9 @@ public class CallSignal implements Serializable {
     private final String toUsername;
     private final String host;
     private final int udpPort;
+    private final int screenUdpPort;
 
-    public CallSignal(String callId, CallAction action, String fromUsername, String fromNickname, String toUsername, String host, int udpPort) {
+    public CallSignal(String callId, CallAction action, String fromUsername, String fromNickname, String toUsername, String host, int udpPort, int screenUdpPort) {
         this.callId = callId;
         this.action = action;
         this.fromUsername = fromUsername;
@@ -21,6 +22,7 @@ public class CallSignal implements Serializable {
         this.toUsername = toUsername;
         this.host = host;
         this.udpPort = udpPort;
+        this.screenUdpPort = screenUdpPort;
     }
 
     public String getCallId() {
@@ -49,5 +51,9 @@ public class CallSignal implements Serializable {
 
     public int getUdpPort() {
         return udpPort;
+    }
+
+    public int getScreenUdpPort() {
+        return screenUdpPort;
     }
 }

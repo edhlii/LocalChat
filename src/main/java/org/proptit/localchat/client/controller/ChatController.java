@@ -399,6 +399,11 @@ public class ChatController implements ChatCallView {
                     callManager.setMuted(muted);
                 }
             });
+            callWindowController.setOnScreenShareChanged(sharing -> {
+                if (callManager != null) {
+                    callManager.setScreenSharing(sharing);
+                }
+            });
             callWindowController.setOnEndCall(() -> {
                 if (callManager != null) {
                     callManager.endCall(true);
@@ -420,6 +425,42 @@ public class ChatController implements ChatCallView {
             e.printStackTrace();
             showError("Unable to open call window.");
         }
+    }
+
+    @Override
+    public void updateCallStatus(String statusText) {
+        Platform.runLater(() -> {
+            if (callWindowController != null) {
+                callWindowController.updateCallStatus(statusText);
+            }
+        });
+    }
+
+    @Override
+    public void updateScreenShareButton(boolean sharing) {
+        Platform.runLater(() -> {
+            if (callWindowController != null) {
+                callWindowController.setScreenSharingActive(sharing);
+            }
+        });
+    }
+
+    @Override
+    public void showRemoteScreenFrame(byte[] frameBytes) {
+        Platform.runLater(() -> {
+            if (callWindowController != null) {
+                callWindowController.showRemoteScreenFrame(frameBytes);
+            }
+        });
+    }
+
+    @Override
+    public void clearRemoteScreenFrame() {
+        Platform.runLater(() -> {
+            if (callWindowController != null) {
+                callWindowController.clearRemoteScreenFrame();
+            }
+        });
     }
 
     @Override
