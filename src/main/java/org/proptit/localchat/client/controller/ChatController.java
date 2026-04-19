@@ -16,6 +16,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.embed.swing.SwingFXUtils;
+import javax.imageio.ImageIO;
 import org.proptit.localchat.client.networks.SocketClient;
 import org.proptit.localchat.common.enums.TypeDataPacket;
 import org.proptit.localchat.common.models.DataPacket;
@@ -152,6 +154,41 @@ public class ChatController implements ChatCallView {
         imageView.setFitWidth(250);
         imageView.setPreserveRatio(true);
 
+        ContextMenu imageMenu = new ContextMenu();
+        MenuItem saveImageItem = new MenuItem("Tải ảnh xuống");
+
+        saveImageItem.setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Lưu ảnh tải về");
+            fileChooser.getExtensionFilters().addAll(
+                    new FileChooser.ExtensionFilter("PNG Files", "*.png"),
+                    new FileChooser.ExtensionFilter("JPG Files", "*.jpg")
+            );
+            fileChooser.setInitialFileName("downloaded_image.png");
+
+            Stage stage = (Stage) imageView.getScene().getWindow();
+            File file = fileChooser.showSaveDialog(stage);
+
+            if (file != null) {
+                try {
+                    ImageIO.write(SwingFXUtils.fromFXImage(imageView.getImage(), null), "png", file);
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION, "Đã lưu ảnh thành công!");
+                    alert.setHeaderText(null);
+                    alert.show();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                    Alert alert = new Alert(Alert.AlertType.ERROR, "Lỗi khi lưu ảnh!");
+                    alert.setHeaderText(null);
+                    alert.show();
+                }
+            }
+        });
+
+        imageMenu.getItems().add(saveImageItem);
+
+        imageView.setOnContextMenuRequested(e -> {
+            imageMenu.show(imageView, e.getScreenX(), e.getScreenY());
+        });
         VBox messageGroup = new VBox(3);
 
         if (!isMe) {

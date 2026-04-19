@@ -82,7 +82,22 @@ public class ClientHandler implements Runnable {
                         CallSignal signal = (CallSignal) data.getData();
                         server.forwardCallSignal(signal);
                         break;
+                    case TypeDataPacket.UPDATE_PROFILE_REQUEST:
+                        User updateUser = (User) data.getData();
+                        updateUser.setPassword(PasswordUtils.hashPassword(updateUser.getPassword()));
 
+                        boolean isUpdated = userDao.updateUser(updateUser);
+                        if(isUpdated) {
+                            this.user.setNickname(updateUser.getNickname());
+                            this.user.setPassword(updateUser.getPassword());
+
+                            sendData(new DataPacket(TypeDataPacket.UPDATE_PROFILE_SUCCESS, this.user));
+                            server.broadcastOnlineUsers();
+                        }
+                        else {
+                            sendData(new DataPacket(TypeDataPacket.UPDATE_PROFILE_FAILURE, "Cập nhật thất bại!"));
+                        }
+                        break;
                 }
             }
 
