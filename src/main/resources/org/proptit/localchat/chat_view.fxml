@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-
 <?import javafx.geometry.Insets?>
-<SplitPane fx:id="chatArea" dividerPositions="0.3" prefHeight="720.0" prefWidth="1145.0"
-           style="-fx-background-color: transparent;"
-           xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="org.proptit.localchat.client.controller.ChatController">
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<SplitPane fx:id="chatArea" dividerPositions="0.3" prefHeight="720.0" prefWidth="1145.0" style="-fx-background-color: transparent;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.proptit.localchat.client.controller.ChatController">
     <items>
         <AnchorPane fx:id="sidebarArea" minWidth="250.0" prefWidth="300.0" style="-fx-background-color: #f4f4f4;">
             <children>
@@ -29,7 +32,7 @@
             <children>
                 <BorderPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                     <center>
-                        <ScrollPane fx:id="scrollPane" fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;">
+                        <ScrollPane fx:id="scrollPane" fitToWidth="true" prefHeight="595.0" prefWidth="798.0" style="-fx-background-color: transparent; -fx-background: transparent;">
                             <content>
                                 <VBox fx:id="vboxMessage" spacing="10.0" style="-fx-background-color: transparent;">
                                     <padding>
@@ -48,6 +51,16 @@
                             </children>
                         </HBox>
                     </bottom>
+               <top>
+                  <HBox prefHeight="49.0" prefWidth="798.0" BorderPane.alignment="CENTER">
+                     <children>
+                        <Label fx:id="contactNameTopBar" prefHeight="130.0" prefWidth="109.0" style="-fx-font-weight: bold; -fx-padding: 12 12 0 12;" text="Contact name" />
+                        <Region prefHeight="69.0" prefWidth="534.0" HBox.hgrow="ALWAYS" />
+                        <Button fx:id="callButton" mnemonicParsing="false" onAction="#onCallButtonClick" prefHeight="87.0" prefWidth="67.0" text="Call" />
+                        <Button fx:id="videoCallButton" mnemonicParsing="false" onAction="#onVideoCallButtonClick" prefHeight="72.0" prefWidth="86.0" text="Video Call" />
+                     </children>
+                  </HBox>
+               </top>
                 </BorderPane>
             </children>
         </AnchorPane>
