@@ -1,0 +1,106 @@
+* {
+    -bg-main: #0B0F19;
+    -bg-card: #161B28;
+    -bg-input: #0B0F19;
+    -bg-button-primary: #AD7BFF;
+    -bg-button-hover: #9b61ff;
+    -text-primary: #FFFFFF;
+    -text-secondary: #8B92A5;
+    -text-accent: #AD7BFF;
+    -border-color: #2A3042;
+
+    -fx-font-family: "Ubuntu", "Roboto", "Segoe UI", sans-serif;
+}
+
+.main-bg {
+    -fx-background-color: -bg-main;
+}
+
+.login-card {
+    -fx-background-color: -bg-card;
+    -fx-background-radius: 12;
+    -fx-padding: 40 30 40 30;
+    -fx-border-color: -border-color;
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+}
+
+.title-text {
+    -fx-text-fill: -text-primary;
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+}
+
+.subtitle-text {
+    -fx-text-fill: -text-secondary;
+    -fx-font-size: 14px;
+}
+
+.input-label {
+    -fx-text-fill: -text-secondary;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 1px;
+}
+
+.link-text-small {
+    -fx-text-fill: -text-accent;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.input-container {
+    -fx-background-color: -bg-input;
+    -fx-background-radius: 6;
+    -fx-padding: 0 10 0 10;
+    -fx-border-color: -border-color;
+    -fx-border-radius: 6;
+    -fx-pref-height: 42px;
+}
+
+.input-field {
+    -fx-background-color: transparent;
+    -fx-text-fill: -text-primary;
+    -fx-font-size: 14px;
+    -fx-prompt-text-fill: #4A5165;
+}
+
+.input-field:focused {
+    -fx-background-color: transparent;
+}
+
+.icon-label {
+    -fx-text-fill: -text-secondary;
+    -fx-font-size: 14px;
+    -fx-padding: 0 5 0 0;
+}
+
+.btn-primary {
+    -fx-background-color: -bg-button-primary;
+    -fx-text-fill: #000000;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6;
+    -fx-padding: 12;
+    -fx-cursor: hand;
+}
+
+.btn-primary:hover {
+    -fx-background-color: -bg-button-hover;
+}
+
+.checkbox-text {
+    -fx-text-fill: -text-secondary;
+    -fx-font-size: 13px;
+}
+
+.checkbox-text .box {
+    -fx-background-color: -bg-input;
+    -fx-border-color: -border-color;
+    -fx-border-radius: 3;
+}
+
+.checkbox-text:selected .box {
+    -fx-background-color: -bg-button-primary;
+}

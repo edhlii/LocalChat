@@ -5,64 +5,135 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.SplitPane?>
-<?import javafx.scene.control.TextArea?>
-<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.SVGPath?>
 
-<SplitPane fx:id="chatArea" dividerPositions="0.3" prefHeight="720.0" prefWidth="1145.0" style="-fx-background-color: transparent;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.proptit.localchat.client.controller.ChatController">
-    <items>
-        <AnchorPane fx:id="sidebarArea" minWidth="250.0" prefWidth="300.0" style="-fx-background-color: #f4f4f4;">
+<HBox prefHeight="720.0" prefWidth="1145.0" stylesheets="@chat.css" xmlns="http://javafx.com/javafx/23" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.proptit.localchat.client.controller.ChatController">
+    <children>
+
+        <VBox prefWidth="280.0" styleClass="sidebar-container" HBox.hgrow="NEVER">
             <children>
-                <VBox spacing="8.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                <HBox alignment="CENTER_LEFT" prefHeight="70.0" styleClass="sidebar-header">
                     <children>
-                        <Label style="-fx-font-weight: bold; -fx-padding: 12 12 0 12;" text="Online People" />
-                        <ListView fx:id="lvOnlinePeople" prefHeight="180.0" VBox.vgrow="NEVER" />
-                        <Label style="-fx-font-weight: bold; -fx-padding: 8 12 0 12;" text="Conversations" />
-                        <ListView fx:id="lvChatList" VBox.vgrow="ALWAYS" />
+                        <VBox alignment="CENTER_LEFT" spacing="2.0">
+                            <Label styleClass="workspace-name" text="LocalChat Workspace" />
+                            <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                <Circle fill="#23A559" radius="4.0" />
+                                <Label styleClass="status-text" text="Connected" />
+                            </HBox>
+                        </VBox>
                     </children>
-                </VBox>
-            </children>
-        </AnchorPane>
+                    <padding>
+                        <Insets left="20.0" right="20.0" />
+                    </padding>
+                </HBox>
 
-        <AnchorPane style="-fx-background-color: white;">
-            <children>
-                <BorderPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                    <center>
-                        <ScrollPane fx:id="scrollPane" fitToWidth="true" prefHeight="595.0" prefWidth="798.0" style="-fx-background-color: transparent; -fx-background: transparent;">
-                            <content>
-                                <VBox fx:id="vboxMessage" spacing="10.0" style="-fx-background-color: transparent;">
-                                    <padding>
-                                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                    </padding></VBox>
-                            </content>
-                        </ScrollPane>
-                    </center>
-                    <bottom>
-                        <HBox alignment="CENTER" prefHeight="80.0" spacing="10.0" style="-fx-padding: 10;">
-                            <children>
-                                <TextArea fx:id="messageInput" prefHeight="29.0" prefWidth="537.0" promptText="Type a message..." HBox.hgrow="ALWAYS" />
-                                <Button mnemonicParsing="false" onAction="#onFileButtonClick" prefHeight="60.0" prefWidth="70.0" text="File" />
-                                <Button fx:id="sendMessageButton" mnemonicParsing="false" onAction="#onSendButtonClick" prefHeight="60.0" prefWidth="70.0" text="Send" />
-                                <Button fx:id="sendMessageAllButton" mnemonicParsing="false" onAction="#onSendButtonClick" prefHeight="60.0" prefWidth="70.0" text="Send All" />
-                            </children>
-                        </HBox>
-                    </bottom>
-               <top>
-                  <HBox prefHeight="49.0" prefWidth="798.0" BorderPane.alignment="CENTER">
-                     <children>
-                        <Label fx:id="contactNameTopBar" prefHeight="130.0" prefWidth="109.0" style="-fx-font-weight: bold; -fx-padding: 12 12 0 12;" text="Contact name" />
-                        <Region prefHeight="69.0" prefWidth="534.0" HBox.hgrow="ALWAYS" />
-                        <Button fx:id="callButton" mnemonicParsing="false" onAction="#onCallButtonClick" prefHeight="87.0" prefWidth="67.0" text="Call" />
-                        <Button fx:id="videoCallButton" mnemonicParsing="false" onAction="#onVideoCallButtonClick" prefHeight="72.0" prefWidth="86.0" text="Video Call" />
-                     </children>
-                  </HBox>
-               </top>
-                </BorderPane>
+                <VBox spacing="5.0" VBox.vgrow="NEVER">
+                    <padding>
+                        <Insets left="20.0" right="20.0" top="15.0" />
+                    </padding>
+                    <HBox alignment="CENTER_LEFT">
+                        <Label styleClass="section-title" text="ONLINE PEOPLE" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label styleClass="status-dot" text="●" textFill="#23A559" />
+                    </HBox>
+                    <ListView fx:id="lvOnlinePeople" prefHeight="130.0" styleClass="custom-list-view" />
+                </VBox>
+
+                <VBox spacing="5.0" VBox.vgrow="ALWAYS">
+                    <padding>
+                        <Insets left="20.0" right="20.0" top="15.0" />
+                    </padding>
+                    <HBox alignment="CENTER_LEFT">
+                        <Label styleClass="section-title" text="CONVERSATIONS" />
+                        <Region HBox.hgrow="ALWAYS" />
+                    </HBox>
+                    <ListView fx:id="lvChatList" styleClass="custom-list-view" VBox.vgrow="ALWAYS" />
+                </VBox>
+
             </children>
-        </AnchorPane>
-    </items>
-</SplitPane>
+        </VBox>
+
+        <BorderPane styleClass="chat-container" HBox.hgrow="ALWAYS">
+
+            <top>
+                <HBox alignment="CENTER_LEFT" prefHeight="70.0" spacing="15.0" styleClass="chat-header" BorderPane.alignment="CENTER">
+                    <padding>
+                        <Insets left="25.0" right="25.0" />
+                    </padding>
+
+                    <Label fx:id="contactNameTopBar" styleClass="channel-title" text="Contact Name" />
+                    <Region HBox.hgrow="ALWAYS" />
+
+                    <Button fx:id="callButton" mnemonicParsing="false" onAction="#onCallButtonClick" styleClass="btn-call" text="Call">
+                        <graphic>
+                            <SVGPath styleClass="icon-svg" content="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
+                        </graphic>
+                    </Button>
+
+                    <Button fx:id="videoCallButton" mnemonicParsing="false" onAction="#onVideoCallButtonClick" styleClass="btn-video-call" text="Video">
+                        <graphic>
+                            <SVGPath styleClass="icon-svg" content="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" />
+                        </graphic>
+                    </Button>
+
+                    <HBox alignment="CENTER_LEFT" styleClass="search-box">
+                        <Label>
+                            <graphic>
+                                <SVGPath styleClass="icon-svg" content="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+                            </graphic>
+                        </Label>
+                        <TextField promptText="Search" styleClass="search-field" />
+                    </HBox>
+                </HBox>
+            </top>
+
+            <center>
+                <ScrollPane fx:id="scrollPane" fitToWidth="true" styleClass="chat-scroll-pane" BorderPane.alignment="CENTER">
+                    <content>
+                        <VBox fx:id="vboxMessage" spacing="20.0" styleClass="message-area">
+                            <padding>
+                                <Insets bottom="20.0" left="30.0" right="30.0" top="30.0" />
+                            </padding>
+                        </VBox>
+                    </content>
+                </ScrollPane>
+            </center>
+
+            <bottom>
+                <VBox styleClass="chat-input-container" BorderPane.alignment="CENTER">
+                    <padding>
+                        <Insets bottom="20.0" left="25.0" right="25.0" top="10.0" />
+                    </padding>
+                    <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="chat-input-box">
+                        <padding>
+                            <Insets bottom="8.0" left="15.0" right="8.0" top="8.0" />
+                        </padding>
+
+                        <Button contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#onFileButtonClick" styleClass="btn-icon">
+                            <graphic>
+                                <SVGPath styleClass="icon-svg" content="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z" />
+                            </graphic>
+                        </Button>
+
+                        <TextField fx:id="messageInput" promptText="Type a message..." styleClass="message-text-field" HBox.hgrow="ALWAYS" />
+
+                        <Button fx:id="sendMessageAllButton" mnemonicParsing="false" onAction="#onSendButtonClick" styleClass="btn-send-all" text="Send All" />
+
+                        <Button fx:id="sendMessageButton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#onSendButtonClick" styleClass="btn-send">
+                            <graphic>
+                                <SVGPath styleClass="icon-svg-send" content="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                            </graphic>
+                        </Button>
+                    </HBox>
+                </VBox>
+            </bottom>
+
+        </BorderPane>
+    </children>
+</HBox>

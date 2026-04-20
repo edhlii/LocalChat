@@ -1,0 +1,245 @@
+.root {
+    -fx-font-family: "Ubuntu", "Roboto", "Segoe UI", sans-serif;
+}
+
+.sidebar-container {
+    -fx-background-color: #0B0F19;
+    -fx-border-color: transparent #2A3042 transparent transparent;
+    -fx-border-width: 1px;
+}
+
+.sidebar-header {
+    -fx-border-color: transparent transparent #2A3042 transparent;
+    -fx-border-width: 1px;
+}
+
+.workspace-name {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.status-text {
+    -fx-text-fill: #8B92A5;
+    -fx-font-size: 11px;
+}
+
+.section-title {
+    -fx-text-fill: #8B92A5;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 1px;
+}
+
+.custom-list-view {
+    -fx-background-color: transparent;
+    -fx-control-inner-background: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.custom-list-view .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #8B92A5;
+    -fx-padding: 0;
+}
+
+.custom-list-view .list-cell:empty {
+    -fx-background-color: transparent;
+}
+
+.custom-list-view .list-cell:filled:hover {
+    -fx-background-color: #1A2133;
+    -fx-cursor: hand;
+}
+
+.custom-list-view .list-cell:filled:selected {
+    -fx-background-color: #2A3042;
+    -fx-text-fill: #FFFFFF;
+    -fx-background-radius: 6;
+}
+
+.custom-list-view .scroll-bar:vertical {
+    -fx-opacity: 0;
+    -fx-padding: -10;
+}
+
+.chat-container {
+    -fx-background-color: #121622;
+}
+
+.chat-header {
+    -fx-border-color: transparent transparent #2A3042 transparent;
+    -fx-border-width: 1px;
+}
+
+.channel-title {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.btn-call, .btn-video-call {
+    -fx-background-color: transparent;
+    -fx-border-color: #8B92A5;
+    -fx-border-radius: 6;
+    -fx-text-fill: #8B92A5;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 6 12 6 12;
+    -fx-cursor: hand;
+}
+
+.btn-call:hover {
+    -fx-background-color: #23A559;
+    -fx-border-color: #23A559;
+    -fx-text-fill: #FFFFFF;
+}
+
+.btn-video-call:hover {
+    -fx-background-color: #AD7BFF;
+    -fx-border-color: #AD7BFF;
+    -fx-text-fill: #000000;
+}
+
+.search-box {
+    -fx-background-color: #1E2435;
+    -fx-background-radius: 6;
+    -fx-padding: 0 10 0 10;
+    -fx-pref-height: 30px;
+}
+
+.search-field {
+    -fx-background-color: transparent;
+    -fx-text-fill: #FFFFFF;
+    -fx-prompt-text-fill: #8B92A5;
+}
+
+.chat-scroll-pane {
+    -fx-background: transparent;
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.chat-scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+.message-area {
+    -fx-background-color: transparent;
+}
+
+.chat-input-container {
+    -fx-background-color: transparent;
+}
+
+.chat-input-box {
+    -fx-background-color: #1E2435;
+    -fx-background-radius: 12;
+}
+
+.btn-icon {
+    -fx-background-color: transparent;
+    -fx-text-fill: #8B92A5;
+    -fx-font-size: 16px;
+    -fx-cursor: hand;
+    -fx-padding: 4 8 4 8;
+}
+
+.btn-icon:hover {
+    -fx-background-color: #2A3042;
+    -fx-text-fill: #FFFFFF;
+    -fx-background-radius: 6;
+}
+
+.message-text-field {
+    -fx-background-color: transparent;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 14px;
+    -fx-prompt-text-fill: #8B92A5;
+}
+
+.btn-send-all {
+    -fx-background-color: transparent;
+    -fx-text-fill: #8B92A5;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-padding: 6 12 6 12;
+}
+
+.btn-send-all:hover {
+    -fx-text-fill: #AD7BFF;
+    -fx-underline: true;
+}
+
+.btn-send {
+    -fx-background-color: #AD7BFF;
+    -fx-text-fill: #000000;
+    -fx-background-radius: 8;
+    -fx-padding: 6 12 6 12;
+    -fx-cursor: hand;
+}
+
+.btn-send:hover {
+    -fx-background-color: #9b61ff;
+}
+
+#lvOnlinePeople .list-cell {
+    -fx-padding: 0;
+    -fx-background-color: transparent;
+}
+
+#lvOnlinePeople .list-cell:filled:hover {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+}
+#lvOnlinePeople .list-cell:filled:selected {
+    -fx-background-color: transparent;
+}
+
+#lvOnlinePeople .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+    -fx-pref-height: 8px;
+}
+
+#lvOnlinePeople .scroll-bar:horizontal .track {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+#lvOnlinePeople .scroll-bar:horizontal .thumb {
+    -fx-background-color: #2A3042;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+
+#lvOnlinePeople .scroll-bar:horizontal .thumb:hover {
+    -fx-background-color: #5A6278;
+}
+
+#lvOnlinePeople .scroll-bar:horizontal .increment-button,
+#lvOnlinePeople .scroll-bar:horizontal .decrement-button {
+    -fx-opacity: 0;
+    -fx-padding: 0;
+    -fx-pref-width: 0;
+}
+.icon-svg {
+    -fx-fill: #8B92A5;
+}
+
+.btn-call:hover .icon-svg {
+    -fx-fill: #FFFFFF;
+}
+
+.btn-video-call:hover .icon-svg {
+    -fx-fill: #000000;
+}
+
+.btn-icon:hover .icon-svg {
+    -fx-fill: #AD7BFF;
+}
+
+.icon-svg-send {
+    -fx-fill: #000000;
+}

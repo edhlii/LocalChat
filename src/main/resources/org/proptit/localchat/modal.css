@@ -1,0 +1,10 @@
+.modal-dialog { -fx-background-color: #161B28; -fx-border-color: #2A3042; -fx-border-width: 1; -fx-background-radius: 12; -fx-border-radius: 12; -fx-font-family: "Segoe UI", sans-serif; }
+.modal-title { -fx-text-fill: #FFFFFF; -fx-font-size: 20px; -fx-font-weight: bold; }
+.input-label { -fx-text-fill: #8B92A5; -fx-font-size: 11px; -fx-font-weight: bold; -fx-letter-spacing: 1px; }
+.input-field { -fx-background-color: #0B0F19; -fx-text-fill: #FFFFFF; -fx-border-color: transparent; -fx-background-radius: 6; -fx-padding: 10; -fx-font-size: 14px; }
+.input-field:focused { -fx-border-color: #AD7BFF; -fx-border-radius: 6; }
+.error-text { -fx-text-fill: #FF5C5C; -fx-font-size: 12px; }
+.btn-secondary { -fx-background-color: transparent; -fx-text-fill: #FFFFFF; -fx-border-color: #2A3042; -fx-border-radius: 6; -fx-padding: 8 16 8 16; -fx-cursor: hand; }
+.btn-secondary:hover { -fx-background-color: #2A3042; }
+.btn-primary { -fx-background-color: #AD7BFF; -fx-text-fill: #000000; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 8 16 8 16; -fx-cursor: hand; }
+.btn-primary:hover { -fx-background-color: #9b61ff; }

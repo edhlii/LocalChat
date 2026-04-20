@@ -1,0 +1,9 @@
+.main-bg { -fx-background-color: #121622; -fx-font-family: "Segoe UI", sans-serif; }
+.header-title { -fx-text-fill: #FFFFFF; -fx-font-size: 28px; -fx-font-weight: bold; }
+.search-box { -fx-background-color: #1E2435; -fx-background-radius: 8; -fx-padding: 5 15 5 15; -fx-pref-height: 40px; }
+.search-field { -fx-background-color: transparent; -fx-text-fill: #FFFFFF; -fx-prompt-text-fill: #8B92A5; -fx-font-size: 14px; }
+.btn-primary { -fx-background-color: #AD7BFF; -fx-text-fill: #000000; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 10 20 10 20; -fx-cursor: hand; }
+.btn-primary:hover { -fx-background-color: #9b61ff; }
+.custom-scroll-pane { -fx-background: transparent; -fx-background-color: transparent; -fx-border-color: transparent; }
+.custom-scroll-pane .viewport { -fx-background-color: transparent; }
+.member-list-container { -fx-background-color: #0B0F19; -fx-background-radius: 12; -fx-border-color: #2A3042; -fx-border-radius: 12; }

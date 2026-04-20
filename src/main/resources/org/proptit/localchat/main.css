@@ -1,0 +1,29 @@
+.nav-sidebar {
+    -fx-background-color: #050811;
+    -fx-border-color: transparent #2A3042 transparent transparent;
+    -fx-border-width: 1px;
+}
+
+.content-area {
+    -fx-background-color: #121622;
+}
+
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+    -fx-padding: 12;
+    -fx-background-radius: 12;
+}
+
+.nav-icon {
+    -fx-fill: #8B92A5;
+    -fx-scale-x: 1.2;
+    -fx-scale-y: 1.2;
+}
+
+.nav-button:hover {
+    -fx-background-color: #1E2435;
+}
+.nav-button:hover .nav-icon {
+    -fx-fill: #AD7BFF;
+}

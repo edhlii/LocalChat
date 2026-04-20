@@ -5,6 +5,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -13,7 +14,12 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.embed.swing.SwingFXUtils;
@@ -55,7 +61,7 @@ public class ChatController implements ChatCallView {
     @FXML
     private ScrollPane scrollPane;
     @FXML
-    private TextArea messageInput;
+    private TextField messageInput;
     @FXML
     private ListView<String> lvOnlinePeople;
     @FXML
@@ -74,18 +80,128 @@ public class ChatController implements ChatCallView {
             scrollPane.setVvalue((Double) newValue);
         });
 
+        // Gọi hàm cấu hình giao diện cho ListView
+        setupListViewCustomCells();
+
         // get the target conversation user.
         if (lvChatList != null) {
             lvChatList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-                selectedConversationUser = conversationUserMap.get(newValue);
-                contactNameTopBar.setText(selectedConversationUser.getNickname());
-                clearMessageArea();
+                if (newValue != null && !newValue.equals("No conversations") && !newValue.equals("No one online")) {
+                    selectedConversationUser = conversationUserMap.get(newValue);
+                    if (selectedConversationUser != null) {
+                        contactNameTopBar.setText(selectedConversationUser.getNickname());
+                        clearMessageArea();
+                    }
+                }
             });
         }
         boolean isManager = me.isManager();
         if (sendMessageAllButton != null) {
             sendMessageAllButton.setVisible(isManager);
             sendMessageAllButton.setManaged(isManager);
+        }
+
+        if (lvOnlinePeople != null) {
+            lvOnlinePeople.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal != null && conversationUserMap.containsKey(newVal)) {
+                    // Tự động chọn người đó bên danh sách Conversations
+                    lvChatList.getSelectionModel().select(newVal);
+
+                    // Cập nhật giao diện top bar và xóa vùng chat cũ
+                    selectedConversationUser = conversationUserMap.get(newVal);
+                    contactNameTopBar.setText(selectedConversationUser.getNickname());
+                    clearMessageArea();
+                }
+            });
+        }
+    }
+
+    private void setupListViewCustomCells() {
+        if (lvOnlinePeople != null) {
+            lvOnlinePeople.setOrientation(Orientation.HORIZONTAL);
+            lvOnlinePeople.setPrefHeight(105);
+            lvOnlinePeople.setMinHeight(105);
+            lvOnlinePeople.setMaxHeight(105);
+
+            lvOnlinePeople.setCellFactory(param -> new ListCell<String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null || item.equals("No one online")) {
+                        setGraphic(null);
+                        setText(null);
+                        setStyle("-fx-background-color: transparent;");
+                    } else {
+                        VBox root = new VBox(5);
+                        root.setAlignment(Pos.CENTER);
+                        root.setPrefWidth(75);
+
+                        StackPane avatarContainer = new StackPane();
+                        avatarContainer.setMaxSize(52, 52);
+
+                        Circle avatarBg = new Circle(26, Color.web("#2A3042"));
+                        String initialLetter = item.substring(0, 1).toUpperCase();
+                        Label initialLabel = new Label(initialLetter);
+                        initialLabel.setTextFill(Color.WHITE);
+                        initialLabel.setFont(Font.font("System", FontWeight.BOLD, 22));
+
+                        Circle onlineDot = new Circle(7, Color.web("#23A559"));
+                        onlineDot.setStroke(Color.web("#0B0F19"));
+                        onlineDot.setStrokeWidth(2.5);
+                        StackPane.setAlignment(onlineDot, Pos.BOTTOM_RIGHT);
+
+                        avatarContainer.getChildren().addAll(avatarBg, initialLabel, onlineDot);
+
+                        String nickname = item.contains("(@") ? item.substring(0, item.indexOf("(@")).trim() : item;
+                        if (nickname.length() > 10) {
+                            nickname = nickname.substring(0, 9) + "...";
+                        }
+
+                        Label nickLabel = new Label(nickname);
+                        nickLabel.setTextFill(Color.web("#E4E6EB"));
+                        nickLabel.setFont(Font.font("System", 12));
+                        nickLabel.setAlignment(Pos.CENTER);
+
+                        root.getChildren().addAll(avatarContainer, nickLabel);
+                        setGraphic(root);
+                        setText(null);
+                    }
+                }
+            });
+        }
+
+        if (lvChatList != null) {
+            lvChatList.setCellFactory(param -> new ListCell<String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null || item.equals("No conversations")) {
+                        setGraphic(null);
+                        setText(null);
+                    } else {
+                        HBox root = new HBox(12);
+                        root.setAlignment(Pos.CENTER_LEFT);
+                        root.setPadding(new Insets(8, 12, 8, 12));
+
+                        Circle avatar = new Circle(20, Color.web("#2A3042"));
+                        VBox textInfo = new VBox(2);
+
+                        String name = item.contains("(@") ? item.substring(0, item.indexOf("(@")).trim() : item;
+                        Label nameLbl = new Label(name);
+                        nameLbl.setTextFill(Color.WHITE);
+                        nameLbl.setFont(Font.font("System", FontWeight.BOLD, 14));
+
+                        Label lastMsg = new Label("Bấm để bắt đầu chat...");
+                        lastMsg.setTextFill(Color.web("#8B92A5"));
+                        lastMsg.setFont(Font.font("System", 11));
+
+                        textInfo.getChildren().addAll(nameLbl, lastMsg);
+                        root.getChildren().addAll(avatar, textInfo);
+                        setGraphic(root);
+                        setText(null);
+                    }
+                }
+            });
         }
     }
 
@@ -121,16 +237,16 @@ public class ChatController implements ChatCallView {
         lblMessage.setMaxWidth(400);
 
         if (isMe) {
-            lblMessage.setStyle("-fx-background-color: #0084FF; -fx-text-fill: white; -fx-background-radius: 15px; -fx-padding: 8px 12px;");
+            lblMessage.setStyle("-fx-background-color: #AD7BFF; -fx-text-fill: black; -fx-background-radius: 15px; -fx-padding: 8px 12px;");
         } else {
-            lblMessage.setStyle("-fx-background-color: #E4E6EB; -fx-text-fill: black; -fx-background-radius: 15px; -fx-padding: 8px 12px;");
+            lblMessage.setStyle("-fx-background-color: #1E2435; -fx-text-fill: white; -fx-background-radius: 15px; -fx-padding: 8px 12px;");
         }
 
         VBox messageGroup = new VBox(3);
 
         if (!isMe) {
             Label lblSender = new Label(senderName);
-            lblSender.setStyle("-fx-font-size: 11px; -fx-text-fill: #65676B; -fx-padding: 0 0 0 5px;");
+            lblSender.setStyle("-fx-font-size: 11px; -fx-text-fill: #8B92A5; -fx-padding: 0 0 0 5px;");
             messageGroup.getChildren().add(lblSender);
             messageGroup.setAlignment(Pos.TOP_LEFT);
         } else {
@@ -193,7 +309,7 @@ public class ChatController implements ChatCallView {
 
         if (!isMe) {
             Label lblSender = new Label(senderName);
-            lblSender.setStyle("-fx-font-size: 11px; -fx-text-fill: #65676B; -fx-padding: 0 0 0 5px;");
+            lblSender.setStyle("-fx-font-size: 11px; -fx-text-fill: #8B92A5; -fx-padding: 0 0 0 5px;");
             messageGroup.getChildren().add(lblSender);
             messageGroup.setAlignment(Pos.TOP_LEFT);
         } else {
@@ -287,7 +403,7 @@ public class ChatController implements ChatCallView {
 
         if (!isMe) {
             Label lblSender = new Label(senderName);
-            lblSender.setStyle("-fx-font-size: 11px; -fx-text-fill: #65676B; -fx-padding: 0 0 0 5px;");
+            lblSender.setStyle("-fx-font-size: 11px; -fx-text-fill: #8B92A5; -fx-padding: 0 0 0 5px;");
             messageGroup.getChildren().add(lblSender);
             messageGroup.setAlignment(Pos.TOP_LEFT);
         } else {
@@ -296,15 +412,15 @@ public class ChatController implements ChatCallView {
 
         HBox fileBox = new HBox(10);
         fileBox.setAlignment(Pos.CENTER_LEFT);
-        fileBox.setStyle("-fx-background-color: #F0F2F5; -fx-background-radius: 10px; -fx-padding: 10px; -fx-border-color: #CCD0D5; -fx-border-radius: 10px;");
+        fileBox.setStyle("-fx-background-color: #1E2435; -fx-background-radius: 10px; -fx-padding: 10px; -fx-border-color: #2A3042; -fx-border-radius: 10px;");
 
         Label lblFileName = new Label(fileName);
         lblFileName.setWrapText(true);
         lblFileName.setMaxWidth(200);
-        lblFileName.setStyle("-fx-font-weight: bold; -fx-text-fill: #050505;");
+        lblFileName.setStyle("-fx-font-weight: bold; -fx-text-fill: white;");
 
         Button btnDownload = new Button("Tải về");
-        btnDownload.setStyle("-fx-background-color: #0084FF; -fx-text-fill: white; -fx-background-radius: 5px; -fx-cursor: hand;");
+        btnDownload.setStyle("-fx-background-color: #AD7BFF; -fx-text-fill: black; -fx-background-radius: 5px; -fx-cursor: hand;");
 
         btnDownload.setOnAction(e -> downloadFile(fileName, fileData));
 
@@ -397,7 +513,6 @@ public class ChatController implements ChatCallView {
             }
         });
     }
-
 
     public void onCallButtonClick(ActionEvent actionEvent) {
         if (callManager != null) {
