@@ -1,16 +1,10 @@
 package org.proptit.localchat.client.controller;
 
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import org.proptit.localchat.client.networks.SocketClient;
@@ -18,23 +12,14 @@ import org.proptit.localchat.common.enums.TypeDataPacket;
 import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.User;
 import org.proptit.localchat.common.models.call.CallSignal;
-import org.proptit.localchat.common.models.message.ImageMessage;
 import org.proptit.localchat.common.models.message.Message;
-import org.proptit.localchat.common.models.message.TextMessage;
-import org.proptit.localchat.common.utils.FileUtils;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class MainWindowController {
     @FXML
-    private SplitPane chatArea;
+    private HBox chatArea;
     @FXML
     private AnchorPane memberManagerArea;
 

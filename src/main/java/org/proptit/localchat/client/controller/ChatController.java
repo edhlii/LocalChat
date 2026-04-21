@@ -5,6 +5,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -14,7 +15,12 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.embed.swing.SwingFXUtils;
@@ -64,7 +70,7 @@ public class ChatController implements ChatCallView {
     @FXML
     private ScrollPane scrollPane;
     @FXML
-    private TextArea messageInput;
+    private TextField messageInput;
     @FXML
     private ListView<String> lvOnlinePeople;
     @FXML
@@ -84,29 +90,7 @@ public class ChatController implements ChatCallView {
             scrollPane.setVvalue(1.0);
         });
 
-        lvChatList.setCellFactory(param -> new ListCell<String>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                    setStyle("");
-                } else if (item.equals(ANNOUNCEMENT_LABEL)) {
-                    setText(item);
-                    setStyle("-fx-font-weight: bold; -fx-text-fill: #E67E22;");
-                } else {
-                    User u = conversationUserMap.get(item);
-                    if (u != null && onlineUserIds.contains(u.getId())) {
-                        setText("● " + item);
-                        setStyle("-fx-text-fill: #2ECC71; -fx-font-weight: bold;");
-                    } else {
-                        setText("○ " + item);
-                        setStyle("-fx-text-fill: #95A5A6;");
-                    }
-                }
-            }
-        });
-
+        setupListViewCustomCells();
 
         if (lvChatList != null) {
             lvChatList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
@@ -142,6 +126,28 @@ public class ChatController implements ChatCallView {
                     }
 
                 }
+
+
+            });
+        }
+
+        boolean isManager = me.isManager();
+        if (sendMessageAllButton != null) {
+            sendMessageAllButton.setVisible(isManager);
+            sendMessageAllButton.setManaged(isManager);
+        }
+
+        if (lvOnlinePeople != null) {
+            lvOnlinePeople.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal != null && conversationUserMap.containsKey(newVal)) {
+
+                    lvChatList.getSelectionModel().select(newVal);
+
+
+                    selectedConversationUser = conversationUserMap.get(newVal);
+                    contactNameTopBar.setText(selectedConversationUser.getNickname());
+                    clearMessageArea();
+                }
             });
         }
 
@@ -166,6 +172,135 @@ public class ChatController implements ChatCallView {
                 lvChatList.getItems().add(label);
             }
         });
+
+    }
+
+    private void setupListViewCustomCells() {
+        if (lvOnlinePeople != null) {
+            lvOnlinePeople.setOrientation(Orientation.HORIZONTAL);
+            lvOnlinePeople.setPrefHeight(105);
+            lvOnlinePeople.setMinHeight(105);
+            lvOnlinePeople.setMaxHeight(105);
+
+            lvOnlinePeople.setCellFactory(param -> new ListCell<String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null || item.equals("No one online")) {
+                        setGraphic(null);
+                        setText(null);
+                        setStyle("-fx-background-color: transparent;");
+                    } else {
+                        VBox root = new VBox(5);
+                        root.setAlignment(Pos.CENTER);
+                        root.setPrefWidth(75);
+
+                        StackPane avatarContainer = new StackPane();
+                        avatarContainer.setMaxSize(52, 52);
+
+                        Circle avatarBg = new Circle(26, Color.web("#2A3042"));
+                        String initialLetter = item.substring(0, 1).toUpperCase();
+                        Label initialLabel = new Label(initialLetter);
+                        initialLabel.setTextFill(Color.WHITE);
+                        initialLabel.setFont(Font.font("System", FontWeight.BOLD, 22));
+
+                        Circle onlineDot = new Circle(7, Color.web("#23A559"));
+                        onlineDot.setStroke(Color.web("#0B0F19"));
+                        onlineDot.setStrokeWidth(2.5);
+                        StackPane.setAlignment(onlineDot, Pos.BOTTOM_RIGHT);
+
+                        avatarContainer.getChildren().addAll(avatarBg, initialLabel, onlineDot);
+
+                        String nickname = item.contains("(@") ? item.substring(0, item.indexOf("(@")).trim() : item;
+                        if (nickname.length() > 10) {
+                            nickname = nickname.substring(0, 9) + "...";
+                        }
+
+                        Label nickLabel = new Label(nickname);
+                        nickLabel.setTextFill(Color.web("#E4E6EB"));
+                        nickLabel.setFont(Font.font("System", 12));
+                        nickLabel.setAlignment(Pos.CENTER);
+
+                        root.getChildren().addAll(avatarContainer, nickLabel);
+                        setGraphic(root);
+                        setText(null);
+                    }
+                }
+            });
+        }
+
+        if (lvChatList != null) {
+            lvChatList.setCellFactory(param -> new ListCell<String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null || item.equals("No conversations")) {
+                        setGraphic(null);
+                        setText(null);
+                    }
+                    else if(item.equals(ANNOUNCEMENT_LABEL))
+                    {
+                        HBox root = new HBox(12);
+                        root.setAlignment(Pos.CENTER_LEFT);
+                        root.setPadding(new Insets(8, 12, 8, 12));
+
+                        Label icon = new Label("📢");
+                        icon.setStyle("-fx-font-size: 20px;");
+
+                        Label nameLbl = new Label("Thông báo chung");
+                        nameLbl.setTextFill(javafx.scene.paint.Color.web("#E67E22"));
+                        nameLbl.setFont(javafx.scene.text.Font.font("System", javafx.scene.text.FontWeight.BOLD, 14));
+
+                        root.getChildren().addAll(icon, nameLbl);
+                        setGraphic(root);
+                        setText(null);
+                    }
+                    else {
+                        HBox root = new HBox(12);
+                        root.setAlignment(Pos.CENTER_LEFT);
+                        root.setPadding(new Insets(8, 12, 8, 12));
+
+                        StackPane avatarStack = new StackPane();
+                        Circle avatar = new Circle(20, Color.web("#2A3042"));
+
+                        VBox textInfo = new VBox(2);
+
+                        String name = item.contains("(@") ? item.substring(0, item.indexOf("(@")).trim() : item;
+                        String initialLetter = name.isEmpty() ? "?" : name.substring(0, 1).toUpperCase();
+
+                        Label initialLabel = new Label(initialLetter);
+                        initialLabel.setTextFill(Color.WHITE); // Chữ trắng cho nổi
+                        initialLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
+
+                        avatarStack.getChildren().addAll(avatar, initialLabel);
+
+                        User u = conversationUserMap.get(item);
+                        if (u != null && onlineUserIds.contains(u.getId())) {
+                            Circle onlineDot = new Circle(6, Color.web("#23A559"));
+                            onlineDot.setStroke(Color.web("#1E2435"));
+                            onlineDot.setStrokeWidth(2);
+
+
+                            StackPane.setAlignment(onlineDot, Pos.BOTTOM_RIGHT);
+                            avatarStack.getChildren().add(onlineDot);
+                        }
+
+                        Label nameLbl = new Label(name);
+                        nameLbl.setTextFill(Color.WHITE);
+                        nameLbl.setFont(Font.font("System", FontWeight.BOLD, 14));
+
+                        Label lastMsg = new Label("Bấm để bắt đầu chat...");
+                        lastMsg.setTextFill(Color.web("#8B92A5"));
+                        lastMsg.setFont(Font.font("System", 11));
+
+                        textInfo.getChildren().addAll(nameLbl, lastMsg);
+                        root.getChildren().addAll(avatarStack, textInfo);
+                        setGraphic(root);
+                        setText(null);
+                    }
+                }
+            });
+        }
     }
 
     @FXML
@@ -233,21 +368,23 @@ public class ChatController implements ChatCallView {
         lblTime.setStyle("-fx-font-size: 10px; -fx-text-fill: #919191;");
 
         if (isMe) {
-            lblMessage.setStyle("-fx-background-color: #0084FF; -fx-text-fill: white; -fx-background-radius: 15px; -fx-padding: 8px 12px;");
+            lblMessage.setStyle("-fx-background-color: #AD7BFF; -fx-text-fill: black; -fx-background-radius: 15px; -fx-padding: 8px 12px;");
         } else {
-            lblMessage.setStyle("-fx-background-color: #E4E6EB; -fx-text-fill: black; -fx-background-radius: 15px; -fx-padding: 8px 12px;");
+            lblMessage.setStyle("-fx-background-color: #1E2435; -fx-text-fill: white; -fx-background-radius: 15px; -fx-padding: 8px 12px;");
         }
 
         VBox messageGroup = new VBox(3);
 
         if (!isMe) {
             Label lblSender = new Label(senderName);
-            lblSender.setStyle("-fx-font-size: 11px; -fx-text-fill: #65676B; -fx-padding: 0 0 0 5px;");
+
+            lblSender.setStyle("-fx-font-size: 11px; -fx-text-fill: #8B92A5; -fx-padding: 0 0 0 5px;");
 
             HBox header = new HBox(8, lblSender, lblTime);
             header.setAlignment(Pos.BOTTOM_LEFT);
 
             messageGroup.getChildren().add(header);
+
             messageGroup.setAlignment(Pos.TOP_LEFT);
 
             lblMessage.setMaxWidth(Region.USE_PREF_SIZE);
@@ -325,12 +462,14 @@ public class ChatController implements ChatCallView {
 
         if (!isMe) {
             Label lblSender = new Label(senderName);
-            lblSender.setStyle("-fx-font-size: 11px; -fx-text-fill: #65676B; -fx-padding: 0 0 0 5px;");
+
+            lblSender.setStyle("-fx-font-size: 11px; -fx-text-fill: #8B92A5; -fx-padding: 0 0 0 5px;");
 
             HBox header = new HBox(8, lblSender, lblTime);
 
             header.setAlignment(Pos.BOTTOM_LEFT);
             messageGroup.getChildren().add(header);
+
             messageGroup.setAlignment(Pos.TOP_LEFT);
         } else {
             messageGroup.getChildren().add(lblTime);
@@ -442,10 +581,12 @@ public class ChatController implements ChatCallView {
 
         if (!isMe) {
             Label lblSender = new Label(senderName);
-            lblSender.setStyle("-fx-font-size: 11px; -fx-text-fill: #65676B; -fx-padding: 0 0 0 5px;");
+
+            lblSender.setStyle("-fx-font-size: 11px; -fx-text-fill: #8B92A5; -fx-padding: 0 0 0 5px;");
             HBox header = new HBox(8, lblSender, lblTime);
             header.setAlignment(Pos.BOTTOM_LEFT);
             messageGroup.getChildren().add(header);
+
             messageGroup.setAlignment(Pos.TOP_LEFT);
         } else {
             messageGroup.getChildren().add(lblTime);
@@ -454,15 +595,15 @@ public class ChatController implements ChatCallView {
 
         HBox fileBox = new HBox(10);
         fileBox.setAlignment(Pos.CENTER_LEFT);
-        fileBox.setStyle("-fx-background-color: #F0F2F5; -fx-background-radius: 10px; -fx-padding: 10px; -fx-border-color: #CCD0D5; -fx-border-radius: 10px;");
+        fileBox.setStyle("-fx-background-color: #1E2435; -fx-background-radius: 10px; -fx-padding: 10px; -fx-border-color: #2A3042; -fx-border-radius: 10px;");
 
         Label lblFileName = new Label(fileName);
         lblFileName.setWrapText(true);
         lblFileName.setMaxWidth(200);
-        lblFileName.setStyle("-fx-font-weight: bold; -fx-text-fill: #050505;");
+        lblFileName.setStyle("-fx-font-weight: bold; -fx-text-fill: white;");
 
         Button btnDownload = new Button("Tải về");
-        btnDownload.setStyle("-fx-background-color: #0084FF; -fx-text-fill: white; -fx-background-radius: 5px; -fx-cursor: hand;");
+        btnDownload.setStyle("-fx-background-color: #AD7BFF; -fx-text-fill: black; -fx-background-radius: 5px; -fx-cursor: hand;");
 
         btnDownload.setOnAction(e -> {
             if(fileData != null)
@@ -553,7 +694,6 @@ public class ChatController implements ChatCallView {
             }
         });
     }
-
 
     public void onCallButtonClick(ActionEvent actionEvent) {
         if (callManager != null) {
@@ -683,20 +823,7 @@ public class ChatController implements ChatCallView {
         return confirm.showAndWait().orElse(ButtonType.NO) == ButtonType.YES;
     }
 
-//    @Override
-//    public User resolveUser(String username, String nickname) {
-//        if (username != null) {
-//            for (User onlineUser : onlineUsers) {
-//                if (onlineUser.getUsername().equalsIgnoreCase(username)) {
-//                    return onlineUser;
-//                }
-//            }
-//        }
-//
-//        User user = new User(username);
-//        user.setNickname(nickname != null && !nickname.isBlank() ? nickname : username);
-//        return user;
-//    }
+
     @Override
     public User resolveUser(String username, String nickname) {
 

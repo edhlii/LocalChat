@@ -34,7 +34,8 @@ VALUES ('ducanh', '$2a$12$AwqraqEAznNZdB7lVomfCOJ8i7Y5XRRuNTFFWLIYTby2tDL50FkDS'
 		('dinhhieu', '$2a$12$xUVOxsIFoDBh6lWRAgL10uaCvUo1Zw1DJ7XU3xsOFhOV08SyhAPWO', 'Hieu', 'MEMBER'),
 		('vantoan', '$2a$12$NQmQoGxVptAY0sqUk5t5C.hY2EjKVcQEArWR9LpVT8zpVRrUQeU7G', 'Van Toan', 'MANAGER');
 
---------
+---------
+--Chạy cái SQL này, để tạo table messages
 USE localchat;
 CREATE TABLE messages (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,

@@ -1,32 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
 
-<?import javafx.scene.text.Font?>
-<AnchorPane fx:id="memberManagerArea" prefWidth="1145.0" style="-fx-background-color: #6699FF;"
-            xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="org.proptit.localchat.client.controller.MemberManagementController">
+<AnchorPane fx:id="memberManagerArea" prefHeight="720.0" prefWidth="1145.0" styleClass="main-bg" stylesheets="@/org/proptit/localchat/member.css" xmlns="http://javafx.com/javafx/23" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.proptit.localchat.client.controller.MemberManagementController">
     <children>
-        <Label layoutX="427.0" layoutY="23.0" text="Member Management" textFill="WHITE">
-            <font>
-                <Font name="System Bold" size="24.0" />
-            </font>
-        </Label>
-        <TextField fx:id="txtSearchPeople" layoutX="38.0" layoutY="75.0" prefHeight="38.0" prefWidth="320.0" promptText="Search people by username or nickname..." AnchorPane.leftAnchor="38.0" AnchorPane.topAnchor="75.0" />
-        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" layoutX="38.0" layoutY="125.0" prefHeight="500.0" prefWidth="1070.0" style="-fx-background-radius:: 20;" AnchorPane.bottomAnchor="95.0" AnchorPane.leftAnchor="38.0" AnchorPane.rightAnchor="37.0" AnchorPane.topAnchor="125.0">
+        <VBox spacing="20.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0" AnchorPane.topAnchor="40.0">
+            <children>
+                <Label styleClass="header-title" text="Member Management" />
+
+                <HBox alignment="CENTER_LEFT" spacing="15.0">
+                    <children>
+                        <HBox alignment="CENTER_LEFT" maxWidth="400.0" styleClass="search-box" HBox.hgrow="ALWAYS">
+                            <children>
+                                <Label text="🔍" textFill="#8b92a5" />
+                                <TextField fx:id="txtSearchPeople" promptText="Search people by username or nickname..." styleClass="search-field" HBox.hgrow="ALWAYS" />
+                            </children>
+                        </HBox>
+
+                        <Region HBox.hgrow="ALWAYS" />
+
+                        <Button fx:id="btnAddMember" mnemonicParsing="false" onAction="#onAddMemberClick" styleClass="btn-primary" text="⊕ Add Member" />
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="custom-scroll-pane" AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0" AnchorPane.topAnchor="150.0">
             <content>
-                <VBox fx:id="vboxMemberList" prefHeight="79.0" prefWidth="1113.0" spacing="5.0" style="-fx-padding: 10;" />
+                <VBox fx:id="vboxMemberList" spacing="10.0" styleClass="member-list-container">
+                    <padding>
+                        <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                    </padding>
+                </VBox>
             </content>
         </ScrollPane>
-        <Button fx:id="btnAddMember" mnemonicParsing="false" onAction="#onAddMemberClick" prefHeight="60.0" prefWidth="60.0" style="-fx-background-radius: 100; -fx-background-color: white;" text="➕" AnchorPane.bottomAnchor="20.0" AnchorPane.rightAnchor="30.0">
-            <font>
-                <Font size="24.0" />
-            </font></Button>
     </children>
 </AnchorPane>
-
-
