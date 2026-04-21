@@ -55,7 +55,7 @@
                <top>
                   <HBox prefHeight="49.0" prefWidth="798.0" BorderPane.alignment="CENTER">
                      <children>
-                        <Label fx:id="contactNameTopBar" prefHeight="130.0" prefWidth="109.0" style="-fx-font-weight: bold; -fx-padding: 12 12 0 12;" text="Contact name" />
+                         <Label fx:id="contactNameTopBar" minWidth="-Infinity" style="-fx-font-weight: bold; -fx-padding: 0 12 0 12;" text="Contact name" />
                         <Region prefHeight="69.0" prefWidth="534.0" HBox.hgrow="ALWAYS" />
                         <Button fx:id="callButton" mnemonicParsing="false" onAction="#onCallButtonClick" prefHeight="87.0" prefWidth="67.0" text="Call" />
                         <Button fx:id="videoCallButton" mnemonicParsing="false" onAction="#onVideoCallButtonClick" prefHeight="72.0" prefWidth="86.0" text="Video Call" />
