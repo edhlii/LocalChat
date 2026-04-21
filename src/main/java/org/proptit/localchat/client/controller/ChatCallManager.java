@@ -377,6 +377,7 @@ public class ChatCallManager {
         }
 
         stopLocalVideoStreaming(false);
+        view.clearRemoteScreenFrame();
         view.clearLocalVideoFrame();
         view.updateCallStatus("Connected");
     }
