@@ -2,20 +2,32 @@ package org.proptit.localchat.client.networks;
 
 
 import javafx.scene.control.Alert;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import org.proptit.localchat.client.controller.LoginController;
 import org.proptit.localchat.client.controller.MainWindowController;
 import org.proptit.localchat.common.enums.TypeDataPacket;
 import javafx.application.Platform;
+import org.proptit.localchat.common.enums.TypeMessage;
 import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.User;
+
+import org.proptit.localchat.common.models.message.FileMessage;
+import org.proptit.localchat.common.models.message.ImageMessage;
+
 import org.proptit.localchat.common.models.call.CallSignal;
+
 import org.proptit.localchat.common.models.message.Message;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SocketClient implements Runnable {
     private String host;
@@ -28,6 +40,8 @@ public class SocketClient implements Runnable {
     private MainWindowController controller;
 
     private LoginController loginController;
+    private Map<String, ImageView> pendingImages = new HashMap<>();
+
 
     public SocketClient(String host, int port, User user) {
         this.host = host;
@@ -103,6 +117,35 @@ public class SocketClient implements Runnable {
                     alert.showAndWait();
                 });
                 break;
+            case TypeDataPacket.RETURN_HISTORY:
+                List<Message> history = (List<Message>) data.getData();
+                controller.getChatAreaController().loadHistory(history);
+                break;
+            case TypeDataPacket.DOWNLOAD_IMAGE_RESPONSE:
+                {
+                    ImageMessage imageMessage = (ImageMessage)data.getData();
+                    ImageView targetIv = pendingImages.get(imageMessage.getFileName());
+                    if (targetIv != null && imageMessage.getImageData() != null) {
+                        Image img = new Image(new ByteArrayInputStream(imageMessage.getImageData()));
+                        Platform.runLater(() -> {
+                            targetIv.setImage(img);
+                            pendingImages.remove(imageMessage.getFileName());
+                        });
+                    }
+                }
+                break;
+            case TypeDataPacket.DOWNLOAD_FILE_RESPONSE:
+                FileMessage fileMessage = (FileMessage)data.getData();
+                controller.getChatAreaController().handleFileDownloadResponse(fileMessage.getFileName(), fileMessage.getFileData());
+                break;
+            case TypeDataPacket.RETURN_CHAT_CONTACTS:
+                List<User> contactList = (List<User>) data.getData();
+                if (controller != null) {
+                    Platform.runLater(() -> {
+                        controller.updateChatContacts(contactList);
+                    });
+                }
+                break;
             case TypeDataPacket.CALL_SIGNAL:
                 if (controller != null) {
                     CallSignal signal = (CallSignal) data.getData();
@@ -118,7 +161,6 @@ public class SocketClient implements Runnable {
                     alert.show();
                 });
                 break;
-
             case TypeDataPacket.UPDATE_PROFILE_FAILURE:
                 javafx.application.Platform.runLater(() -> {
                     javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
@@ -161,5 +203,19 @@ public class SocketClient implements Runnable {
         this.controller = controller;
     }
 
+
+
+    public void sendRequestDownload(String fileName, ImageView imageView) {
+
+        pendingImages.put(fileName, imageView);
+
+
+        DataPacket packet = new DataPacket(TypeDataPacket.DOWNLOAD_IMAGE_REQUEST, fileName);
+
+
+        this.sendData(packet);
+
+        System.out.println("Đang xin Server file: " + fileName);
+    }
 
 }
