@@ -107,7 +107,6 @@
             <Button fx:id="btnMic" mnemonicParsing="false" style="-fx-background-color: #2f426a; -fx-text-fill: white; -fx-background-radius: 22; -fx-padding: 10 18;" text="Mute" />
             <Button fx:id="btnCamera" mnemonicParsing="false" style="-fx-background-color: #2f426a; -fx-text-fill: white; -fx-background-radius: 22; -fx-padding: 10 18;" text="Camera" />
             <Button fx:id="btnShareScreen" mnemonicParsing="false" style="-fx-background-color: #2f426a; -fx-text-fill: white; -fx-background-radius: 22; -fx-padding: 10 18;" text="Share Screen" />
-            <Button fx:id="btnChat" mnemonicParsing="false" style="-fx-background-color: #2f426a; -fx-text-fill: white; -fx-background-radius: 22; -fx-padding: 10 18;" text="Chat" />
             <Button fx:id="btnEndCall" mnemonicParsing="false" style="-fx-background-color: #cf3342; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 22; -fx-padding: 10 20;" text="End Call" />
          </children>
          <padding>

@@ -19,8 +19,6 @@ public class CallWindowController {
     @FXML
     private Button btnCamera;
     @FXML
-    private Button btnChat;
-    @FXML
     private Button btnEndCall;
     @FXML
     private Button btnMic;
