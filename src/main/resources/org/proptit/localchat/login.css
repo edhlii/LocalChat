@@ -37,7 +37,7 @@
 }
 
 .input-label {
-    -fx-text-fill: -text-secondary;
+    -fx-text-fill: -text-primary;
     -fx-font-size: 11px;
     -fx-font-weight: bold;
     -fx-letter-spacing: 1px;
@@ -78,7 +78,7 @@
 
 .btn-primary {
     -fx-background-color: -bg-button-primary;
-    -fx-text-fill: #000000;
+    -fx-text-fill: #FFFFFF;
     -fx-font-size: 14px;
     -fx-font-weight: bold;
     -fx-background-radius: 6;
@@ -91,7 +91,7 @@
 }
 
 .checkbox-text {
-    -fx-text-fill: -text-secondary;
+    -fx-text-fill: -text-primary;
     -fx-font-size: 13px;
 }
 
