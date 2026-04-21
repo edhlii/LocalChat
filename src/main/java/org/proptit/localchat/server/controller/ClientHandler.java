@@ -3,8 +3,12 @@ package org.proptit.localchat.server.controller;
 import org.proptit.localchat.common.enums.TypeDataPacket;
 import org.proptit.localchat.common.enums.TypeMessage;
 import org.proptit.localchat.common.models.DataPacket;
+
 import org.proptit.localchat.common.models.message.FileMessage;
 import org.proptit.localchat.common.models.message.ImageMessage;
+
+import org.proptit.localchat.common.models.call.CallSignal;
+
 import org.proptit.localchat.common.models.message.Message;
 import org.proptit.localchat.common.models.User;
 import org.proptit.localchat.common.utils.PasswordUtils;
@@ -177,7 +181,26 @@ public class ClientHandler implements Runnable {
                         List<User> contacts = userDao.getAllUsers();
                         sendData(new DataPacket(TypeDataPacket.RETURN_CHAT_CONTACTS, contacts));
                         break;
+                    case TypeDataPacket.CALL_SIGNAL:
+                        CallSignal signal = (CallSignal) data.getData();
+                        server.forwardCallSignal(signal);
+                        break;
 
+                    case TypeDataPacket.UPDATE_PROFILE_REQUEST:
+                        User updateUser = (User) data.getData();
+                        updateUser.setPassword(PasswordUtils.hashPassword(updateUser.getPassword()));
+                        boolean isUpdated = userDao.updateUser(updateUser);
+                        if(isUpdated) {
+                            this.user.setNickname(updateUser.getNickname());
+                            this.user.setPassword(updateUser.getPassword());
+
+                            sendData(new DataPacket(TypeDataPacket.UPDATE_PROFILE_SUCCESS, this.user));
+                            server.broadcastOnlineUsers();
+                        }
+                        else {
+                            sendData(new DataPacket(TypeDataPacket.UPDATE_PROFILE_FAILURE, "Cập nhật thất bại!"));
+                        }
+                        break;
                 }
             }
 

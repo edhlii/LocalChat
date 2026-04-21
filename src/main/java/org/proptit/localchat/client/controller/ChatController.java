@@ -3,9 +3,12 @@ package org.proptit.localchat.client.controller;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -14,11 +17,14 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.embed.swing.SwingFXUtils;
+import javax.imageio.ImageIO;
 import org.proptit.localchat.client.networks.SocketClient;
 import org.proptit.localchat.common.enums.TypeDataPacket;
 import org.proptit.localchat.common.enums.TypeMessage;
 import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.User;
+import org.proptit.localchat.common.models.call.CallSignal;
 import org.proptit.localchat.common.models.message.FileMessage;
 import org.proptit.localchat.common.models.message.ImageMessage;
 import org.proptit.localchat.common.models.message.Message;
@@ -28,11 +34,12 @@ import org.proptit.localchat.common.utils.FileUtils;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class ChatController {
+public class ChatController implements ChatCallView {
     private SocketClient client;
     private User me;
 
@@ -42,19 +49,36 @@ public class ChatController {
     private final Set<Integer> onlineUserIds = new HashSet<>();
 
     private User selectedConversationUser;
+
     private final Map<String, Button> pendingFileButtons = new HashMap<>();
     private static final String ANNOUNCEMENT_LABEL = "Thông báo chung 📢";
 
-    @FXML private VBox vboxMessage;
-    @FXML private ScrollPane scrollPane;
-    @FXML private TextArea messageInput;
-    @FXML private ListView<String> lvOnlinePeople;
-    @FXML private ListView<String> lvChatList;
+
+
+    private ChatCallManager callManager;
+    private Stage callStage;
+    private CallWindowController callWindowController;
+
+    @FXML
+    private VBox vboxMessage;
+    @FXML
+    private ScrollPane scrollPane;
+    @FXML
+    private TextArea messageInput;
+    @FXML
+    private ListView<String> lvOnlinePeople;
+    @FXML
+    private ListView<String> lvChatList;
+    @FXML
+    private Button sendMessageAllButton;
+    @FXML
+    public Label contactNameTopBar;
 
 
     public void init(SocketClient client, User me) {
         this.client = client;
         this.me = me;
+        this.callManager = new ChatCallManager(client, me, this);
 
         vboxMessage.heightProperty().addListener((observable, oldValue, newValue) -> {
             scrollPane.setVvalue(1.0);
@@ -92,6 +116,7 @@ public class ChatController {
                     selectedConversationUser = null;
                     clearMessageArea();
 
+                    contactNameTopBar.setText(ANNOUNCEMENT_LABEL);
 
                     boolean canSend = me.isManager();
                     messageInput.getParent().setVisible(canSend);
@@ -105,6 +130,7 @@ public class ChatController {
                 User newUser = conversationUserMap.get(newValue);
                 if (newUser != null)
                 {
+                    contactNameTopBar.setText(newUser.getNickname());
                     messageInput.getParent().setVisible(true);
                     messageInput.getParent().setManaged(true);
                     if(selectedConversationUser == null || newUser.getId() != selectedConversationUser.getId())
@@ -253,8 +279,47 @@ public class ChatController {
         imageView.setFitWidth(250);
         imageView.setPreserveRatio(true);
 
+
         Label lblTime = new Label(time);
         lblTime.setStyle("-fx-font-size: 10px; -fx-text-fill: #919191;");
+
+
+        ContextMenu imageMenu = new ContextMenu();
+        MenuItem saveImageItem = new MenuItem("Tải ảnh xuống");
+
+        saveImageItem.setOnAction(e -> {
+            if (imageView.getImage() == null) return;
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Lưu ảnh tải về");
+            fileChooser.getExtensionFilters().addAll(
+                    new FileChooser.ExtensionFilter("PNG Files", "*.png"),
+                    new FileChooser.ExtensionFilter("JPG Files", "*.jpg")
+            );
+            fileChooser.setInitialFileName("downloaded_image.png");
+
+            Stage stage = (Stage) imageView.getScene().getWindow();
+            File file = fileChooser.showSaveDialog(stage);
+
+            if (file != null) {
+                try {
+                    ImageIO.write(SwingFXUtils.fromFXImage(imageView.getImage(), null), "png", file);
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION, "Đã lưu ảnh thành công!");
+                    alert.setHeaderText(null);
+                    alert.show();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                    Alert alert = new Alert(Alert.AlertType.ERROR, "Lỗi khi lưu ảnh!");
+                    alert.setHeaderText(null);
+                    alert.show();
+                }
+            }
+        });
+
+        imageMenu.getItems().add(saveImageItem);
+
+        imageView.setOnContextMenuRequested(e -> {
+            imageMenu.show(imageView, e.getScreenX(), e.getScreenY());
+        });
 
         VBox messageGroup = new VBox(3);
 
@@ -433,6 +498,7 @@ public class ChatController {
 //        });
         vboxMessage.getChildren().add(hboxContainer);
     }
+
     private void downloadFile(String fileName, byte[] fileData) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Lưu file");
@@ -456,18 +522,19 @@ public class ChatController {
         }
     }
 
-    public void updateOnlinePeople(List<User> newUsers) {
+
+    public void updateOnlinePeople(List<User> users) {
         Platform.runLater(() -> {
             if (lvOnlinePeople == null || lvChatList == null) return;
 
 
-            List<String> onlineNames = newUsers.stream()
+            List<String> onlineNames = users.stream()
                     .map(user -> user.getNickname() + " (@" + user.getUsername() + ")")
                     .collect(Collectors.toList());
             lvOnlinePeople.getItems().setAll(onlineNames);
 
             this.onlineUserIds.clear();
-            for (User u : newUsers) {
+            for (User u : users) {
                 this.onlineUserIds.add(u.getId());
             }
 
@@ -488,5 +555,187 @@ public class ChatController {
     }
 
 
+    public void onCallButtonClick(ActionEvent actionEvent) {
+        if (callManager != null) {
+            callManager.startOutgoingCall(selectedConversationUser);
+        }
+    }
 
+    public void receiveCallSignal(CallSignal signal) {
+        if (callManager != null) {
+            callManager.receiveCallSignal(signal);
+        }
+    }
+
+    @Override
+    public void showCallWindow(User peer, String statusText) {
+        try {
+            if (callStage != null && callStage.isShowing()) {
+                if (callWindowController != null) {
+                    callWindowController.init(peer);
+                    callWindowController.updateCallStatus(statusText);
+                    callWindowController.setMicMuted(false);
+                }
+                callStage.toFront();
+                return;
+            }
+
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/proptit/localchat/call_window.fxml"));
+            Parent root = loader.load();
+
+            callWindowController = loader.getController();
+            callWindowController.init(peer);
+            callWindowController.updateCallStatus(statusText);
+            callWindowController.setMicMuted(false);
+            callWindowController.setOnMuteChanged(muted -> {
+                if (callManager != null) {
+                    callManager.setMuted(muted);
+                }
+            });
+            callWindowController.setOnScreenShareChanged(sharing -> {
+                if (callManager != null) {
+                    callManager.setScreenSharing(sharing);
+                }
+            });
+            callWindowController.setOnEndCall(() -> {
+                if (callManager != null) {
+                    callManager.endCall(true);
+                }
+            });
+
+            callStage = new Stage();
+            callStage.setTitle("Call - " + peer.getNickname());
+            callStage.setScene(new Scene(root));
+            callStage.setOnCloseRequest(event -> {
+                event.consume();
+                if (callManager != null) {
+                    callManager.endCall(true);
+                }
+                closeCallWindow();
+            });
+            callStage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            showError("Unable to open call window.");
+        }
+    }
+
+    @Override
+    public void updateCallStatus(String statusText) {
+        Platform.runLater(() -> {
+            if (callWindowController != null) {
+                callWindowController.updateCallStatus(statusText);
+            }
+        });
+    }
+
+    @Override
+    public void updateScreenShareButton(boolean sharing) {
+        Platform.runLater(() -> {
+            if (callWindowController != null) {
+                callWindowController.setScreenSharingActive(sharing);
+            }
+        });
+    }
+
+    @Override
+    public void showRemoteScreenFrame(byte[] frameBytes) {
+        Platform.runLater(() -> {
+            if (callWindowController != null) {
+                callWindowController.showRemoteScreenFrame(frameBytes);
+            }
+        });
+    }
+
+    @Override
+    public void clearRemoteScreenFrame() {
+        Platform.runLater(() -> {
+            if (callWindowController != null) {
+                callWindowController.clearRemoteScreenFrame();
+            }
+        });
+    }
+
+    @Override
+    public void showInfo(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, message);
+        alert.setHeaderText(null);
+        alert.show();
+    }
+
+    @Override
+    public void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR, message);
+        alert.setHeaderText(null);
+        alert.show();
+    }
+
+    @Override
+    public boolean confirmIncomingCall(User caller) {
+        Alert confirm = new Alert(
+                Alert.AlertType.CONFIRMATION,
+                caller.getNickname() + " is calling you.",
+                ButtonType.YES,
+                ButtonType.NO
+        );
+        confirm.setTitle("Incoming Call");
+        confirm.setHeaderText("Accept voice call?");
+        return confirm.showAndWait().orElse(ButtonType.NO) == ButtonType.YES;
+    }
+
+//    @Override
+//    public User resolveUser(String username, String nickname) {
+//        if (username != null) {
+//            for (User onlineUser : onlineUsers) {
+//                if (onlineUser.getUsername().equalsIgnoreCase(username)) {
+//                    return onlineUser;
+//                }
+//            }
+//        }
+//
+//        User user = new User(username);
+//        user.setNickname(nickname != null && !nickname.isBlank() ? nickname : username);
+//        return user;
+//    }
+    @Override
+    public User resolveUser(String username, String nickname) {
+
+        String searchKey = nickname + " (@" + username + ")";
+
+
+        User onlineUser = conversationUserMap.get(searchKey);
+
+        if (onlineUser != null) {
+            return onlineUser;
+        }
+
+        // 3. Nếu không thấy trong danh sách (người lạ hoặc offline), tạo mới object tạm
+        User user = new User(username);
+        user.setNickname((nickname != null && !nickname.isBlank()) ? nickname : username);
+        return user;
+    }
+
+    @Override
+    public String resolveLocalAddress() {
+        try {
+            return InetAddress.getLocalHost().getHostAddress();
+        } catch (Exception ex) {
+            return "127.0.0.1";
+        }
+    }
+
+    @Override
+    public void closeCallWindow() {
+        if (callStage != null) {
+            callStage.setOnCloseRequest(null);
+            if (callStage.isShowing()) {
+                callStage.close();
+            }
+            callStage = null;
+            callWindowController = null;
+        }
+    }
+
+    public void onVideoCallButtonClick(ActionEvent actionEvent) {
+    }
 }

@@ -88,7 +88,6 @@ public class UserDao {
         return null;
     }
 
-
     private User mapRowToUser(ResultSet rs) throws SQLException {
         return new User(
                 rs.getInt("id"),
@@ -97,5 +96,21 @@ public class UserDao {
                 rs.getString("nickname"),
                 rs.getString("role")
         );
+    }
+
+    public boolean updateUser(User user) {
+        try (Connection c = DbConnection.openConnection()) {
+            String sql = "UPDATE users SET nickname = ?, password = ? WHERE id = ?";
+            PreparedStatement ps = c.prepareStatement(sql);
+            ps.setString(1, user.getNickname());
+            ps.setString(2, user.getPassword());
+            ps.setInt(3, user.getId());
+
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            System.err.println("Lỗi DB khi cập nhật thông tin user!");
+            e.printStackTrace();
+        }
+        return false;
     }
 }

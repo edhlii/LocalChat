@@ -11,8 +11,12 @@ import javafx.application.Platform;
 import org.proptit.localchat.common.enums.TypeMessage;
 import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.User;
+
 import org.proptit.localchat.common.models.message.FileMessage;
 import org.proptit.localchat.common.models.message.ImageMessage;
+
+import org.proptit.localchat.common.models.call.CallSignal;
+
 import org.proptit.localchat.common.models.message.Message;
 
 import java.io.ByteArrayInputStream;
@@ -142,8 +146,30 @@ public class SocketClient implements Runnable {
                     });
                 }
                 break;
-
-
+            case TypeDataPacket.CALL_SIGNAL:
+                if (controller != null) {
+                    CallSignal signal = (CallSignal) data.getData();
+                    Platform.runLater(() -> controller.receiveCallSignal(signal));
+                }
+                break;
+            case TypeDataPacket.UPDATE_PROFILE_SUCCESS:
+                javafx.application.Platform.runLater(() -> {
+                    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
+                    alert.setTitle("Thành công");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Đổi mật khẩu thành công!");
+                    alert.show();
+                });
+                break;
+            case TypeDataPacket.UPDATE_PROFILE_FAILURE:
+                javafx.application.Platform.runLater(() -> {
+                    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+                    alert.setTitle("Thất bại");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Đổi mật khẩu thất bại. Vui lòng thử lại!");
+                    alert.show();
+                });
+                break;
         }
     }
 

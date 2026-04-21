@@ -3,6 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
@@ -21,9 +22,17 @@
                         <Font size="23.0" />
                     </font>
                 </Button>
+
+                <Region VBox.vgrow="ALWAYS" />
+
+                <Button fx:id="btnChangePassword" contentDisplay="CENTER" mnemonicParsing="false" onAction="#onChangePasswordAction" prefHeight="60.0" prefWidth="60.0" text="⚙️">
+                    <font>
+                        <Font size="23.0" />
+                    </font>
+                </Button>
             </children>
             <padding>
-                <Insets top="20.0" />
+                <Insets bottom="20.0" top="20.0" />
             </padding>
         </VBox>
 
@@ -31,7 +40,6 @@
             <children>
                 <fx:include fx:id="chatArea" source="chat_view.fxml" />
                 <fx:include fx:id="memberManagerArea" source="member_management_view.fxml" />
-
             </children>
         </StackPane>
     </children>
