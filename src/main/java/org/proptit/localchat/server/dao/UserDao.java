@@ -11,24 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UserDao {
-//    public User getUserByLogin(String username) {
-//        try ( Connection c = DbConnection.openConnection())
-//        {
-//            String sql = "select * from users where username = ?";
-//            PreparedStatement ps = c.prepareStatement(sql);
-//            ps.setString(1, username);
-//            ps.setString(2, password);
-//            ResultSet rs = ps.executeQuery();
-//            if(rs.next()){
-//                return mapRowToUser(rs);
-//            }
-//            return null;
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//        return null;
-//    }
-
     public List<User> getAllUsers() {
         try (Connection c = DbConnection.openConnection())
         {

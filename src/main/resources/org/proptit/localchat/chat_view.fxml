@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-
 <?import javafx.geometry.Insets?>
-<SplitPane fx:id="chatArea" dividerPositions="0.3" prefHeight="720.0" prefWidth="1145.0"
-           style="-fx-background-color: transparent;"
-           xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="org.proptit.localchat.client.controller.ChatController">
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<SplitPane fx:id="chatArea" dividerPositions="0.3" prefHeight="720.0" prefWidth="1145.0" style="-fx-background-color: transparent;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.proptit.localchat.client.controller.ChatController">
     <items>
         <AnchorPane fx:id="sidebarArea" minWidth="250.0" prefWidth="300.0" style="-fx-background-color: #f4f4f4;">
             <children>
@@ -44,7 +46,6 @@
                                 <TextArea fx:id="messageInput" prefHeight="29.0" prefWidth="537.0" promptText="Type a message..." HBox.hgrow="ALWAYS" />
                                 <Button mnemonicParsing="false" onAction="#onFileButtonClick" prefHeight="60.0" prefWidth="70.0" text="File" />
                                 <Button fx:id="sendMessageButton" mnemonicParsing="false" onAction="#onSendButtonClick" prefHeight="60.0" prefWidth="70.0" text="Send" />
-                                <Button fx:id="sendMessageAllButton" mnemonicParsing="false" onAction="#onSendButtonClick" prefHeight="60.0" prefWidth="70.0" text="Send All" />
                             </children>
                         </HBox>
                     </bottom>

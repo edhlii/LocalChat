@@ -18,6 +18,11 @@ public class User implements Serializable {
         this.nickname = nickname;
         this.role = role;
     }
+
+    public User(Integer id) {
+        this.id = id;
+    }
+
     public User(String username)
     {
         this.userame = username;

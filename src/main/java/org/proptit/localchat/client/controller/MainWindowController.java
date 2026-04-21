@@ -75,6 +75,9 @@ public class MainWindowController {
     public void receiveMessage(Message msg) {
         chatAreaController.receiveMessage(msg);
     }
+    public void updateChatContacts(List<User> contactList) {
+        chatAreaController.setAllMembers(contactList);
+    }
 
     public void addMemberToUI(User user) {
         memberManagerAreaController.addMemberToUI(user);
@@ -82,6 +85,9 @@ public class MainWindowController {
     }
 
 
+    public ChatController getChatAreaController() {
+        return chatAreaController;
+    }
 
     @FXML
     void onNavMembersClick(ActionEvent event) {
