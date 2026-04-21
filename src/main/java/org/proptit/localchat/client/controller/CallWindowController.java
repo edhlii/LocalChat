@@ -40,12 +40,19 @@ public class CallWindowController {
     private Pane remoteVideoPane;
     @FXML
     private ImageView remoteScreenImageView;
+    @FXML
+    private ImageView localPreviewImageView;
+    @FXML
+    private Label localPreviewPlaceholderLabel;
     private User selectedConversationUser;
     private Runnable onEndCall;
     private Consumer<Boolean> onMuteChanged;
     private Consumer<Boolean> onScreenShareChanged;
+    private Consumer<Boolean> onVideoChanged;
     private boolean micMuted;
     private boolean screenSharing;
+    private boolean videoActive;
+    private boolean videoAvailable;
 
     @FXML
     private void initialize() {
@@ -54,6 +61,9 @@ public class CallWindowController {
         }
         if (btnMic != null) {
             btnMic.setOnAction(event -> onMicButtonClick());
+        }
+        if (btnCamera != null) {
+            btnCamera.setOnAction(event -> onCameraButtonClick());
         }
         if (btnShareScreen != null) {
             btnShareScreen.setOnAction(event -> onShareScreenButtonClick());
@@ -82,6 +92,10 @@ public class CallWindowController {
         this.onScreenShareChanged = onScreenShareChanged;
     }
 
+    public void setOnVideoChanged(Consumer<Boolean> onVideoChanged) {
+        this.onVideoChanged = onVideoChanged;
+    }
+
     public void updateCallStatus(String statusText) {
         if (callStatusLabel != null) {
             callStatusLabel.setText(statusText);
@@ -102,6 +116,21 @@ public class CallWindowController {
         }
     }
 
+    public void setVideoCallAvailable(boolean available) {
+        videoAvailable = available;
+        if (btnCamera != null) {
+            btnCamera.setDisable(!available);
+            btnCamera.setText(available ? (videoActive ? "Stop Camera" : "Camera") : "Camera");
+        }
+    }
+
+    public void setVideoCallActive(boolean active) {
+        videoActive = active;
+        if (btnCamera != null) {
+            btnCamera.setText(videoActive ? "Stop Camera" : "Camera");
+        }
+    }
+
     public void showRemoteScreenFrame(byte[] frameBytes) {
         if (frameBytes == null || frameBytes.length == 0) {
             return;
@@ -112,7 +141,26 @@ public class CallWindowController {
             remoteScreenImageView.setVisible(true);
         }
         if (remoteVideoPlaceholderLabel != null) {
+            remoteVideoPlaceholderLabel.setText("Remote video stream");
             remoteVideoPlaceholderLabel.setVisible(false);
+        }
+    }
+
+    public void showRemoteVideoFrame(byte[] frameBytes) {
+        showRemoteScreenFrame(frameBytes);
+    }
+
+    public void showLocalVideoFrame(byte[] frameBytes) {
+        if (frameBytes == null || frameBytes.length == 0) {
+            return;
+        }
+
+        if (localPreviewImageView != null) {
+            localPreviewImageView.setImage(new Image(new ByteArrayInputStream(frameBytes)));
+            localPreviewImageView.setVisible(true);
+        }
+        if (localPreviewPlaceholderLabel != null) {
+            localPreviewPlaceholderLabel.setVisible(false);
         }
     }
 
@@ -124,6 +172,17 @@ public class CallWindowController {
         if (remoteVideoPlaceholderLabel != null) {
             remoteVideoPlaceholderLabel.setText("Remote video stream");
             remoteVideoPlaceholderLabel.setVisible(true);
+        }
+    }
+
+    public void clearLocalVideoFrame() {
+        if (localPreviewImageView != null) {
+            localPreviewImageView.setImage(null);
+            localPreviewImageView.setVisible(false);
+        }
+        if (localPreviewPlaceholderLabel != null) {
+            localPreviewPlaceholderLabel.setText("Camera preview");
+            localPreviewPlaceholderLabel.setVisible(true);
         }
     }
 
@@ -140,6 +199,18 @@ public class CallWindowController {
         setScreenSharingActive(!screenSharing);
         if (onScreenShareChanged != null) {
             onScreenShareChanged.accept(screenSharing);
+        }
+    }
+
+    @FXML
+    private void onCameraButtonClick() {
+        if (!videoAvailable) {
+            return;
+        }
+
+        setVideoCallActive(!videoActive);
+        if (onVideoChanged != null) {
+            onVideoChanged.accept(videoActive);
         }
     }
 

@@ -49,6 +49,8 @@ public class ChatController implements ChatCallView {
     private ChatCallManager callManager;
     private Stage callStage;
     private CallWindowController callWindowController;
+    private boolean videoCallAvailable;
+    private boolean videoCallActive;
 
     @FXML
     private VBox vboxMessage;
@@ -405,6 +407,12 @@ public class ChatController implements ChatCallView {
         }
     }
 
+    public void onVideoCallButtonClick(ActionEvent actionEvent) {
+        if (callManager != null) {
+            callManager.startOutgoingVideoCall(selectedConversationUser);
+        }
+    }
+
     public void receiveCallSignal(CallSignal signal) {
         if (callManager != null) {
             callManager.receiveCallSignal(signal);
@@ -419,6 +427,8 @@ public class ChatController implements ChatCallView {
                     callWindowController.init(peer);
                     callWindowController.updateCallStatus(statusText);
                     callWindowController.setMicMuted(false);
+                    callWindowController.setVideoCallAvailable(videoCallAvailable);
+                    callWindowController.setVideoCallActive(videoCallActive);
                 }
                 callStage.toFront();
                 return;
@@ -431,6 +441,8 @@ public class ChatController implements ChatCallView {
             callWindowController.init(peer);
             callWindowController.updateCallStatus(statusText);
             callWindowController.setMicMuted(false);
+            callWindowController.setVideoCallAvailable(videoCallAvailable);
+            callWindowController.setVideoCallActive(videoCallActive);
             callWindowController.setOnMuteChanged(muted -> {
                 if (callManager != null) {
                     callManager.setMuted(muted);
@@ -439,6 +451,11 @@ public class ChatController implements ChatCallView {
             callWindowController.setOnScreenShareChanged(sharing -> {
                 if (callManager != null) {
                     callManager.setScreenSharing(sharing);
+                }
+            });
+            callWindowController.setOnVideoChanged(active -> {
+                if (callManager != null) {
+                    callManager.setVideoStreaming(active);
                 }
             });
             callWindowController.setOnEndCall(() -> {
@@ -474,6 +491,26 @@ public class ChatController implements ChatCallView {
     }
 
     @Override
+    public void setVideoCallAvailable(boolean available) {
+        videoCallAvailable = available;
+        Platform.runLater(() -> {
+            if (callWindowController != null) {
+                callWindowController.setVideoCallAvailable(available);
+            }
+        });
+    }
+
+    @Override
+    public void setVideoCallActive(boolean active) {
+        videoCallActive = active;
+        Platform.runLater(() -> {
+            if (callWindowController != null) {
+                callWindowController.setVideoCallActive(active);
+            }
+        });
+    }
+
+    @Override
     public void updateScreenShareButton(boolean sharing) {
         Platform.runLater(() -> {
             if (callWindowController != null) {
@@ -492,10 +529,37 @@ public class ChatController implements ChatCallView {
     }
 
     @Override
+    public void showRemoteVideoFrame(byte[] frameBytes) {
+        Platform.runLater(() -> {
+            if (callWindowController != null) {
+                callWindowController.showRemoteVideoFrame(frameBytes);
+            }
+        });
+    }
+
+    @Override
+    public void showLocalVideoFrame(byte[] frameBytes) {
+        Platform.runLater(() -> {
+            if (callWindowController != null) {
+                callWindowController.showLocalVideoFrame(frameBytes);
+            }
+        });
+    }
+
+    @Override
     public void clearRemoteScreenFrame() {
         Platform.runLater(() -> {
             if (callWindowController != null) {
                 callWindowController.clearRemoteScreenFrame();
+            }
+        });
+    }
+
+    @Override
+    public void clearLocalVideoFrame() {
+        Platform.runLater(() -> {
+            if (callWindowController != null) {
+                callWindowController.clearLocalVideoFrame();
             }
         });
     }
@@ -561,8 +625,7 @@ public class ChatController implements ChatCallView {
             callStage = null;
             callWindowController = null;
         }
-    }
-
-    public void onVideoCallButtonClick(ActionEvent actionEvent) {
+        videoCallAvailable = false;
+        videoCallActive = false;
     }
 }

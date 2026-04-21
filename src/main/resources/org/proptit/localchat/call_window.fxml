@@ -52,12 +52,13 @@
                <children>
                   <StackPane fx:id="localPreviewPane" prefHeight="132.0" prefWidth="220.0" style="-fx-background-color: rgba(0, 0, 0, 0.60); -fx-background-radius: 12; -fx-border-color: rgba(255, 255, 255, 0.12); -fx-border-radius: 12;">
                      <children>
+                        <ImageView fx:id="localPreviewImageView" fitHeight="132.0" fitWidth="220.0" pickOnBounds="true" preserveRatio="true" visible="false" />
                         <Label text="You" textFill="WHITE" StackPane.alignment="TOP_LEFT">
                            <StackPane.margin>
                               <Insets left="10.0" top="8.0" />
                            </StackPane.margin>
                         </Label>
-                        <Label text="Camera preview" textFill="#b9c8e8" />
+                        <Label fx:id="localPreviewPlaceholderLabel" text="Camera preview" textFill="#b9c8e8" />
                      </children>
                   </StackPane>
 
