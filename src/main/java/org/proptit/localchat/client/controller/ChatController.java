@@ -57,13 +57,14 @@ public class ChatController implements ChatCallView {
     private User selectedConversationUser;
 
     private final Map<String, Button> pendingFileButtons = new HashMap<>();
-    private static final String ANNOUNCEMENT_LABEL = "Thông báo chung 📢";
-
+    private static final String ANNOUNCEMENT_LABEL = "Thông báo chung";
+    private final Set<Integer> usersWithNewMessages = new HashSet<>();
 
 
     private ChatCallManager callManager;
     private Stage callStage;
     private CallWindowController callWindowController;
+    private List<User> allMembersForSearch = new ArrayList<>();
 
     @FXML
     private VBox vboxMessage;
@@ -79,6 +80,8 @@ public class ChatController implements ChatCallView {
     private Button sendMessageAllButton;
     @FXML
     public Label contactNameTopBar;
+    @FXML
+    private TextField txtSearchPeopleChat;
 
 
     public void init(SocketClient client, User me) {
@@ -97,6 +100,9 @@ public class ChatController implements ChatCallView {
                 if (newValue == null) return;
 
                 if (newValue.equals(ANNOUNCEMENT_LABEL)) {
+                    usersWithNewMessages.remove(0);
+                    lvChatList.refresh();
+
                     selectedConversationUser = null;
                     clearMessageArea();
 
@@ -119,10 +125,13 @@ public class ChatController implements ChatCallView {
                     messageInput.getParent().setManaged(true);
                     if(selectedConversationUser == null || newUser.getId() != selectedConversationUser.getId())
                     {
+                        usersWithNewMessages.remove(newUser.getId());
+                        lvChatList.refresh();
                         selectedConversationUser = newUser;
                         clearMessageArea();
                         System.out.println("DEBUG: Load lịch sử với " + selectedConversationUser.getNickname());
                         client.sendData(new DataPacket(TypeDataPacket.GET_HISTORY_REQUEST, selectedConversationUser.getId()));
+
                     }
 
                 }
@@ -151,25 +160,55 @@ public class ChatController implements ChatCallView {
             });
         }
 
+        if (txtSearchPeopleChat != null) {
+            txtSearchPeopleChat.textProperty().addListener((observable, oldValue, newValue) -> {
+                renderChatListByKeyword(newValue);
+            });
+        }
+
+
         client.sendData(new DataPacket(TypeDataPacket.GET_CHAT_CONTACTS, null));
+    }
+    private void renderChatListByKeyword(String keyword) {
+        String normalizedKeyword = (keyword == null) ? "" : keyword.trim().toLowerCase();
+
+
+        lvChatList.getItems().clear();
+        conversationUserMap.clear();
+
+
+        lvChatList.getItems().add(ANNOUNCEMENT_LABEL);
+
+
+        for (User user : allMembers) {
+            if (user.getId().equals(me.getId())) continue;
+
+            String username = user.getUsername() == null ? "" : user.getUsername().toLowerCase();
+            String nickname = user.getNickname() == null ? "" : user.getNickname().toLowerCase();
+
+            if (normalizedKeyword.isEmpty() || username.contains(normalizedKeyword) || nickname.contains(normalizedKeyword)) {
+                String label = user.getNickname() + " (@" + user.getUsername() + ")";
+
+
+                conversationUserMap.put(label, user);
+                lvChatList.getItems().add(label);
+            }
+        }
+
+
+        lvChatList.refresh();
     }
 
     public void setAllMembers(List<User> members) {
         Platform.runLater(() -> {
-            this.allMembers = members;
 
-            lvChatList.getItems().clear();
-            conversationUserMap.clear();
+            this.allMembers = (members == null) ? new ArrayList<>() : new ArrayList<>(members);
 
 
-            lvChatList.getItems().add(ANNOUNCEMENT_LABEL);
+            renderChatListByKeyword(txtSearchPeopleChat != null ? txtSearchPeopleChat.getText() : "");
 
-
-            for (User u : allMembers) {
-                if (u.getId() == me.getId()) continue;
-                String label = u.getNickname() + " (@" + u.getUsername() + ")";
-                conversationUserMap.put(label, u);
-                lvChatList.getItems().add(label);
+            if (!lvChatList.getItems().isEmpty() && (txtSearchPeopleChat == null || txtSearchPeopleChat.getText().isEmpty())) {
+                lvChatList.getSelectionModel().select(0);
             }
         });
 
@@ -244,14 +283,28 @@ public class ChatController implements ChatCallView {
                         root.setAlignment(Pos.CENTER_LEFT);
                         root.setPadding(new Insets(8, 12, 8, 12));
 
-                        Label icon = new Label("📢");
-                        icon.setStyle("-fx-font-size: 20px;");
+                        Label icon = new Label("\uD83D\uDCE2");
+                        icon.setStyle("-fx-font-size: 20px; -fx-text-fill: #FFFFFF;");
+
+                        VBox textInfo = new VBox(2);
+                        textInfo.setAlignment(Pos.CENTER_LEFT);
+
 
                         Label nameLbl = new Label("Thông báo chung");
                         nameLbl.setTextFill(javafx.scene.paint.Color.web("#E67E22"));
-                        nameLbl.setFont(javafx.scene.text.Font.font("System", javafx.scene.text.FontWeight.BOLD, 14));
+                        nameLbl.setFont(javafx.scene.text.Font.font("System", FontWeight.BOLD, 14));
 
-                        root.getChildren().addAll(icon, nameLbl);
+                        textInfo.getChildren().add(nameLbl);
+
+                        if (usersWithNewMessages.contains(0)) {
+                            Label newMsgNotify = new Label("Có tin nhắn mới");
+                            newMsgNotify.setFont(javafx.scene.text.Font.font("System", FontWeight.BOLD, 11));
+
+                            textInfo.getChildren().add(newMsgNotify);
+
+                        }
+
+                        root.getChildren().addAll(icon, textInfo);
                         setGraphic(root);
                         setText(null);
                     }
@@ -264,12 +317,14 @@ public class ChatController implements ChatCallView {
                         Circle avatar = new Circle(20, Color.web("#2A3042"));
 
                         VBox textInfo = new VBox(2);
+                        textInfo.setAlignment(Pos.CENTER_LEFT);
+
 
                         String name = item.contains("(@") ? item.substring(0, item.indexOf("(@")).trim() : item;
                         String initialLetter = name.isEmpty() ? "?" : name.substring(0, 1).toUpperCase();
 
                         Label initialLabel = new Label(initialLetter);
-                        initialLabel.setTextFill(Color.WHITE); // Chữ trắng cho nổi
+                        initialLabel.setTextFill(Color.WHITE);
                         initialLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
 
                         avatarStack.getChildren().addAll(avatar, initialLabel);
@@ -288,12 +343,16 @@ public class ChatController implements ChatCallView {
                         Label nameLbl = new Label(name);
                         nameLbl.setTextFill(Color.WHITE);
                         nameLbl.setFont(Font.font("System", FontWeight.BOLD, 14));
+                        textInfo.getChildren().add(nameLbl);
 
-                        Label lastMsg = new Label("Bấm để bắt đầu chat...");
-                        lastMsg.setTextFill(Color.web("#8B92A5"));
-                        lastMsg.setFont(Font.font("System", 11));
 
-                        textInfo.getChildren().addAll(nameLbl, lastMsg);
+                        if (u != null && usersWithNewMessages.contains(u.getId())) {
+                            Label newMsgNotify = new Label("Có tin nhắn mới");
+                            newMsgNotify.setFont(Font.font("System", FontWeight.BOLD, 11));
+                            textInfo.getChildren().add(newMsgNotify);
+                            nameLbl.setTextFill(Color.web("#AD7BFF"));
+                        }
+
                         root.getChildren().addAll(avatarStack, textInfo);
                         setGraphic(root);
                         setText(null);
@@ -313,11 +372,11 @@ public class ChatController implements ChatCallView {
 
             if (selectedItem.equals(ANNOUNCEMENT_LABEL)) {
                 msg = TextMessage.createBroadcast(me, messageText);
-                addMessageToScreen(messageText, "Me", true, msg.getSentAt());
+                addMessageToScreen(messageText, true, msg.getSentAt());
 
             } else {
                 msg = TextMessage.createPrivate(me, selectedConversationUser, messageText);
-                addMessageToScreen(messageText, "Me -> " + selectedConversationUser.getNickname(), true, msg.getSentAt());
+                addMessageToScreen(messageText, true, msg.getSentAt());
             }
 
             DataPacket packet = new DataPacket(TypeDataPacket.CHAT_MESSAGE, msg);
@@ -340,35 +399,36 @@ public class ChatController implements ChatCallView {
                 String senderName = isMe ? "Me" : msg.getSender().getNickname();
 
                 if (msg.getTypeMessage() == TypeMessage.TEXT)
-                    addMessageToScreen(msg.getContent(), senderName, isMe, msg.getSentAt());
+                    addMessageToScreen(msg.getContent(), isMe, msg.getSentAt());
                 else if(msg.getTypeMessage() == TypeMessage.IMAGE)
                 {
                     ImageView imageView = new ImageView();
                     imageView.setFitWidth(250);
                     imageView.setPreserveRatio(true);
 
-                    addImageToScreen(imageView, msg.getSender().getNickname(), isMe, msg.getSentAt());
+                    addImageToScreen(imageView, isMe, msg.getSentAt());
                     client.sendRequestDownload(msg.getContent(), imageView);
                 }
                 else
                 {
-                    addFileToScreen(msg.getContent(), msg.getFileName(), null,senderName, isMe, msg.getSentAt());
+                    addFileToScreen(msg.getContent(), msg.getFileName(), null, isMe, msg.getSentAt());
                 }
             }
         });
     }
 
 
-    private void addMessageToScreen(String text, String senderName, boolean isMe, String time) {
+    private void addMessageToScreen(String text, boolean isMe, String time) {
         Label lblMessage = new Label(text);
         lblMessage.setWrapText(true);
         lblMessage.setMaxWidth(400);
+        lblMessage.setFont(Font.font("System", 16));
 
         Label lblTime = new Label(time);
-        lblTime.setStyle("-fx-font-size: 10px; -fx-text-fill: #919191;");
+        lblTime.getStyleClass().add("chat-time");
 
         if (isMe) {
-            lblMessage.setStyle("-fx-background-color: #AD7BFF; -fx-text-fill: black; -fx-background-radius: 15px; -fx-padding: 8px 12px;");
+            lblMessage.setStyle("-fx-background-color: #AD7BFF; -fx-text-fill: white; -fx-background-radius: 15px; -fx-padding: 8px 12px;");
         } else {
             lblMessage.setStyle("-fx-background-color: #1E2435; -fx-text-fill: white; -fx-background-radius: 15px; -fx-padding: 8px 12px;");
         }
@@ -376,14 +436,7 @@ public class ChatController implements ChatCallView {
         VBox messageGroup = new VBox(3);
 
         if (!isMe) {
-            Label lblSender = new Label(senderName);
-
-            lblSender.setStyle("-fx-font-size: 11px; -fx-text-fill: #8B92A5; -fx-padding: 0 0 0 5px;");
-
-            HBox header = new HBox(8, lblSender, lblTime);
-            header.setAlignment(Pos.BOTTOM_LEFT);
-
-            messageGroup.getChildren().add(header);
+            messageGroup.getChildren().add(lblTime);
 
             messageGroup.setAlignment(Pos.TOP_LEFT);
 
@@ -411,14 +464,14 @@ public class ChatController implements ChatCallView {
         vboxMessage.getChildren().add(hboxContainer);
     }
 
-    private void addImageToScreen(ImageView imageView, String senderName, boolean isMe, String time) {
+    private void addImageToScreen(ImageView imageView, boolean isMe, String time) {
 
         imageView.setFitWidth(250);
         imageView.setPreserveRatio(true);
 
 
         Label lblTime = new Label(time);
-        lblTime.setStyle("-fx-font-size: 10px; -fx-text-fill: #919191;");
+        lblTime.getStyleClass().add("chat-time");
 
 
         ContextMenu imageMenu = new ContextMenu();
@@ -461,15 +514,7 @@ public class ChatController implements ChatCallView {
         VBox messageGroup = new VBox(3);
 
         if (!isMe) {
-            Label lblSender = new Label(senderName);
-
-            lblSender.setStyle("-fx-font-size: 11px; -fx-text-fill: #8B92A5; -fx-padding: 0 0 0 5px;");
-
-            HBox header = new HBox(8, lblSender, lblTime);
-
-            header.setAlignment(Pos.BOTTOM_LEFT);
-            messageGroup.getChildren().add(header);
-
+            messageGroup.getChildren().add(lblTime);
             messageGroup.setAlignment(Pos.TOP_LEFT);
         } else {
             messageGroup.getChildren().add(lblTime);
@@ -497,26 +542,42 @@ public class ChatController implements ChatCallView {
     public void receiveMessage(Message msg) {
         Platform.runLater(() -> {
 
+            User sender = msg.getSender();
             String selectedItem = lvChatList.getSelectionModel().getSelectedItem();
 
             boolean isAnnouncementTab = selectedItem.equals(ANNOUNCEMENT_LABEL);
             boolean isChattingWithSender = (selectedConversationUser != null &&
-                    msg.getSender().getId().equals(selectedConversationUser.getId()));
+                    sender.getId().equals(selectedConversationUser.getId()));
 
-            String senderName = msg.getSender().getNickname();
+            boolean isCurrentTab = false;
+            if (msg.isBroadcast()) {
+                isCurrentTab = ANNOUNCEMENT_LABEL.equals(selectedItem);
+            } else {
+                isCurrentTab = (selectedConversationUser != null && sender.getId().equals(selectedConversationUser.getId()));
+            }
+
+
+            if (!isCurrentTab && !sender.getId().equals(me.getId())) {
+                if (msg.isBroadcast()) {
+                    usersWithNewMessages.add(0);
+                } else {
+                    usersWithNewMessages.add(sender.getId());
+                }
+                lvChatList.refresh();
+            }
 
             if ((msg.isBroadcast() && isAnnouncementTab) || (!msg.isBroadcast() && isChattingWithSender)) {
                 if (msg instanceof ImageMessage) {
                     ImageMessage imgMsg = (ImageMessage) msg;
                     Image img = new Image(new ByteArrayInputStream(imgMsg.getImageData()));
                     ImageView imageView = new ImageView(img);
-                    addImageToScreen(imageView, senderName, false, msg.getSentAt());
+                    addImageToScreen(imageView, false, msg.getSentAt());
 
                 } else if (msg instanceof FileMessage) {
                     FileMessage fileMsg = (FileMessage) msg;
-                    addFileToScreen(fileMsg.getContent(),fileMsg.getFileName(), fileMsg.getFileData(), senderName, false, msg.getSentAt());
+                    addFileToScreen(fileMsg.getContent(),fileMsg.getFileName(), fileMsg.getFileData(), false, msg.getSentAt());
                 } else {
-                    addMessageToScreen(msg.getContent(), senderName, false, msg.getSentAt());
+                    addMessageToScreen(msg.getContent(), false, msg.getSentAt());
                 }
             }
 
@@ -552,7 +613,7 @@ public class ChatController implements ChatCallView {
                     } else {
                         msg = ImageMessage.createPrivate(me, selectedConversationUser, fileBytes, extension);
                     }
-                    addImageToScreen(new ImageView(new Image(new ByteArrayInputStream(fileBytes))), "Me", true, msg.getSentAt());
+                    addImageToScreen(new ImageView(new Image(new ByteArrayInputStream(fileBytes))), true, msg.getSentAt());
                 } else {
                     if (selectedItem.equals(ANNOUNCEMENT_LABEL)) {
                         msg = FileMessage.createBroadcast(me, fileBytes, fileName, extension);
@@ -560,7 +621,7 @@ public class ChatController implements ChatCallView {
                     } else {
                         msg = FileMessage.createPrivate(me, selectedConversationUser, fileBytes, fileName, extension);
                     }
-                    addFileToScreen(null,fileName, fileBytes, "Me", true, msg.getSentAt());
+                    addFileToScreen(null,fileName, fileBytes, true, msg.getSentAt());
                 }
 
                 client.sendData(new DataPacket(TypeDataPacket.CHAT_MESSAGE, msg));
@@ -572,7 +633,7 @@ public class ChatController implements ChatCallView {
         }
     }
 
-    private void addFileToScreen(String serverUUID, String fileName, byte[] fileData, String senderName, boolean isMe, String time) {
+    private void addFileToScreen(String serverUUID, String fileName, byte[] fileData, boolean isMe, String time) {
 
         Label lblTime = new Label(time);
         lblTime.setStyle("-fx-font-size: 10px; -fx-text-fill: #919191;");
@@ -580,12 +641,9 @@ public class ChatController implements ChatCallView {
         VBox messageGroup = new VBox(3);
 
         if (!isMe) {
-            Label lblSender = new Label(senderName);
 
-            lblSender.setStyle("-fx-font-size: 11px; -fx-text-fill: #8B92A5; -fx-padding: 0 0 0 5px;");
-            HBox header = new HBox(8, lblSender, lblTime);
-            header.setAlignment(Pos.BOTTOM_LEFT);
-            messageGroup.getChildren().add(header);
+
+            messageGroup.getChildren().add(lblTime);
 
             messageGroup.setAlignment(Pos.TOP_LEFT);
         } else {
@@ -634,9 +692,7 @@ public class ChatController implements ChatCallView {
         } else {
             hboxContainer.setAlignment(Pos.CENTER_LEFT);
         }
-//        Platform.runLater(() -> {
-//            vboxMessage.getChildren().add(hboxContainer);
-//        });
+
         vboxMessage.getChildren().add(hboxContainer);
     }
 
@@ -836,7 +892,7 @@ public class ChatController implements ChatCallView {
             return onlineUser;
         }
 
-        // 3. Nếu không thấy trong danh sách (người lạ hoặc offline), tạo mới object tạm
+
         User user = new User(username);
         user.setNickname((nickname != null && !nickname.isBlank()) ? nickname : username);
         return user;

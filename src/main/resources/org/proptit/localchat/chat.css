@@ -15,7 +15,7 @@
 
 .workspace-name {
     -fx-text-fill: #FFFFFF;
-    -fx-font-size: 16px;
+    -fx-font-size: 30px;
     -fx-font-weight: bold;
 }
 
@@ -25,8 +25,8 @@
 }
 
 .section-title {
-    -fx-text-fill: #8B92A5;
-    -fx-font-size: 11px;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-letter-spacing: 1px;
 }
@@ -140,7 +140,7 @@
 
 .btn-icon {
     -fx-background-color: transparent;
-    -fx-text-fill: #8B92A5;
+    -fx-text-fill: #FFFFFF;
     -fx-font-size: 16px;
     -fx-cursor: hand;
     -fx-padding: 4 8 4 8;
@@ -242,4 +242,10 @@
 
 .icon-svg-send {
     -fx-fill: #000000;
+}
+
+.chat-time {
+    -fx-font-size: 11px;
+    -fx-text-fill: #919191;
+    -fx-padding: 0 5 0 5;
 }
