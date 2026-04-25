@@ -53,7 +53,7 @@ public class ClientHandler implements Runnable {
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
 
-            AuthService authService = new AuthService(new UserDao());
+            AuthService authService = new AuthService(new UserDao(), new MessageDao());
 
             Object receivedData;
             while ((receivedData = in.readObject()) != null)
@@ -114,9 +114,11 @@ public class ClientHandler implements Runnable {
                         sendData(new DataPacket(TypeDataPacket.RETURN_ONLINE_USERS, onlineUsers));
                         break;
                     case TypeDataPacket.DELETE_USER_REQUEST:
+                    {
                         int id = (int)data.getData();
                         userDao.deleteUser(id);
                         break;
+                    }
                     case TypeDataPacket.ADD_USER_REQUEST:
                         User user = (User)data.getData();
                         if(userDao.findByUsername(user.getUsername()) == null)
@@ -133,6 +135,7 @@ public class ClientHandler implements Runnable {
                         }
                         break;
                     case TypeDataPacket.GET_HISTORY_REQUEST:
+                    {
                         Integer partnerId = (Integer) data.getData();
                         List<Message> history;
                         if(partnerId == null)
@@ -141,6 +144,7 @@ public class ClientHandler implements Runnable {
                             history = messageDao.getHistory(this.user.getId(), partnerId);
                         sendData(new DataPacket(TypeDataPacket.RETURN_HISTORY, history));
                         break;
+                    }
 
                     case TypeDataPacket.DOWNLOAD_IMAGE_REQUEST:
                     {
@@ -212,6 +216,20 @@ public class ClientHandler implements Runnable {
                             System.out.println("Cập nhật thất bại");
                         }
                         break;
+                    case MARK_AS_READ:
+                        Integer partnerId = (Integer) data.getData();
+                        if (this.user != null) {
+
+                            messageDao.updateReadStatus(this.user.getId(), partnerId);
+                        }
+                        break;
+                    case TypeDataPacket.GET_OFFLINE_NOTIFICATIONS:
+                        if (this.user != null) {
+                            List<Integer> unreadIds = messageDao.getOfflineNotificationIds(this.user.getId());
+                            System.out.println("DEBUG SERVER: Gui thong bao cho " + this.user.getNickname() + ": " + unreadIds);
+                            sendData(new DataPacket(TypeDataPacket.RETURN_OFFLINE_NOTIFICATIONS, unreadIds));
+                        }
+                        break;
 
 
 
@@ -227,11 +245,13 @@ public class ClientHandler implements Runnable {
     }
 
     public void sendData(Object obj) {
-        try {
-            out.writeObject(obj);
-            out.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
+        synchronized (out) {
+            try {
+                out.writeObject(obj);
+                out.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 

@@ -35,9 +35,26 @@ VALUES ('ducanh', '$2a$12$AwqraqEAznNZdB7lVomfCOJ8i7Y5XRRuNTFFWLIYTby2tDL50FkDS'
 		('vantoan', '$2a$12$NQmQoGxVptAY0sqUk5t5C.hY2EjKVcQEArWR9LpVT8zpVRrUQeU7G', 'Van Toan', 'MANAGER');
 
 ---------
--chạy cái này để tạo cột avatar trong table users
+---chạy cái này để tạo cột avatar trong table users
 USE localchat;
 ALTER TABLE users ADD COLUMN avatar LONGBLOB AFTER role;
+
+
+---Chạy cái này để xóa 2 cột file_size và file_path trong table messages
+USE localchat;
+ALTER TABLE messages DROP COLUMN file_size;
+USE localchat;
+ALTER TABLE messages DROP COLUMN file_path;
+
+---Chạy cái này để tạo table conversation_status : dùng để check tin nhắn đã read
+USE localchat;
+CREATE TABLE conversation_status (
+    user_id INT,
+    partner_id INT, -- Nếu partner_id = 0, hiểu là Thông báo chung
+    last_read_message_id INT,
+    PRIMARY KEY (user_id, partner_id)
+);
+
 ---------
 --Chạy cái SQL này, để tạo table messages
 USE localchat;

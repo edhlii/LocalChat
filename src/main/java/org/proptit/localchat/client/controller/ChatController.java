@@ -103,6 +103,8 @@ public class ChatController implements ChatCallView {
                     usersWithNewMessages.remove(0);
                     lvChatList.refresh();
 
+                    client.sendData(new DataPacket(TypeDataPacket.MARK_AS_READ, 0));
+
                     selectedConversationUser = null;
                     clearMessageArea();
 
@@ -127,6 +129,9 @@ public class ChatController implements ChatCallView {
                     {
                         usersWithNewMessages.remove(newUser.getId());
                         lvChatList.refresh();
+
+                        client.sendData(new DataPacket(TypeDataPacket.MARK_AS_READ, newUser.getId()));
+
                         selectedConversationUser = newUser;
                         clearMessageArea();
                         System.out.println("DEBUG: Load lịch sử với " + selectedConversationUser.getNickname());
@@ -168,6 +173,8 @@ public class ChatController implements ChatCallView {
 
 
         client.sendData(new DataPacket(TypeDataPacket.GET_CHAT_CONTACTS, null));
+
+        client.sendData(new DataPacket(TypeDataPacket.GET_OFFLINE_NOTIFICATIONS, null));
     }
     private void renderChatListByKeyword(String keyword) {
         String normalizedKeyword = (keyword == null) ? "" : keyword.trim().toLowerCase();
@@ -920,5 +927,13 @@ public class ChatController implements ChatCallView {
     }
 
     public void onVideoCallButtonClick(ActionEvent actionEvent) {
+    }
+    public void setOfflineMessages(List<Integer> unreadIds) {
+        Platform.runLater(() -> {
+            if (unreadIds != null && !unreadIds.isEmpty()) {
+                usersWithNewMessages.addAll(unreadIds);
+                lvChatList.refresh();
+            }
+        });
     }
 }
