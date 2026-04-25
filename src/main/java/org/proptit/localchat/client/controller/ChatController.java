@@ -305,6 +305,7 @@ public class ChatController implements ChatCallView {
                     if (empty || item == null || item.equals("No conversations")) {
                         setGraphic(null);
                         setText(null);
+                        setTooltip(null);
                     }
                     else if(item.equals(ANNOUNCEMENT_LABEL))
                     {
@@ -397,6 +398,11 @@ public class ChatController implements ChatCallView {
                             textInfo.getChildren().add(newMsgNotify);
                             nameLbl.setTextFill(Color.web("#AD7BFF"));
                         }
+
+                        Tooltip tip = new Tooltip(u.getUsername());
+                        tip.setShowDelay(javafx.util.Duration.millis(200));
+
+                        setTooltip(tip);
 
                         root.getChildren().addAll(avatarStack, textInfo);
                         setGraphic(root);

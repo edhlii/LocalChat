@@ -249,3 +249,13 @@
     -fx-text-fill: #919191;
     -fx-padding: 0 5 0 5;
 }
+
+.tooltip {
+    -fx-background-color: #1A1E29;
+    -fx-text-fill: white;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-border-color: #3A404F;
+    -fx-padding: 8px 12px;
+    -fx-font-size: 12px;
+}
