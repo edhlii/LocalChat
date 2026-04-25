@@ -35,6 +35,10 @@ VALUES ('ducanh', '$2a$12$AwqraqEAznNZdB7lVomfCOJ8i7Y5XRRuNTFFWLIYTby2tDL50FkDS'
 		('vantoan', '$2a$12$NQmQoGxVptAY0sqUk5t5C.hY2EjKVcQEArWR9LpVT8zpVRrUQeU7G', 'Van Toan', 'MANAGER');
 
 ---------
+-chạy cái này để tạo cột avatar trong table users
+USE localchat;
+ALTER TABLE users ADD COLUMN avatar LONGBLOB AFTER role;
+---------
 --Chạy cái SQL này, để tạo table messages
 USE localchat;
 CREATE TABLE messages (

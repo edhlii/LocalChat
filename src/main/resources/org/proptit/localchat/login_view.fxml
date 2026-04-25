@@ -46,6 +46,9 @@
                   </HBox>
                </children>
             </VBox>
+             <Label fx:id="lblMessage" alignment="CENTER" maxWidth="1.7976931348623157E308"
+                    managed="false" visible="false"
+                    style="-fx-text-fill: #FF5C5C; -fx-font-weight: bold;" text="" />
             <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onLoginButtonClick" styleClass="btn-primary" text="LOG IN" textFill="#0504040d" />
          </children>
       </VBox>

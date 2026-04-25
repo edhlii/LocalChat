@@ -186,21 +186,35 @@ public class ClientHandler implements Runnable {
                         server.forwardCallSignal(signal);
                         break;
 
-                    case TypeDataPacket.UPDATE_PROFILE_REQUEST:
+                    case TypeDataPacket.UPDATE_PASS_REQUEST:
                         User updateUser = (User) data.getData();
                         updateUser.setPassword(PasswordUtils.hashPassword(updateUser.getPassword()));
-                        boolean isUpdated = userDao.updateUser(updateUser);
+                        boolean isUpdated = userDao.updatePasswordUser(updateUser);
                         if(isUpdated) {
-                            this.user.setNickname(updateUser.getNickname());
                             this.user.setPassword(updateUser.getPassword());
-
-                            sendData(new DataPacket(TypeDataPacket.UPDATE_PROFILE_SUCCESS, this.user));
+                            sendData(new DataPacket(TypeDataPacket.UPDATE_PASS_SUCCESS, userDao.findByUsername(this.user.getUsername())));
                             server.broadcastOnlineUsers();
                         }
                         else {
-                            sendData(new DataPacket(TypeDataPacket.UPDATE_PROFILE_FAILURE, "Cập nhật thất bại!"));
+                            sendData(new DataPacket(TypeDataPacket.UPDATE_PASS_FAILURE, "Cập nhật thất bại!"));
                         }
                         break;
+                    case UPDATE_PROFILE_REQUEST:
+                        User u = (User) data.getData();
+                        if (userDao.updateProfileInfo(u.getId(), u.getNickname(), u.getAvatar())) {
+                            sendData(new DataPacket(TypeDataPacket.UPDATE_PROFILE_SUCCESS, null));
+                            System.out.println("Cập nhật thành công");
+                            server.broadcastOnlineUsers();
+                        }
+                        else
+                        {
+                            sendData(new DataPacket(TypeDataPacket.UPDATE_PROFILE_FAILURE, null));
+                            System.out.println("Cập nhật thất bại");
+                        }
+                        break;
+
+
+
                 }
             }
 

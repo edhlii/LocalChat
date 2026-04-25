@@ -213,7 +213,7 @@ public class MemberManagementController {
         txtNickname.textProperty().addListener(validationListener);
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == btnAddType) {
-                return new User(0, txtUsername.getText().trim(), txtPassword.getText().trim(), txtNickname.getText().trim(), cbRole.getValue());
+                return new User(0, txtUsername.getText().trim(), txtPassword.getText().trim(), txtNickname.getText().trim(), cbRole.getValue(), null);
             }
             return null;
         });

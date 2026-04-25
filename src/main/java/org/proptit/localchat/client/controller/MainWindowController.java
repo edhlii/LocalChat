@@ -31,6 +31,8 @@ public class MainWindowController {
     @FXML
     private MemberManagementController memberManagerAreaController;
 
+    private UserSettingsController userSettingsController;
+
 
     private SocketClient client;
     private User me;
@@ -113,20 +115,33 @@ public class MainWindowController {
     }
 
     @FXML
-    void onChangePasswordAction(ActionEvent event) {
+    void onChangeInfoAction(ActionEvent event) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/proptit/localchat/change_password.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/proptit/localchat/user_setting.fxml"));
             VBox root = loader.load();
 
-            ChangePasswordController controller = loader.getController();
-            controller.setup(this.client, this.me);
+
+            this.userSettingsController = loader.getController();
+
+
+            this.userSettingsController.init(this.client, this.me);
 
             Stage stage = new Stage();
-            stage.setTitle("Đổi mật khẩu - LocalChat");
+            stage.setTitle("User Profile - LocalChat");
             stage.setScene(new Scene(root));
+
+
+            stage.setOnCloseRequest(e -> {
+                this.userSettingsController = null;
+            });
+
             stage.show();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public UserSettingsController getUserSettingsController() {
+        return userSettingsController;
     }
 }
