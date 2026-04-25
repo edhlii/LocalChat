@@ -181,7 +181,7 @@ public class ChatController implements ChatCallView {
 
 
         lvChatList.getItems().clear();
-        conversationUserMap.clear();
+        lvChatList.getItems().clear();
 
 
         lvChatList.getItems().add(ANNOUNCEMENT_LABEL);
@@ -244,18 +244,40 @@ public class ChatController implements ChatCallView {
                         StackPane avatarContainer = new StackPane();
                         avatarContainer.setMaxSize(52, 52);
 
-                        Circle avatarBg = new Circle(26, Color.web("#2A3042"));
-                        String initialLetter = item.substring(0, 1).toUpperCase();
-                        Label initialLabel = new Label(initialLetter);
-                        initialLabel.setTextFill(Color.WHITE);
-                        initialLabel.setFont(Font.font("System", FontWeight.BOLD, 22));
+                        Circle avatarCircle = new Circle(26, Color.web("#2A3042"));
+                        avatarCircle.setStroke(Color.WHITE);
+                        avatarCircle.setStrokeWidth(2);
+
+
+                        String name = item.contains("(@") ? item.substring(0, item.indexOf("(@")).trim() : item;
+                        User u = conversationUserMap.get(item);
+
+                        if (u != null && u.getAvatar() != null && u.getAvatar().length != 0) {
+                            try {
+                                Image img = new Image(new ByteArrayInputStream(u.getAvatar()));
+
+                                if (!img.isError()) {
+                                    avatarCircle.setFill(new javafx.scene.paint.ImagePattern(img));
+                                    //avatarContainer.getChildren().clear();
+                                    avatarContainer.getChildren().add(avatarCircle);
+                                } else {
+                                    setDefaultAvatar(avatarContainer, avatarCircle, name, 22);
+                                }
+                            } catch (Exception e) {
+
+                                setDefaultAvatar(avatarContainer, avatarCircle, name, 22);
+                            }
+                        } else {
+
+                            setDefaultAvatar(avatarContainer, avatarCircle, name, 22);
+                        }
+
 
                         Circle onlineDot = new Circle(7, Color.web("#23A559"));
                         onlineDot.setStroke(Color.web("#0B0F19"));
                         onlineDot.setStrokeWidth(2.5);
                         StackPane.setAlignment(onlineDot, Pos.BOTTOM_RIGHT);
-
-                        avatarContainer.getChildren().addAll(avatarBg, initialLabel, onlineDot);
+                        avatarContainer.getChildren().add(onlineDot);
 
                         String nickname = item.contains("(@") ? item.substring(0, item.indexOf("(@")).trim() : item;
                         if (nickname.length() > 10) {
@@ -321,22 +343,38 @@ public class ChatController implements ChatCallView {
                         root.setPadding(new Insets(8, 12, 8, 12));
 
                         StackPane avatarStack = new StackPane();
-                        Circle avatar = new Circle(20, Color.web("#2A3042"));
+                        Circle avatarCircle = new Circle(20, Color.web("#2A3042"));
+                        avatarCircle.setStroke(Color.WHITE);
+                        avatarCircle.setStrokeWidth(1);
 
                         VBox textInfo = new VBox(2);
                         textInfo.setAlignment(Pos.CENTER_LEFT);
 
 
                         String name = item.contains("(@") ? item.substring(0, item.indexOf("(@")).trim() : item;
-                        String initialLetter = name.isEmpty() ? "?" : name.substring(0, 1).toUpperCase();
-
-                        Label initialLabel = new Label(initialLetter);
-                        initialLabel.setTextFill(Color.WHITE);
-                        initialLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
-
-                        avatarStack.getChildren().addAll(avatar, initialLabel);
-
                         User u = conversationUserMap.get(item);
+
+                        if (u != null && u.getAvatar() != null && u.getAvatar().length != 0) {
+                            try {
+                                Image img = new Image(new ByteArrayInputStream(u.getAvatar()));
+
+                                if (!img.isError()) {
+                                    avatarCircle.setFill(new javafx.scene.paint.ImagePattern(img));
+                                    avatarStack.getChildren().clear();
+                                    avatarStack.getChildren().add(avatarCircle);
+                                } else {
+                                    setDefaultAvatar(avatarStack, avatarCircle, name, 14);
+                                }
+                            } catch (Exception e) {
+                                setDefaultAvatar(avatarStack, avatarCircle, name, 14);
+                            }
+                        } else {
+                            setDefaultAvatar(avatarStack, avatarCircle, name, 14);
+                        }
+
+
+
+
                         if (u != null && onlineUserIds.contains(u.getId())) {
                             Circle onlineDot = new Circle(6, Color.web("#23A559"));
                             onlineDot.setStroke(Color.web("#1E2435"));
@@ -367,6 +405,16 @@ public class ChatController implements ChatCallView {
                 }
             });
         }
+    }
+
+    private void setDefaultAvatar(StackPane stack, Circle circle, String name, int fontSize) {
+        stack.getChildren().clear();
+        circle.setFill(Color.web("#2A3042"));
+        String initial = (name == null || name.isEmpty()) ? "?" : name.substring(0, 1).toUpperCase();
+        Label initialLabel = new Label(initial);
+        initialLabel.setTextFill(Color.WHITE);
+        initialLabel.setFont(Font.font("System", FontWeight.BOLD, fontSize));
+        stack.getChildren().addAll(circle, initialLabel);
     }
 
     @FXML
@@ -733,7 +781,11 @@ public class ChatController implements ChatCallView {
 
 
             List<String> onlineNames = users.stream()
-                    .map(user -> user.getNickname() + " (@" + user.getUsername() + ")")
+                    .map(user -> {
+                        String label = user.getNickname() + " (@" + user.getUsername() + ")";
+                        conversationUserMap.put(label, user);
+                        return label;
+                    })
                     .collect(Collectors.toList());
             lvOnlinePeople.getItems().setAll(onlineNames);
 

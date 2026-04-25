@@ -219,14 +219,12 @@ public class ClientHandler implements Runnable {
                     case MARK_AS_READ:
                         Integer partnerId = (Integer) data.getData();
                         if (this.user != null) {
-
                             messageDao.updateReadStatus(this.user.getId(), partnerId);
                         }
                         break;
                     case TypeDataPacket.GET_OFFLINE_NOTIFICATIONS:
                         if (this.user != null) {
                             List<Integer> unreadIds = messageDao.getOfflineNotificationIds(this.user.getId());
-                            System.out.println("DEBUG SERVER: Gui thong bao cho " + this.user.getNickname() + ": " + unreadIds);
                             sendData(new DataPacket(TypeDataPacket.RETURN_OFFLINE_NOTIFICATIONS, unreadIds));
                         }
                         break;
