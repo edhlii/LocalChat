@@ -171,6 +171,13 @@ public class ChatController implements ChatCallView {
             });
         }
 
+        messageInput.setOnKeyPressed(event -> {
+            if (event.getCode() == javafx.scene.input.KeyCode.ENTER) {
+                onSendButtonClick(new ActionEvent());
+                event.consume();
+            }
+        });
+
 
         client.sendData(new DataPacket(TypeDataPacket.GET_CHAT_CONTACTS, null));
 
