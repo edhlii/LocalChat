@@ -46,6 +46,13 @@
                   </HBox>
                </children>
             </VBox>
+
+            <Label fx:id="lblMessage" textFill="#ff4757" wrapText="true">
+               <font>
+                  <Font name="System Bold" size="13.0" />
+               </font>
+            </Label>
+
             <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onLoginButtonClick" styleClass="btn-primary" text="LOG IN" textFill="#0504040d" />
          </children>
       </VBox>

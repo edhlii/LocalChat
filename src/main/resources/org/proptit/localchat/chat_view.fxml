@@ -21,12 +21,16 @@
                 <HBox alignment="CENTER_LEFT" prefHeight="70.0" styleClass="sidebar-header">
                     <children>
                         <VBox alignment="CENTER_LEFT" spacing="2.0">
-                            <Label styleClass="workspace-name" text="LocalChat Workspace" />
+                            <Label styleClass="workspace-name" text="LocalChat" />
                             <HBox alignment="CENTER_LEFT" spacing="5.0">
                                 <Circle fill="#23A559" radius="4.0" />
                                 <Label styleClass="status-text" text="Connected" />
                             </HBox>
                         </VBox>
+
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button minWidth="30.0" onAction="#onCreateGroupClick" style="-fx-background-color: #3A3B3C; -fx-text-fill: #E4E6EB; -fx-background-radius: 6; -fx-font-weight: bold; -fx-cursor: hand; -fx-font-size: 14px;" text="+" />
+
                     </children>
                     <padding>
                         <Insets left="20.0" right="20.0" />
@@ -53,6 +57,16 @@
                         <Label styleClass="section-title" text="CONVERSATIONS" />
                         <Region HBox.hgrow="ALWAYS" />
                     </HBox>
+                    <HBox alignment="CENTER" spacing="0" style="-fx-background-color: #F0F2F5; -fx-background-radius: 8;">
+                        <padding>
+                            <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
+                        </padding>
+                        <children>
+                            <Button fx:id="btnTabAll" maxWidth="Infinity" HBox.hgrow="ALWAYS" onAction="#onTabAllClick" style="-fx-background-color: #0084FF; -fx-text-fill: white; -fx-background-radius: 6; -fx-font-weight: bold;" text="All" />
+                            <Button fx:id="btnTabGroups" maxWidth="Infinity" HBox.hgrow="ALWAYS" onAction="#onTabGroupsClick" style="-fx-background-color: transparent; -fx-text-fill: #65676B; -fx-background-radius: 6; -fx-font-weight: bold;" text="Groups" />
+                        </children>
+                    </HBox>
+                    
                     <ListView fx:id="lvChatList" styleClass="custom-list-view" VBox.vgrow="ALWAYS" />
                 </VBox>
 

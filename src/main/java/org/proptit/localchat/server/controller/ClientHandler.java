@@ -2,6 +2,7 @@ package org.proptit.localchat.server.controller;
 
 import org.proptit.localchat.common.enums.TypeDataPacket;
 import org.proptit.localchat.common.enums.TypeMessage;
+import org.proptit.localchat.common.models.ChatGroup;
 import org.proptit.localchat.common.models.DataPacket;
 
 import org.proptit.localchat.common.models.message.FileMessage;
@@ -13,6 +14,7 @@ import org.proptit.localchat.common.models.message.Message;
 import org.proptit.localchat.common.models.User;
 import org.proptit.localchat.common.utils.PasswordUtils;
 import org.proptit.localchat.server.config.StorageConfig;
+import org.proptit.localchat.server.dao.GroupDao;
 import org.proptit.localchat.server.dao.MessageDao;
 import org.proptit.localchat.server.dao.UserDao;
 import org.proptit.localchat.server.networks.SocketServer;
@@ -26,6 +28,7 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -37,7 +40,9 @@ public class ClientHandler implements Runnable {
     private ObjectInputStream in;
     private User user;
     private UserDao userDao = new UserDao();
+    private GroupDao groupDao = new GroupDao();
     private StorageFileService storageFileServicefileService = new StorageFileService();
+
 
     private static final ExecutorService dbExecutor = Executors.newFixedThreadPool(10);
     private MessageDao messageDao = new MessageDao();
@@ -46,6 +51,7 @@ public class ClientHandler implements Runnable {
         this.socket = socket;
         this.server = server;
     }
+
 
     @Override
     public void run() {
@@ -200,6 +206,55 @@ public class ClientHandler implements Runnable {
                         else {
                             sendData(new DataPacket(TypeDataPacket.UPDATE_PROFILE_FAILURE, "Cập nhật thất bại!"));
                         }
+                        break;
+                    case CREATE_GROUP_REQUEST:
+                        System.out.println("SERVER: Đã nhận yêu cầu tạo nhóm!");
+                        ChatGroup requestedGroup = (ChatGroup) data.getData();
+
+                        List<Integer> memberIds = new ArrayList<>();
+                        for (User member : requestedGroup.getMembers()) {
+                            memberIds.add(member.getId());
+                        }
+
+                        int newGroupId = groupDao.createGroup(
+                                requestedGroup.getName(),
+                                requestedGroup.getCreatedBy().getId(),
+                                memberIds
+                        );
+
+                        if (newGroupId != -1) {
+                            System.out.println("SERVER: Tạo nhóm thành công! ID = " + newGroupId);
+                            requestedGroup.setId(newGroupId);
+
+                            for (ClientHandler ch : server.getClients()) {
+                                if (ch.getUser() != null) {
+                                    boolean isMember = false;
+                                    for (User member : requestedGroup.getMembers()) {
+                                        if (member.getId().equals(ch.getUser().getId()) || (int) member.getId() == (int) ch.getUser().getId()) {
+                                            isMember = true;
+                                            break;
+                                        }
+                                    }
+
+                                    if (isMember) {
+                                        ch.sendData(new DataPacket(TypeDataPacket.CREATE_GROUP_SUCCESS, requestedGroup));
+                                    }
+                                }
+                            }
+                        } else {
+                            System.out.println("SERVER: Lỗi DB khi tạo nhóm!");
+                            sendData(new DataPacket(TypeDataPacket.CREATE_GROUP_FAILURE, "Lỗi DB khi tạo nhóm!"));
+                        }
+                        break;
+                    case GET_MY_GROUPS_REQUEST:
+                        int myUserId = (int) data.getData();
+                        List<ChatGroup> myGroups = groupDao.getGroupsByUserId(myUserId);
+                        sendData(new DataPacket(TypeDataPacket.RETURN_MY_GROUPS, myGroups));
+                        break;
+                    case GET_GROUP_HISTORY_REQUEST:
+                        Integer groupIdForHistory = (Integer) data.getData();
+                        List<Message> groupHistory = messageDao.getGroupHistory(groupIdForHistory);
+                        sendData(new DataPacket(TypeDataPacket.RETURN_HISTORY, groupHistory));
                         break;
                 }
             }
