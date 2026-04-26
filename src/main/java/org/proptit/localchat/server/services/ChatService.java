@@ -50,7 +50,7 @@ public class ChatService {
         DataPacket packet = new DataPacket(TypeDataPacket.CHAT_MESSAGE, msg);
 
         for (ClientHandler client : clients) {
-            if (client.getUser().getNickname().equalsIgnoreCase(msg.getReceiverNickname())) {
+            if (client.getUser().getId().equals(msg.getReceiver().getId())) {
                 client.sendData(packet);
                 return;
             }

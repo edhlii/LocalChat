@@ -1,31 +1,42 @@
 package org.proptit.localchat.common.models.message;
 
+import org.proptit.localchat.common.enums.TypeMessage;
 import org.proptit.localchat.common.models.User;
 
 import java.io.Serializable;
 
 public class TextMessage extends Message implements Serializable {
-    private String content;
+
 
     protected TextMessage(User sender, String content) {
-        super(sender);
-        this.content = content;
+        super(sender, content);
+
     }
 
     public static TextMessage createBroadcast(User admin, String content) {
         TextMessage msg = new TextMessage(admin, content);
         msg.isBroadcast = true;
+        msg.setTypeMessage(TypeMessage.TEXT);
         return msg;
     }
 
-    public static TextMessage createPrivate(User sender, String receiver, String content) {
+    public static TextMessage createPrivate(User sender, User receiver, String content) {
         TextMessage msg = new TextMessage(sender, content);
-        msg.receiverNickname = receiver;
+        msg.setReceiver(receiver);
+        msg.receiverNickname = receiver.getNickname();
         msg.isBroadcast = false;
+        msg.setTypeMessage(TypeMessage.TEXT);
         return msg;
     }
-
-    public String toString() {
-        return "[" + timestamp + "] " + ": " + content;
+    @Override
+    public String getFileName()
+    {
+        return null;
     }
+    public void setFileName(String fileName)
+    {
+
+    }
+
+
 }
