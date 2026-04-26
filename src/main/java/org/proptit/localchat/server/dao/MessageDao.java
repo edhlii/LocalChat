@@ -16,28 +16,35 @@ import java.util.List;
 public class MessageDao {
 
     public Integer save(Message msg) {
-        try (Connection c = DbConnection.openConnection())
-        {
-            System.out.println(msg.getTypeMessage().name());
-            String sql = "INSERT INTO messages (sender_id, receiver_id, message_type, content, file_name) VALUES (?, ?, ?, ?, ?)";
+        try (Connection c = DbConnection.openConnection()) {
+            // Thêm cột group_id vào câu lệnh SQL
+            String sql = "INSERT INTO messages (sender_id, receiver_id, group_id, message_type, content, file_name) VALUES (?, ?, ?, ?, ?, ?)";
             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
             ps.setInt(1, msg.getSender().getId());
-            if (msg.isBroadcast())
-                ps.setNull(2, Types.INTEGER);
-             else
+
+            // Xử lý receiver_id (nếu là chat 1-1 thì có, còn chat nhóm thì null)
+            if (msg.getReceiver() != null) {
                 ps.setInt(2, msg.getReceiver().getId());
+            } else {
+                ps.setNull(2, Types.INTEGER);
+            }
 
-            ps.setString(3, msg.getTypeMessage().name());
-            ps.setString(4, msg.getContent());
+            // 🌟 NẾU LÀ TIN NHẮN NHÓM THÌ LƯU GROUP ID VÀO
+            if (msg.getGroupId() != null && msg.getGroupId() > 0) {
+                ps.setInt(3, msg.getGroupId());
+            } else {
+                ps.setNull(3, Types.INTEGER);
+            }
 
-            if (msg.getTypeMessage() == TypeMessage.FILE )
-                ps.setString(5, msg.getFileName());
-            else if(msg.getTypeMessage() == TypeMessage.IMAGE)
-                ps.setString(5, msg.getFileName());
-             else
-                ps.setNull(5, Types.VARCHAR);
+            ps.setString(4, msg.getTypeMessage().name());
+            ps.setString(5, msg.getContent());
 
+            if (msg.getTypeMessage() == TypeMessage.FILE || msg.getTypeMessage() == TypeMessage.IMAGE) {
+                ps.setString(6, msg.getFileName());
+            } else {
+                ps.setNull(6, Types.VARCHAR);
+            }
 
             int affectedRows = ps.executeUpdate();
             if (affectedRows > 0) {
@@ -49,7 +56,6 @@ public class MessageDao {
             }
         } catch (Exception e) {
             e.printStackTrace();
-
         }
         return -1;
     }
@@ -126,7 +132,7 @@ public class MessageDao {
             List<Message> history = new ArrayList<>();
             String sql = "SELECT m.*, u.nickname AS sender_nickname FROM messages m " +
                     "JOIN users u ON m.sender_id = u.id " +
-                    "WHERE m.receiver_id IS NULL " +
+                    "WHERE m.receiver_id IS NULL AND m.group_id IS NULL " + // <--- QUAN TRỌNG
                     "ORDER BY sent_at ASC LIMIT 100";
             PreparedStatement ps = c.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
@@ -171,6 +177,59 @@ public class MessageDao {
             e.printStackTrace();
         }
         return null;
+    }
+
+
+    public List<Message> getGroupHistory(int groupId) {
+        try (Connection c = DbConnection.openConnection()) {
+            List<Message> history = new ArrayList<>();
+            String sql = "SELECT m.*, u.nickname AS sender_nickname FROM messages m " +
+                    "JOIN users u ON m.sender_id = u.id " +
+                    "WHERE m.group_id = ? " +
+                    "ORDER BY sent_at ASC LIMIT 100";
+            PreparedStatement ps = c.prepareStatement(sql);
+            ps.setInt(1, groupId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                User sender = new User(rs.getInt("sender_id"));
+                sender.setNickname(rs.getString("sender_nickname"));
+
+                String typeStr = rs.getString("message_type");
+                String content = rs.getString("content");
+                String fileName = rs.getString("file_name");
+
+                Timestamp dbTimestamp = rs.getTimestamp("sent_at");
+                String formattedDate = "";
+                if (dbTimestamp != null) {
+                    formattedDate = dbTimestamp.toLocalDateTime().format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy"));
+                }
+
+                Message msg;
+                if (typeStr.equals("IMAGE")) {
+                    msg = new ImageMessage(sender);
+                    msg.setContent(content);
+                    msg.setTypeMessage(TypeMessage.IMAGE);
+                    msg.setFileName(fileName);
+                } else if (typeStr.equals("FILE")) {
+                    msg = new FileMessage(sender);
+                    msg.setContent(content);
+                    msg.setTypeMessage(TypeMessage.FILE);
+                    msg.setFileName(fileName);
+                } else {
+                    msg = TextMessage.createBroadcast(sender, content);
+                }
+
+                msg.setId(rs.getInt("id"));
+                msg.setGroupId(groupId);
+                msg.setSentAt(formattedDate);
+                history.add(msg);
+            }
+            return history;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return new ArrayList<>();
     }
 
     public List<Integer> getOfflineNotificationIds(int myId) {
@@ -234,5 +293,6 @@ public class MessageDao {
             e.printStackTrace();
         }
     }
+
 
 }

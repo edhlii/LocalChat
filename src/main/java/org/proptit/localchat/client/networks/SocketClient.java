@@ -4,10 +4,14 @@ package org.proptit.localchat.client.networks;
 import javafx.scene.control.Alert;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.stage.Stage;
+import org.proptit.localchat.client.controller.ChatController;
 import org.proptit.localchat.client.controller.LoginController;
 import org.proptit.localchat.client.controller.MainWindowController;
 import org.proptit.localchat.common.enums.TypeDataPacket;
 import javafx.application.Platform;
+import org.proptit.localchat.common.enums.TypeMessage;
+import org.proptit.localchat.common.models.ChatGroup;
 import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.User;
 
@@ -170,6 +174,28 @@ public class SocketClient implements Runnable {
                     }
                 });
 
+                break;
+            case CREATE_GROUP_SUCCESS:
+                ChatGroup newGroup = (ChatGroup) data.getData();
+                ChatController.getInstance().onGroupCreatedSuccess(newGroup);
+                break;
+            case CREATE_GROUP_FAILURE:
+                String errorMsg = (String) data.getData();
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.ERROR, "Lỗi tạo nhóm: " + errorMsg);
+                    alert.show();
+
+                    javafx.stage.Window.getWindows().stream()
+                            .filter(w -> w instanceof Stage)
+                            .map(w -> (Stage) w)
+                            .filter(stage -> "Tạo Nhóm Mới".equals(stage.getTitle()))
+                            .findFirst()
+                            .ifPresent(Stage::close);
+                });
+                break;
+            case RETURN_MY_GROUPS:
+                List<ChatGroup> loadedGroups = (List<ChatGroup>) data.getData();
+                ChatController.getInstance().setMyGroupsList(loadedGroups);
                 break;
         }
     }

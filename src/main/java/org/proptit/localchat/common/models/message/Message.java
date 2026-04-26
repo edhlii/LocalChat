@@ -13,6 +13,7 @@ public abstract class Message implements Serializable {
     protected User sender;
     protected User receiver;
     protected String content;
+    protected Integer groupId;
 
 
     protected String sentAt;
@@ -54,7 +55,8 @@ public abstract class Message implements Serializable {
     }
 
     public boolean isBroadcast() {
-        return isBroadcast;
+        //return isBroadcast;
+        return receiver == null && groupId == null;
     }
 
     public String getReceiverNickname() {
@@ -85,5 +87,11 @@ public abstract class Message implements Serializable {
         this.content = content;
     }
 
+    public Integer getGroupId() {
+        return groupId;
+    }
 
+    public void setGroupId(Integer groupId) {
+        this.groupId = groupId;
+    }
 }
