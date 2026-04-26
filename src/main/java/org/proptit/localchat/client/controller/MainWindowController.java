@@ -1,16 +1,10 @@
 package org.proptit.localchat.client.controller;
 
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import org.proptit.localchat.client.networks.SocketClient;
@@ -18,23 +12,14 @@ import org.proptit.localchat.common.enums.TypeDataPacket;
 import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.User;
 import org.proptit.localchat.common.models.call.CallSignal;
-import org.proptit.localchat.common.models.message.ImageMessage;
 import org.proptit.localchat.common.models.message.Message;
-import org.proptit.localchat.common.models.message.TextMessage;
-import org.proptit.localchat.common.utils.FileUtils;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class MainWindowController {
     @FXML
-    private SplitPane chatArea;
+    private HBox chatArea;
     @FXML
     private AnchorPane memberManagerArea;
 
@@ -45,6 +30,8 @@ public class MainWindowController {
     private ChatController chatAreaController;
     @FXML
     private MemberManagementController memberManagerAreaController;
+
+    private UserSettingsController userSettingsController;
 
 
     private SocketClient client;
@@ -84,6 +71,9 @@ public class MainWindowController {
     public void receiveMessage(Message msg) {
         chatAreaController.receiveMessage(msg);
     }
+    public void updateChatContacts(List<User> contactList) {
+        chatAreaController.setAllMembers(contactList);
+    }
 
     public void addMemberToUI(User user) {
         memberManagerAreaController.addMemberToUI(user);
@@ -93,6 +83,9 @@ public class MainWindowController {
         chatAreaController.receiveCallSignal(signal);
     }
 
+    public ChatController getChatAreaController() {
+        return chatAreaController;
+    }
 
     @FXML
     void onNavMembersClick(ActionEvent event) {
@@ -122,20 +115,33 @@ public class MainWindowController {
     }
 
     @FXML
-    void onChangePasswordAction(ActionEvent event) {
+    void onChangeInfoAction(ActionEvent event) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/proptit/localchat/change_password.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/proptit/localchat/user_setting.fxml"));
             VBox root = loader.load();
 
-            ChangePasswordController controller = loader.getController();
-            controller.setup(this.client, this.me);
+
+            this.userSettingsController = loader.getController();
+
+
+            this.userSettingsController.init(this.client, this.me);
 
             Stage stage = new Stage();
-            stage.setTitle("Đổi mật khẩu - LocalChat");
+            stage.setTitle("User Profile - LocalChat");
             stage.setScene(new Scene(root));
+
+
+            stage.setOnCloseRequest(e -> {
+                this.userSettingsController = null;
+            });
+
             stage.show();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public UserSettingsController getUserSettingsController() {
+        return userSettingsController;
     }
 }

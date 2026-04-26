@@ -6,64 +6,70 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
-<?import javafx.scene.text.Text?>
 
-<HBox alignment="CENTER" prefHeight="720.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.proptit.localchat.client.controller.LoginController">
+<AnchorPane prefHeight="720.0" prefWidth="1280.0" styleClass="main-bg" stylesheets="@login.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.proptit.localchat.client.controller.LoginController">
    <children>
-      <VBox alignment="CENTER" prefHeight="720.0" prefWidth="743.0" style="-fx-background-color: #0d1a5f;">
+      
+      <VBox fx:id="loginCard" layoutX="726.0" layoutY="234.0" maxWidth="420.0" prefWidth="420.0" spacing="20.0" styleClass="login-card" AnchorPane.rightAnchor="134.0" AnchorPane.topAnchor="234.0">
          <children>
-            <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Connect">
-               <font>
-                  <Font name="Roboto Condensed Light" size="63.0" />
-               </font>
-            </Text>
-            <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="&amp;">
-               <font>
-                  <Font name="Roboto Condensed Light" size="63.0" />
-               </font>
-            </Text>
-            <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Work">
-               <font>
-                  <Font name="Roboto Condensed Light" size="63.0" />
-               </font>
-            </Text>
-            <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="&amp;">
-               <font>
-                  <Font name="Roboto Condensed Light" size="63.0" />
-               </font>
-            </Text>
-            <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Handsome">
-               <font>
-                  <Font name="Roboto Condensed Light" size="63.0" />
-               </font>
-            </Text>
+            <VBox spacing="8.0">
+               <children>
+                  <Label styleClass="input-label" text="USERNAME" textFill="WHITE" />
+                  <HBox alignment="CENTER_LEFT" styleClass="input-container">
+                     <children>
+                        <Label prefHeight="20.0" prefWidth="24.0" styleClass="icon-label" text="👤" />
+                        <TextField fx:id="txtUsername" promptText="Enter your username" styleClass="input-field" HBox.hgrow="ALWAYS" />
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+      
+                  <VBox spacing="8.0">
+               <children>
+                  <HBox alignment="CENTER_LEFT">
+                     <children>
+                        <Label styleClass="input-label" text="PASSWORD" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label styleClass="link-text-small" />
+                     </children>
+                  </HBox>
+                  <HBox alignment="CENTER_LEFT" styleClass="input-container">
+                     <children>
+                        <Label prefHeight="20.0" prefWidth="29.0" styleClass="icon-label" text="🔒" />
+                        <PasswordField fx:id="txtPassword" promptText="••••••••" styleClass="input-field" HBox.hgrow="ALWAYS" />
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+             <Label fx:id="lblMessage" alignment="CENTER" managed="false" maxWidth="1.7976931348623157E308" style="-fx-text-fill: #FF5C5C; -fx-font-weight: bold;" text="" visible="false" />
+            <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onLoginButtonClick" styleClass="btn-primary" text="LOG IN" textFill="#0504040d" />
          </children>
       </VBox>
-      <VBox alignment="CENTER" prefHeight="400.0" prefWidth="1280.0" spacing="15.0" style="-fx-background-color: white;">
-         <ImageView fitHeight="345.0" fitWidth="655.0" pickOnBounds="true" preserveRatio="true">
-            <image>
-               <Image url="@images/Logo.png" />
-            </image>
-         </ImageView>
-      
-                <Label text="Welcome to Local Chat." textFill="#0d1a5f" textOverrun="CLIP">
-              <font>
-               <Font name="Roboto Condensed Regular" size="18.0" />
-            </font>
-          </Label>
-      
-                <TextField fx:id="txtUsername" maxWidth="200" promptText="Username" />
-          <PasswordField fx:id="txtPassword" maxWidth="200.0" prefWidth="259.0" promptText="Password" />
-      
-                <Button onAction="#onLoginButtonClick" style="-fx-background-color: #0d1a5f;" text="LOGIN" textFill="WHITE">
-            <font>
-               <Font name="System Bold" size="12.0" />
-            </font>
-         </Button>
-          <Label fx:id="lblMessage" textFill="#341ea1" />
-      </VBox>
+
+      <HBox alignment="CENTER" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+         <children>
+            <Label prefWidth="255.0" styleClass="footer-links" text="HANDSOME           SECURITY         SIMPLE" textFill="WHITE">
+               <font>
+                  <Font name="System Bold" size="12.0" />
+               </font></Label>
+         </children>
+      </HBox>
+      <ImageView fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" />
+      <ImageView fitHeight="166.0" fitWidth="410.0" layoutX="770.0" layoutY="75.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@images/localchat.png" />
+         </image>
+      </ImageView>
+      <ImageView fitHeight="352.0" fitWidth="736.0" layoutX="14.0" layoutY="193.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@images/banner.png" />
+         </image>
+      </ImageView>
+
    </children>
-</HBox>
+</AnchorPane>

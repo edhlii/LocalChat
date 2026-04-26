@@ -59,7 +59,9 @@ public class LoginController {
 
                 } catch (IOException e) { e.printStackTrace(); }
             } else {
-                lblMessage.setText("Login failed");
+                lblMessage.setVisible(true);
+                lblMessage.setManaged(true);
+                lblMessage.setText("Login failed!");
             }
         });
     }

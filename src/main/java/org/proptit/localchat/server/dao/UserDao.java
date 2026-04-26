@@ -11,24 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UserDao {
-//    public User getUserByLogin(String username) {
-//        try ( Connection c = DbConnection.openConnection())
-//        {
-//            String sql = "select * from users where username = ?";
-//            PreparedStatement ps = c.prepareStatement(sql);
-//            ps.setString(1, username);
-//            ps.setString(2, password);
-//            ResultSet rs = ps.executeQuery();
-//            if(rs.next()){
-//                return mapRowToUser(rs);
-//            }
-//            return null;
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//        return null;
-//    }
-
     public List<User> getAllUsers() {
         try (Connection c = DbConnection.openConnection())
         {
@@ -97,7 +79,8 @@ public class UserDao {
                         rs.getString("username"),
                         rs.getString("password"),
                         rs.getString("nickname"),
-                        rs.getString("role")
+                        rs.getString("role"),
+                        rs.getBytes("avatar")
                 );
             }
         } catch (Exception e) {
@@ -112,11 +95,13 @@ public class UserDao {
                 rs.getString("username"),
                 rs.getString("password"),
                 rs.getString("nickname"),
-                rs.getString("role")
+                rs.getString("role"),
+                rs.getBytes("avatar")
+
         );
     }
 
-    public boolean updateUser(User user) {
+    public boolean updatePasswordUser(User user) {
         try (Connection c = DbConnection.openConnection()) {
             String sql = "UPDATE users SET nickname = ?, password = ? WHERE id = ?";
             PreparedStatement ps = c.prepareStatement(sql);
@@ -126,9 +111,24 @@ public class UserDao {
 
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
+            System.err.println("Lỗi DB khi cập nhật thông tin mật khẩu user!");
+            e.printStackTrace();
+        }
+        return false;
+    }
+    public boolean updateProfileInfo(int userId, String nickname, byte[] avatar) {
+        try (Connection c = DbConnection.openConnection()) {
+            String sql = "UPDATE users SET nickname = ?, avatar = ? WHERE id = ?";
+            PreparedStatement ps = c.prepareStatement(sql);
+            ps.setString(1, nickname);
+            ps.setBytes(2, avatar);
+            ps.setInt(3, userId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
             System.err.println("Lỗi DB khi cập nhật thông tin user!");
             e.printStackTrace();
         }
         return false;
     }
+
 }
