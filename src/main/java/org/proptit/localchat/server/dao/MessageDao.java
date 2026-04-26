@@ -173,4 +173,66 @@ public class MessageDao {
         return null;
     }
 
+    public List<Integer> getOfflineNotificationIds(int myId) {
+        try (Connection c = DbConnection.openConnection()) {
+            List<Integer> notifyIds = new ArrayList<>();
+
+            String sql = "SELECT DISTINCT " +
+                    "  CASE WHEN m.receiver_id IS NULL THEN 0 ELSE m.sender_id END as notify_id " +
+                    "FROM messages m " +
+                    "LEFT JOIN conversation_status cs ON cs.user_id = ? " +
+                    "  AND cs.partner_id = (CASE WHEN m.receiver_id IS NULL THEN 0 ELSE m.sender_id END) " +
+                    "WHERE (m.receiver_id = ? OR m.receiver_id IS NULL) " +
+                    "  AND m.sender_id != ? " +
+                    "  AND m.id > COALESCE(cs.last_read_message_id, 0)";;
+
+            PreparedStatement ps = c.prepareStatement(sql);
+            ps.setInt(1, myId);
+            ps.setInt(2, myId);
+            ps.setInt(3, myId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                notifyIds.add(rs.getInt("notify_id"));
+            }
+            return notifyIds;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public void updateReadStatus(int myId, int partnerId) {
+
+
+        try (Connection c = DbConnection.openConnection())
+        {
+            String sql = "INSERT INTO conversation_status (user_id, partner_id, last_read_message_id) " +
+                    "SELECT ?, ?, IFNULL(MAX(id), 0) FROM messages " +
+                    "WHERE (" +
+                    "  (? = 0 AND receiver_id IS NULL) " +
+                    "  OR " +
+                    "  (? > 0 AND ((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?))) " +
+                    ") " +
+                    "ON DUPLICATE KEY UPDATE last_read_message_id = VALUES(last_read_message_id)";
+            PreparedStatement ps = c.prepareStatement(sql);
+
+            ps.setInt(1, myId);
+            ps.setInt(2, partnerId);
+
+            ps.setInt(3, partnerId);
+
+            ps.setInt(4, partnerId);
+            ps.setInt(5, partnerId);
+            ps.setInt(6, myId);
+            ps.setInt(7, myId);
+            ps.setInt(8, partnerId);
+
+            ps.executeUpdate();
+            System.out.println("DEBUG: Đã cập nhật mốc đọc cho " + (partnerId == 0 ? "Thông báo chung" : "User " + partnerId));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }

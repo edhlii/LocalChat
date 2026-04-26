@@ -10,7 +10,8 @@ public class PasswordUtils {
 
 
     public static boolean checkPassword(String plainPw, String hashedPw) {
+        if(plainPw == null || hashedPw == null)
+            return false;
         return BCrypt.checkpw(plainPw, hashedPw);
-
     }
 }

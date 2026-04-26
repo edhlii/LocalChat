@@ -21,7 +21,7 @@ public class MainApp extends Application {
         loginController.setSocketClient(client);
 
         Thread clientThread = new Thread(client);
-        // kill thread sau khi dong chuong trinh.
+
         clientThread.setDaemon(true);
         clientThread.start();
 

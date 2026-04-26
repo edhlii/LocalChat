@@ -10,7 +10,6 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.shape.Circle?>
 <?import javafx.scene.shape.SVGPath?>
 
 <HBox prefHeight="720.0" prefWidth="1145.0" stylesheets="@chat.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.proptit.localchat.client.controller.ChatController">
@@ -18,14 +17,10 @@
 
         <VBox prefWidth="280.0" styleClass="sidebar-container" HBox.hgrow="NEVER">
             <children>
-                <HBox alignment="CENTER_LEFT" prefHeight="70.0" styleClass="sidebar-header">
+                <HBox alignment="CENTER_LEFT" prefHeight="55.0" prefWidth="278.0" styleClass="sidebar-header">
                     <children>
                         <VBox alignment="CENTER_LEFT" spacing="2.0">
-                            <Label styleClass="workspace-name" text="LocalChat Workspace" />
-                            <HBox alignment="CENTER_LEFT" spacing="5.0">
-                                <Circle fill="#23A559" radius="4.0" />
-                                <Label styleClass="status-text" text="Connected" />
-                            </HBox>
+                            <Label alignment="CENTER" prefHeight="60.0" prefWidth="260.0" styleClass="workspace-name" text="LocalChat" />
                         </VBox>
                     </children>
                     <padding>
@@ -33,27 +28,39 @@
                     </padding>
                 </HBox>
 
-                <VBox spacing="5.0" VBox.vgrow="NEVER">
+                <VBox prefWidth="279.0" spacing="5.0" VBox.vgrow="NEVER">
                     <padding>
                         <Insets left="20.0" right="20.0" top="15.0" />
                     </padding>
                     <HBox alignment="CENTER_LEFT">
-                        <Label styleClass="section-title" text="ONLINE PEOPLE" />
+                        <Label styleClass="section-title" text="ONLINE PEOPLE" textFill="#907171" />
                         <Region HBox.hgrow="ALWAYS" />
                         <Label styleClass="status-dot" text="●" textFill="#23A559" />
                     </HBox>
                     <ListView fx:id="lvOnlinePeople" prefHeight="130.0" styleClass="custom-list-view" />
                 </VBox>
 
-                <VBox spacing="5.0" VBox.vgrow="ALWAYS">
+                <VBox prefHeight="241.0" prefWidth="278.0" spacing="5.0" VBox.vgrow="ALWAYS">
                     <padding>
-                        <Insets left="20.0" right="20.0" top="15.0" />
+                        <Insets bottom="15.0" left="20.0" right="20.0" top="15.0" />
                     </padding>
                     <HBox alignment="CENTER_LEFT">
                         <Label styleClass="section-title" text="CONVERSATIONS" />
                         <Region HBox.hgrow="ALWAYS" />
                     </HBox>
-                    <ListView fx:id="lvChatList" styleClass="custom-list-view" VBox.vgrow="ALWAYS" />
+               <HBox prefHeight="49.0" prefWidth="238.0">
+                  <children>
+                     <Label contentDisplay="BOTTOM" prefHeight="35.0" prefWidth="19.0" text="🔍" textFill="#8b92a5" />
+                     <TextField fx:id="txtSearchPeopleChat" prefHeight="35.0" prefWidth="224.0" promptText="Search people by username/nickname" styleClass="search-field" />
+                  </children>
+               </HBox>
+                    <ListView fx:id="lvChatList" prefHeight="270.0" prefWidth="238.0" styleClass="custom-list-view" VBox.vgrow="ALWAYS">
+                  <padding>
+                     <Insets bottom="100.0" />
+                  </padding></ListView>
+               <VBox.margin>
+                  <Insets bottom="25.0" />
+               </VBox.margin>
                 </VBox>
 
 
@@ -63,34 +70,25 @@
         <BorderPane styleClass="chat-container" HBox.hgrow="ALWAYS">
 
             <top>
-                <HBox alignment="CENTER_LEFT" prefHeight="70.0" spacing="15.0" styleClass="chat-header" BorderPane.alignment="CENTER">
+                <HBox alignment="CENTER_LEFT" prefHeight="56.0" prefWidth="865.0" spacing="15.0" styleClass="chat-header" BorderPane.alignment="CENTER">
                     <padding>
                         <Insets left="25.0" right="25.0" />
                     </padding>
 
-                    <Label fx:id="contactNameTopBar" styleClass="channel-title" text="Contact Name" />
-                    <Region HBox.hgrow="ALWAYS" />
+                    <Label fx:id="contactNameTopBar" prefHeight="27.0" prefWidth="163.0" styleClass="channel-title" text="Contact name..." />
+                    <Region prefHeight="117.0" prefWidth="492.0" HBox.hgrow="ALWAYS" />
 
-                    <Button fx:id="callButton" mnemonicParsing="false" onAction="#onCallButtonClick" styleClass="btn-call" text="Call">
+                    <Button fx:id="callButton" mnemonicParsing="false" onAction="#onCallButtonClick" prefHeight="33.0" prefWidth="106.0" styleClass="btn-call" text="Call" textFill="WHITE">
                         <graphic>
                             <SVGPath content="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" styleClass="icon-svg" />
                         </graphic>
                     </Button>
 
-                    <Button fx:id="videoCallButton" mnemonicParsing="false" onAction="#onVideoCallButtonClick" styleClass="btn-video-call" text="Video">
+                    <Button fx:id="videoCallButton" mnemonicParsing="false" onAction="#onVideoCallButtonClick" prefHeight="33.0" prefWidth="113.0" styleClass="btn-video-call" text="Video" textFill="WHITE">
                         <graphic>
-                            <SVGPath content="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" styleClass="icon-svg" />
+                            <SVGPath content="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" fill="WHITE" styleClass="icon-svg" />
                         </graphic>
                     </Button>
-
-                    <HBox alignment="CENTER_LEFT" styleClass="search-box">
-                        <Label>
-                            <graphic>
-                                <SVGPath content="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" styleClass="icon-svg" />
-                            </graphic>
-                        </Label>
-                        <TextField promptText="Search" styleClass="search-field" />
-                    </HBox>
                 </HBox>
             </top>
 
