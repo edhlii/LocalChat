@@ -26,10 +26,12 @@ public class AuthService {
 
         if (loginInfo == null || loginInfo.getUsername() == null || loginInfo.getPassword() == null) {
             handler.sendData(new DataPacket(TypeDataPacket.LOGIN_FAILED, null));
+            System.out.println("Log: logininfo = null");
             return;
         }
-
         User validatedUser = userDao.findByUsername(loginInfo.getUsername());
+        
+
         if(validatedUser != null && PasswordUtils.checkPassword(loginInfo.getPassword(), validatedUser.getPassword()))
         {
             handler.setUser(validatedUser);
@@ -37,6 +39,7 @@ public class AuthService {
             handler.getServer().broadcastOnlineUsers();
         }
         else {
+            System.out.println("log: login failed");
             handler.sendData(new DataPacket(TypeDataPacket.LOGIN_FAILED, null));
         }
     }

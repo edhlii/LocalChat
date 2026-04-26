@@ -223,6 +223,12 @@ public class ChatController implements ChatCallView {
 
             if (!lvChatList.getItems().isEmpty() && (txtSearchPeopleChat == null || txtSearchPeopleChat.getText().isEmpty())) {
                 lvChatList.getSelectionModel().select(0);
+//                String firstItem = lvChatList.getItems().get(0);
+//                if (firstItem.equals(ANNOUNCEMENT_LABEL)) {
+//                    usersWithNewMessages.remove(0);
+//                    client.sendData(new DataPacket(TypeDataPacket.MARK_AS_READ, 0));
+//                    lvChatList.refresh();
+//                }
             }
         });
 

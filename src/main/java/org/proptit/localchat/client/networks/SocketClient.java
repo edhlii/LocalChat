@@ -55,9 +55,6 @@ public class SocketClient implements Runnable {
             in = new ObjectInputStream(socket.getInputStream());
 
 
-            if (user != null) {
-                sendData(user);
-            }
 
             Object response;
             while (isRunning && (response = in.readObject()) != null) {
