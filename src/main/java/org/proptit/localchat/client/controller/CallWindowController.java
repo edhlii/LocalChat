@@ -31,6 +31,12 @@ public class CallWindowController {
     @FXML
     private Label contactNameLabel;
     @FXML
+    private Label participantsTitleLabel;
+    @FXML
+    private Label participantSelfLabel;
+    @FXML
+    private Label participantPeerLabel;
+    @FXML
     private Label remoteVideoPlaceholderLabel;
     @FXML
     private StackPane localPreviewPane;
@@ -70,11 +76,21 @@ public class CallWindowController {
 
     public void init(User selectedConversationUser) {
         this.selectedConversationUser = selectedConversationUser;
+        String peerDisplayName = selectedConversationUser != null
+                ? selectedConversationUser.getNickname()
+                : "Unknown";
 
         if (contactNameLabel != null) {
-            contactNameLabel.setText(selectedConversationUser != null
-                    ? selectedConversationUser.getNickname()
-                    : "Unknown");
+            contactNameLabel.setText(peerDisplayName);
+        }
+        if (participantsTitleLabel != null) {
+            participantsTitleLabel.setText("Participants (2)");
+        }
+        if (participantSelfLabel != null) {
+            participantSelfLabel.setText("You");
+        }
+        if (participantPeerLabel != null) {
+            participantPeerLabel.setText(peerDisplayName);
         }
     }
 

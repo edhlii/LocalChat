@@ -64,24 +64,18 @@
 
                   <VBox spacing="8.0" style="-fx-background-color: rgba(8, 18, 38, 0.70); -fx-background-radius: 12; -fx-border-color: rgba(255, 255, 255, 0.10); -fx-border-radius: 12;">
                      <children>
-                        <Label style="-fx-font-weight: bold;" text="Participants (3)" textFill="WHITE" />
+                        <Label fx:id="participantsTitleLabel" style="-fx-font-weight: bold;" text="Participants (2)" textFill="WHITE" />
                         <Separator opacity="0.35" />
                         <HBox alignment="CENTER_LEFT" spacing="8.0">
                            <children>
                               <Circle radius="4.0" stroke="TRANSPARENT" style="-fx-fill: #32d296;" />
-                              <Label text="You" textFill="#d7e3ff" />
+                              <Label fx:id="participantSelfLabel" text="You" textFill="#d7e3ff" />
                            </children>
                         </HBox>
                         <HBox alignment="CENTER_LEFT" spacing="8.0">
                            <children>
                               <Circle radius="4.0" stroke="TRANSPARENT" style="-fx-fill: #32d296;" />
-                              <Label text="Contact Name" textFill="#d7e3ff" />
-                           </children>
-                        </HBox>
-                        <HBox alignment="CENTER_LEFT" spacing="8.0">
-                           <children>
-                              <Circle radius="4.0" stroke="TRANSPARENT" style="-fx-fill: #fbbf24;" />
-                              <Label text="Guest User" textFill="#d7e3ff" />
+                              <Label fx:id="participantPeerLabel" text="Contact Name" textFill="#d7e3ff" />
                            </children>
                         </HBox>
                      </children>
