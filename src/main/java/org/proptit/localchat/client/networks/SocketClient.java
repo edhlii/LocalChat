@@ -30,7 +30,6 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class SocketClient implements Runnable {
     private String host;
@@ -60,9 +59,6 @@ public class SocketClient implements Runnable {
             in = new ObjectInputStream(socket.getInputStream());
 
 
-            if (user != null) {
-                sendData(user);
-            }
 
             Object response;
             while (isRunning && (response = in.readObject()) != null) {
@@ -155,23 +151,29 @@ public class SocketClient implements Runnable {
                     Platform.runLater(() -> controller.receiveCallSignal(signal));
                 }
                 break;
-            case TypeDataPacket.UPDATE_PROFILE_SUCCESS:
-                javafx.application.Platform.runLater(() -> {
-                    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
-                    alert.setTitle("Thành công");
-                    alert.setHeaderText(null);
-                    alert.setContentText("Đổi mật khẩu thành công!");
-                    alert.show();
-                });
+            case TypeDataPacket.UPDATE_PASS_SUCCESS:
+                this.user = (User) data.getData();
+                controller.setMe((User) data.getData());
+                controller.getUserSettingsController().setMe((User) data.getData());
+                controller.getUserSettingsController().getChangePasswordController().closeWindow();
                 break;
-            case TypeDataPacket.UPDATE_PROFILE_FAILURE:
-                javafx.application.Platform.runLater(() -> {
-                    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-                    alert.setTitle("Thất bại");
-                    alert.setHeaderText(null);
-                    alert.setContentText("Đổi mật khẩu thất bại. Vui lòng thử lại!");
-                    alert.show();
+            case UPDATE_PROFILE_SUCCESS:
+                User updatedUser = (User) data.getData();
+                if (controller != null) {
+                    controller.getUserSettingsController().closeWindow(updatedUser);
+                }
+                break;
+            case RETURN_OFFLINE_NOTIFICATIONS:
+                List<Integer> unreadIds = (List<Integer>) data.getData();
+
+                Platform.runLater(() -> {
+                    if (controller != null && controller.getChatAreaController() != null) {
+                        controller.getChatAreaController().setOfflineMessages(unreadIds);
+                    } else {
+                        System.err.println("LỖI: Controller chưa sẵn sàng để hiện thông báo!");
+                    }
                 });
+
                 break;
             case CREATE_GROUP_SUCCESS:
                 ChatGroup newGroup = (ChatGroup) data.getData();

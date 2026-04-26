@@ -10,17 +10,31 @@ public class User implements Serializable {
     private String password;
     private String nickname;
     private String role;
+    private byte[] avatar;
 
-    public User(Integer id, String userame, String password, String nickname, String role) {
+    public User(Integer id, String userame, String password, String nickname, String role, byte[] avatar) {
         this.id = id;
         this.userame = userame;
         this.password = password;
         this.nickname = nickname;
         this.role = role;
+        this.avatar = avatar;
     }
 
     public User(Integer id) {
         this.id = id;
+    }
+
+    public String getUserame() {
+        return userame;
+    }
+
+    public byte[] getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(byte[] avatar) {
+        this.avatar = avatar;
     }
 
     public User(String username)

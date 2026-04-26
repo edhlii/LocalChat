@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+
+<VBox alignment="TOP_CENTER" prefWidth="450.0" spacing="25.0" styleClass="modal-dialog" stylesheets="@/org/proptit/localchat/modal.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.proptit.localchat.client.controller.UserSettingsController">
+    <children>
+        <Label fx:id="lblRole" styleClass="modal-title" text="USER PROFILE" />
+
+        <VBox alignment="CENTER" spacing="10.0">
+            <children>
+                <StackPane fx:id="avatarContainer" onMouseClicked="#onChangeAvatarClick" style="-fx-cursor: hand;">
+                    <children>
+                        <Circle fx:id="circleAvatar" blendMode="ADD" fill="#2a3042" radius="60.0" stroke="#401c80" strokeType="INSIDE" strokeWidth="3.0" />
+                        <Label mouseTransparent="true" style="-fx-font-size: 24;" text="📷" textFill="WHITE" />
+                    </children>
+                </StackPane>
+                <Label style="-fx-text-fill: #8b92a5; -fx-font-size: 12;" text="Click to change avatar" />
+            </children>
+        </VBox>
+
+        <VBox spacing="15.0" style="-fx-padding: 15; -fx-background-color: #1e2435; -fx-background-radius: 10;">
+            <children>
+
+                <VBox spacing="5.0">
+                    <children>
+                        <Label styleClass="input-label" text="NICKNAME" textFill="WHITE" />
+                        <HBox alignment="CENTER_LEFT" spacing="15.0">
+                            <children>
+                                <Label fx:id="lblNickname" style="-fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold;" text="xxx" />
+                                <TextField fx:id="txtEditNickname" managed="false" style="-fx-background-color: #0b0f19; -fx-text-fill: white; -fx-border-color: #ad7bff; -fx-border-radius: 4;" visible="false" />
+                                <Button fx:id="btnEditNickname" mnemonicParsing="false" onAction="#onChangeNicknameClick" style="-fx-background-color: transparent; -fx-text-fill: #ad7bff; -fx-cursor: hand;" text="Edit" />
+                            </children>
+                        </HBox>
+                    </children>
+                </VBox>
+                <VBox spacing="5.0">
+                    <children>
+                        <Label styleClass="input-label" text="USERNAME" textFill="WHITE" />
+                        <Label fx:id="lblUsername" style="-fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold;" text="xxx" />
+                    </children>
+                </VBox>
+            </children>
+        </VBox>
+
+        <Button fx:id="btnTogglePass" mnemonicParsing="false" onAction="#onTogglePassword" style="-fx-text-fill: #8b92a5;" styleClass="btn-secondary" text="Change Password Settings" />
+
+        <VBox fx:id="vboxPasswordFields" managed="false" spacing="15.0" visible="false">
+            <children>
+                <VBox spacing="8.0">
+                    <children>
+                        <Label styleClass="input-label" text="CURRENT PASSWORD" />
+                        <PasswordField fx:id="txtCurrentPassword" styleClass="input-field" />
+                    </children>
+                </VBox>
+                <VBox spacing="8.0">
+                    <children>
+                        <Label styleClass="input-label" text="NEW PASSWORD" />
+                        <PasswordField fx:id="txtNewPassword" styleClass="input-field" />
+                    </children>
+                </VBox>
+                <VBox spacing="8.0">
+                    <children>
+                        <Label styleClass="input-label" text="CONFIRM NEW PASSWORD" />
+                        <PasswordField fx:id="txtConfirmPassword" styleClass="input-field" />
+                    </children>
+                </VBox>
+            </children>
+        </VBox>
+
+        <Label fx:id="lblError" styleClass="error-text" wrapText="true" />
+
+        <HBox alignment="CENTER" spacing="15.0">
+            <children>
+                <Button fx:id="btnSave" mnemonicParsing="false" onAction="#onSaveClick" styleClass="btn-primary" text="Save" />
+            </children>
+            <VBox.margin>
+                <Insets top="10.0" />
+            </VBox.margin>
+        </HBox>
+    </children>
+    <padding>
+        <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
+    </padding>
+</VBox>
