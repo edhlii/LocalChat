@@ -30,7 +30,7 @@ public class VideoCallSession {
     private static final int HEADER_SIZE = 12;
     private static final int RECEIVE_BUFFER = CHUNK_SIZE + HEADER_SIZE;
     private static final float JPEG_QUALITY = 0.7f;
-    private static final int FRAME_INTERVAL_MS = 45;
+    private static final int FRAME_INTERVAL_MS = 60;
 
     private DatagramSocket socket;
     private Thread senderThread;
