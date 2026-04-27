@@ -183,6 +183,10 @@ public class SocketClient implements Runnable {
                 String errorMsg = (String) data.getData();
                 Platform.runLater(() -> {
                     Alert alert = new Alert(Alert.AlertType.ERROR, "Lỗi tạo nhóm: " + errorMsg);
+                    alert.setHeaderText(null);
+                    String css = getClass().getResource("/org/proptit/localchat/create_group.css").toExternalForm();
+                    alert.getDialogPane().getStylesheets().add(css);
+
                     alert.show();
 
                     javafx.stage.Window.getWindows().stream()
