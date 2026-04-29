@@ -10,6 +10,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
 <?import javafx.scene.shape.SVGPath?>
 
 <HBox prefHeight="720.0" prefWidth="1145.0" stylesheets="@chat.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.proptit.localchat.client.controller.ChatController">
@@ -20,8 +21,20 @@
                 <HBox alignment="CENTER_LEFT" prefHeight="55.0" prefWidth="278.0" styleClass="sidebar-header">
                     <children>
                         <VBox alignment="CENTER_LEFT" spacing="2.0">
-                            <Label alignment="CENTER" prefHeight="60.0" prefWidth="260.0" styleClass="workspace-name" text="LocalChat" />
+
+                            <Label styleClass="workspace-name" text="LocalChat" />
+                            <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                <Circle fill="#23A559" radius="4.0" />
+                                <Label styleClass="status-text" text="Connected" />
+                            </HBox>
+
+                            <Label alignment="CENTER" prefHeight="60.0" prefWidth="260.0" styleClass="workspace-name" />
+
                         </VBox>
+
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button minWidth="30.0" onAction="#onCreateGroupClick" style="-fx-background-color: #3A3B3C; -fx-text-fill: #E4E6EB; -fx-background-radius: 6; -fx-font-weight: bold; -fx-cursor: hand; -fx-font-size: 14px;" text="+" />
+
                     </children>
                     <padding>
                         <Insets left="20.0" right="20.0" />
@@ -48,6 +61,20 @@
                         <Label styleClass="section-title" text="CONVERSATIONS" />
                         <Region HBox.hgrow="ALWAYS" />
                     </HBox>
+
+                    <HBox alignment="CENTER" spacing="0" styleClass="toggle-container">
+                        <padding>
+                            <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
+                        </padding>
+                        <children>
+                            <Button fx:id="btnTabAll" maxWidth="Infinity" onAction="#onTabAllClick" styleClass="toggle-btn-active" text="All" HBox.hgrow="ALWAYS" />
+
+                            <Button fx:id="btnTabGroups" maxWidth="Infinity" onAction="#onTabGroupsClick" styleClass="toggle-btn" text="Groups" HBox.hgrow="ALWAYS" />
+                        </children>
+                    </HBox>
+                    
+<!--                    <ListView fx:id="lvChatList" styleClass="custom-list-view" VBox.vgrow="ALWAYS" />-->
+
                <HBox prefHeight="49.0" prefWidth="238.0">
                   <children>
                      <Label contentDisplay="BOTTOM" prefHeight="35.0" prefWidth="19.0" text="🔍" textFill="#8b92a5" />
@@ -61,6 +88,7 @@
                <VBox.margin>
                   <Insets bottom="25.0" />
                </VBox.margin>
+
                 </VBox>
 
 
