@@ -9,5 +9,7 @@ public enum CallAction implements Serializable {
     READY,
     HANGUP,
     SHARE_START,
-    SHARE_STOP
+    SHARE_STOP,
+    VIDEO_START,
+    VIDEO_STOP
 }
