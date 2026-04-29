@@ -25,14 +25,14 @@ public class CreateGroupController {
     private SocketClient client;
     private User me;
 
+    private List<User> selectedMembersForGroup = new ArrayList<>();
+
     public void setup(SocketClient client, User me, List<User> onlineUsers) {
         this.client = client;
         this.me = me;
 
-        // Bật chế độ cho phép chọn nhiều người cùng lúc (Giữ Ctrl / Shift để chọn)
-        lvMembers.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        lvMembers.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
 
-        // Lọc bỏ chính mình ra khỏi danh sách chọn
         List<User> selectableUsers = new ArrayList<>();
         for (User u : onlineUsers) {
             if (u.getId() != me.getId()) {
@@ -41,15 +41,29 @@ public class CreateGroupController {
         }
         lvMembers.setItems(FXCollections.observableArrayList(selectableUsers));
 
-        // Format lại cách hiển thị tên trong danh sách (thay vì hiện mã bộ nhớ)
         lvMembers.setCellFactory(param -> new ListCell<User>() {
             @Override
             protected void updateItem(User user, boolean empty) {
                 super.updateItem(user, empty);
                 if (empty || user == null) {
                     setText(null);
+                    setGraphic(null);
                 } else {
-                    setText(user.getNickname() + " (@" + user.getUsername() + ")");
+                    CheckBox checkBox = new CheckBox(user.getNickname() + " (@" + user.getUsername() + ")");
+                    checkBox.getStyleClass().add("check-box");
+                    checkBox.setSelected(selectedMembersForGroup.contains(user));
+                    checkBox.setOnAction(event -> {
+                        if (checkBox.isSelected()) {
+                            if (!selectedMembersForGroup.contains(user)) {
+                                selectedMembersForGroup.add(user);
+                            }
+                        } else {
+                            selectedMembersForGroup.remove(user);
+                        }
+                    });
+
+                    setGraphic(checkBox);
+                    setText(null);
                 }
             }
         });
@@ -58,7 +72,7 @@ public class CreateGroupController {
     @FXML
     void onCreateClick(ActionEvent event) {
         String groupName = txtGroupName.getText().trim();
-        List<User> selectedUsers = new ArrayList<>(lvMembers.getSelectionModel().getSelectedItems());
+        List<User> selectedUsers = new ArrayList<>(selectedMembersForGroup);
 
         if (groupName.isEmpty()) {
             lblError.setText("Vui lòng nhập tên nhóm!");
@@ -69,6 +83,7 @@ public class CreateGroupController {
             lblError.setText("Vui lòng chọn ít nhất 1 thành viên!");
             return;
         }
+
         selectedUsers.add(me);
 
         ChatGroup newGroup = new ChatGroup(0, groupName, me, selectedUsers);

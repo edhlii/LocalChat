@@ -2,39 +2,35 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.Font?>
 
-<VBox alignment="TOP_CENTER" prefHeight="450.0" prefWidth="350.0" spacing="15.0" style="-fx-background-color: #ffffff; -fx-padding: 20;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.proptit.localchat.client.controller.CreateGroupController">
+<VBox alignment="TOP_CENTER" prefHeight="450.0" prefWidth="350.0" spacing="15.0"
+      stylesheets="@create_group.css" styleClass="root"
+      xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="org.proptit.localchat.client.controller.CreateGroupController">
+
     <children>
-        <Label text="TẠO NHÓM CHAT" textFill="#0084ff">
-            <font>
-                <Font name="System Bold" size="18.0" />
-            </font>
-        </Label>
+        <Label text="TẠO NHÓM CHAT" styleClass="header-label" />
 
         <VBox spacing="5.0">
-            <Label text="Tên nhóm:" textFill="#65676b">
-                <font>
-                    <Font name="System Bold" size="12.0" />
-                </font>
-            </Label>
-            <TextField fx:id="txtGroupName" promptText="Nhập tên nhóm..." style="-fx-padding: 8; -fx-background-radius: 5; -fx-border-color: #ccd0d5; -fx-border-radius: 5;" />
+            <Label text="TÊN NHÓM" styleClass="field-label" />
+            <TextField fx:id="txtGroupName" promptText="Nhập tên nhóm..." styleClass="text-field" />
         </VBox>
 
         <VBox spacing="5.0" VBox.vgrow="ALWAYS">
-            <Label text="Chọn thành viên (Giữ Ctrl để chọn nhiều người):" textFill="#65676b">
-                <font>
-                    <Font name="System Bold" size="12.0" />
-                </font>
-            </Label>
-            <ListView fx:id="lvMembers" VBox.vgrow="ALWAYS" style="-fx-background-radius: 5; -fx-border-color: #ccd0d5; -fx-border-radius: 5;" />
+            <Label text="CHỌN THÀNH VIÊN" styleClass="field-label" />
+
+            <ListView fx:id="lvMembers" VBox.vgrow="ALWAYS" styleClass="list-view" />
         </VBox>
 
-        <Label fx:id="lblError" textFill="#e84118" wrapText="true" />
+        <Label fx:id="lblError" textFill="#ff5252" wrapText="true" />
 
         <HBox alignment="CENTER" spacing="15.0">
-            <Button fx:id="btnCancel" mnemonicParsing="false" onAction="#onCancelClick" prefWidth="100.0" style="-fx-background-color: #e4e6eb; -fx-text-fill: #050505; -fx-font-weight: bold;" text="Hủy" />
-            <Button fx:id="btnCreate" mnemonicParsing="false" onAction="#onCreateClick" prefWidth="100.0" style="-fx-background-color: #0084ff; -fx-text-fill: white; -fx-font-weight: bold;" text="Tạo Nhóm" />
+            <Button fx:id="btnCancel" mnemonicParsing="false" onAction="#onCancelClick" prefWidth="100.0" text="Cancel" styleClass="btn-secondary" />
+            <Button fx:id="btnCreate" mnemonicParsing="false" onAction="#onCreateClick" prefWidth="120.0" text="Save" styleClass="btn-primary" />
         </HBox>
     </children>
+
+    <padding>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+    </padding>
 </VBox>

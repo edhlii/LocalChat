@@ -701,9 +701,6 @@ public class ChatController implements ChatCallView {
             String selectedItem = lvChatList.getSelectionModel().getSelectedItem();
             if (selectedItem == null) return;
 
-
-
-
             boolean isRealBroadcast = msg.isBroadcast() && msg.getGroupId() == null;
 
             boolean isGroupMsg = msg.getGroupId() != null;
@@ -1105,8 +1102,12 @@ public class ChatController implements ChatCallView {
     @FXML
     void onTabAllClick(ActionEvent event) {
         isGroupMode = false;
-        btnTabAll.setStyle("-fx-background-color: #0084FF; -fx-text-fill: white; -fx-background-radius: 6; -fx-font-weight: bold; -fx-cursor: hand;");
-        btnTabGroups.setStyle("-fx-background-color: transparent; -fx-text-fill: #B0B3B8; -fx-background-radius: 6; -fx-font-weight: bold; -fx-cursor: hand;");
+
+        btnTabAll.getStyleClass().removeAll("toggle-btn", "toggle-btn-active");
+        btnTabAll.getStyleClass().add("toggle-btn-active");
+
+        btnTabGroups.getStyleClass().removeAll("toggle-btn", "toggle-btn-active");
+        btnTabGroups.getStyleClass().add("toggle-btn");
 
         selectedConversationGroup = null;
         conversationUserMap.clear();
@@ -1137,8 +1138,11 @@ public class ChatController implements ChatCallView {
     void onTabGroupsClick(ActionEvent event) {
         isGroupMode = true;
 
-        btnTabGroups.setStyle("-fx-background-color: #0084FF; -fx-text-fill: white; -fx-background-radius: 6; -fx-font-weight: bold;");
-        btnTabAll.setStyle("-fx-background-color: transparent; -fx-text-fill: #65676B; -fx-background-radius: 6; -fx-font-weight: bold;");
+        btnTabGroups.getStyleClass().removeAll("toggle-btn", "toggle-btn-active");
+        btnTabGroups.getStyleClass().add("toggle-btn-active");
+
+        btnTabAll.getStyleClass().removeAll("toggle-btn", "toggle-btn-active");
+        btnTabAll.getStyleClass().add("toggle-btn");
 
         selectedConversationUser = null;
 
@@ -1193,6 +1197,10 @@ public class ChatController implements ChatCallView {
 
             Alert alert = new Alert(Alert.AlertType.INFORMATION, "Đã tạo nhóm: " + newGroup.getName());
             alert.setHeaderText(null);
+
+            String css = getClass().getResource("/org/proptit/localchat/create_group.css").toExternalForm();
+            alert.getDialogPane().getStylesheets().add(css);
+
             alert.show();
         });
     }
