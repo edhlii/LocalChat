@@ -1,6 +1,7 @@
 package org.proptit.localchat.common.models.message;
 
 import org.proptit.localchat.common.enums.TypeMessage;
+import org.proptit.localchat.common.models.ChatGroup;
 import org.proptit.localchat.common.models.User;
 
 import java.io.Serializable;
@@ -38,5 +39,12 @@ public class TextMessage extends Message implements Serializable {
 
     }
 
+    public static TextMessage createGroup(User sender, ChatGroup group, String content) {
+        TextMessage msg = new TextMessage(sender, content);
+        msg.setGroupId(group.getId());
+        msg.isBroadcast = false;
+        msg.setTypeMessage(TypeMessage.TEXT);
 
+        return msg;
+    }
 }

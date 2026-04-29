@@ -95,4 +95,7 @@ public class SocketServer implements Runnable {
         }
     }
 
+    public List<ClientHandler> getClients() {
+        return clients;
+    }
 }

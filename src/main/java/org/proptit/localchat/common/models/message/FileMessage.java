@@ -1,6 +1,7 @@
 package org.proptit.localchat.common.models.message;
 
 import org.proptit.localchat.common.enums.TypeMessage;
+import org.proptit.localchat.common.models.ChatGroup;
 import org.proptit.localchat.common.models.User;
 
 import java.io.Serializable;
@@ -42,6 +43,14 @@ public class FileMessage extends Message implements Serializable {
         msg.setReceiver(receiver);
         msg.setTypeMessage(TypeMessage.FILE);
         msg.isBroadcast = false;
+        return msg;
+    }
+
+    public static FileMessage createGroup(User sender, ChatGroup group, byte[] fileData, String fileName, String extension) {
+        FileMessage msg = new FileMessage(sender, fileData, fileName, extension);
+        msg.setGroupId(group.getId());
+        msg.isBroadcast = false;
+        msg.setTypeMessage(TypeMessage.FILE);
         return msg;
     }
 

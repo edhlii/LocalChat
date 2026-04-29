@@ -5,6 +5,8 @@ import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.message.Message;
 import org.proptit.localchat.common.models.User;
 import org.proptit.localchat.server.controller.ClientHandler;
+import org.proptit.localchat.server.dao.GroupDao;
+import org.proptit.localchat.server.networks.SocketServer;
 
 import java.util.List;
 
@@ -17,15 +19,24 @@ public class ChatService {
 
     public void processMessage(ClientHandler senderHandler, Message msg) {
         User sender = senderHandler.getUser();
+        if (msg.getGroupId() != null && msg.getGroupId() > 0) {
+            List<Integer> memberIds = new GroupDao().getMemberIdsByGroupId(msg.getGroupId());
+            for (ClientHandler client : this.clients) {
+                if (client.getUser() != null && memberIds.contains(client.getUser().getId())) {
+                    if (!client.getUser().getId().equals(msg.getSender().getId())) {
+                        client.sendData(new DataPacket(TypeDataPacket.CHAT_MESSAGE, msg));
+                    }
+                }
+            }
+            return;
+        }
 
-        if (msg.isBroadcast()) {
+        else if (msg.isBroadcast()) {
             if (sender.isManager()) {
                 sendAll(senderHandler, msg);
             } else {
                 System.out.println("System: You do not have permission to send the entire message!");
-
             }
-            //sendAll(senderHandler, msg);
             return;
         }
 

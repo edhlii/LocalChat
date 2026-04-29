@@ -259,3 +259,36 @@
     -fx-padding: 8px 12px;
     -fx-font-size: 12px;
 }
+
+.toggle-container {
+    -fx-background-color: #0f1015;
+    -fx-background-radius: 8px;
+    -fx-border-color: #2b2d3e;
+    -fx-border-radius: 8px;
+    -fx-padding: 3px;
+}
+
+.toggle-btn, .toggle-btn:focused {
+    -fx-background-color: transparent;
+    -fx-text-fill: #7a829a;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.toggle-btn:hover {
+    -fx-background-color: #1f2233;
+    -fx-text-fill: white;
+}
+
+.toggle-btn-active, .toggle-btn-active:focused {
+    -fx-background-color: #b388ff;
+    -fx-text-fill: black;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}

@@ -81,3 +81,27 @@ CREATE TABLE messages (
 
     INDEX idx_chat_lookup (sender_id, receiver_id, sent_at)
 );
+
+
+-- 1. Tạo thêm bảng Quản lý Nhóm
+CREATE TABLE IF NOT EXISTS chat_groups (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    created_by INT,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 2. Tạo thêm bảng Quản lý Thành viên trong Nhóm
+CREATE TABLE IF NOT EXISTS group_members (
+    group_id INT,
+    user_id INT,
+    PRIMARY KEY (group_id, user_id),
+    FOREIGN KEY (group_id) REFERENCES chat_groups(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+ALTER TABLE messages
+ADD COLUMN group_id INT DEFAULT NULL AFTER receiver_id;
+
+ALTER TABLE messages
+ADD FOREIGN KEY (group_id) REFERENCES chat_groups(id) ON DELETE CASCADE;
