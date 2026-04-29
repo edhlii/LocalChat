@@ -2,6 +2,7 @@ package org.proptit.localchat.client.controller;
 
 import org.proptit.localchat.client.networks.ScreenShareSession;
 import org.proptit.localchat.client.networks.SocketClient;
+import org.proptit.localchat.client.networks.VideoCallSession;
 import org.proptit.localchat.client.networks.VoiceCallSession;
 import org.proptit.localchat.common.enums.TypeDataPacket;
 import org.proptit.localchat.common.models.DataPacket;
@@ -18,6 +19,7 @@ public class ChatCallManager {
 
     private VoiceCallSession voiceCallSession;
     private ScreenShareSession screenShareSession;
+    private VideoCallSession videoCallSession;
     private String activeCallId;
     private User activeCallPeer;
     private String outgoingCallId;
@@ -25,7 +27,10 @@ public class ChatCallManager {
     private boolean isEndingCall;
     private String remoteMediaHost;
     private int remoteScreenPort;
+    private int remoteVideoPort;
     private boolean localScreenSharing;
+    private boolean videoCallEnabled;
+    private boolean localVideoSending;
 
     public ChatCallManager(SocketClient client, User me, ChatCallView view) {
         this.client = client;
@@ -34,6 +39,14 @@ public class ChatCallManager {
     }
 
     public void startOutgoingCall(User selectedConversationUser) {
+        startOutgoingCall(selectedConversationUser, false);
+    }
+
+    public void startOutgoingVideoCall(User selectedConversationUser) {
+        startOutgoingCall(selectedConversationUser, true);
+    }
+
+    private void startOutgoingCall(User selectedConversationUser, boolean asVideoCall) {
         if (selectedConversationUser == null) {
             view.showInfo("Please select a user to start a call.");
             return;
@@ -47,6 +60,21 @@ public class ChatCallManager {
         String callId = UUID.randomUUID().toString();
         outgoingCallId = callId;
         outgoingCallPeer = selectedConversationUser;
+        videoCallEnabled = asVideoCall;
+        view.setVideoCallAvailable(asVideoCall);
+        view.setVideoCallActive(false);
+
+        int videoPort = 0;
+        try {
+            if (asVideoCall) {
+                videoPort = ensureVideoSessionOpened();
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            cleanupCallState(false);
+            view.showError("Unable to access video devices.");
+            return;
+        }
 
         view.showCallWindow(selectedConversationUser, "Calling...");
         sendCallSignal(new CallSignal(
@@ -57,7 +85,8 @@ public class ChatCallManager {
                 selectedConversationUser.getUsername(),
                 null,
             0,
-            0
+            0,
+            videoPort
         ));
     }
 
@@ -87,6 +116,12 @@ public class ChatCallManager {
                 break;
             case SHARE_STOP:
                 handleRemoteShareStopped(signal);
+                break;
+            case VIDEO_START:
+                handleRemoteVideoStarted(signal);
+                break;
+            case VIDEO_STOP:
+                handleRemoteVideoStopped(signal);
                 break;
             default:
                 break;
@@ -135,6 +170,20 @@ public class ChatCallManager {
         stopLocalScreenShare(true);
     }
 
+    public void setVideoStreaming(boolean active) {
+        if (!videoCallEnabled || activeCallId == null || activeCallPeer == null || remoteMediaHost == null || remoteVideoPort <= 0) {
+            view.setVideoCallActive(false);
+            return;
+        }
+
+        if (active) {
+            startLocalVideoStreaming(true);
+            return;
+        }
+
+        stopLocalVideoStreaming(true);
+    }
+
     private void handleIncomingInvite(CallSignal signal) {
         if (activeCallId != null || outgoingCallId != null) {
             sendCallSignal(new CallSignal(
@@ -168,7 +217,12 @@ public class ChatCallManager {
 
         try {
             int udpPort = ensureVoiceSessionOpened();
-                int screenPort = ensureScreenSessionOpened();
+            int screenPort = ensureScreenSessionOpened();
+            int videoPort = 0;
+            if (signal.getVideoUdpPort() > 0) {
+                videoCallEnabled = true;
+                videoPort = ensureVideoSessionOpened();
+            }
             activeCallId = signal.getCallId();
             activeCallPeer = caller;
             view.showCallWindow(caller, "Connecting...");
@@ -179,13 +233,18 @@ public class ChatCallManager {
                     me.getNickname(),
                     signal.getFromUsername(),
                     view.resolveLocalAddress(),
-                        udpPort,
-                        screenPort
+                    udpPort,
+                    screenPort,
+                    videoPort
             ));
+
+            if (videoPort > 0) {
+                view.setVideoCallAvailable(true);
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
             cleanupCallState(false);
-                    view.showError("Unable to access call devices.");
+            view.showError("Unable to access call devices.");
             sendCallSignal(new CallSignal(
                     signal.getCallId(),
                     CallAction.REJECT,
@@ -193,8 +252,8 @@ public class ChatCallManager {
                     me.getNickname(),
                     signal.getFromUsername(),
                     null,
-                        0,
-                        0
+                    0,
+                    0
             ));
         }
     }
@@ -211,12 +270,18 @@ public class ChatCallManager {
         try {
             int udpPort = ensureVoiceSessionOpened();
             int screenPort = ensureScreenSessionOpened();
+            int videoPort = 0;
+            if (signal.getVideoUdpPort() > 0 || videoCallEnabled) {
+                videoCallEnabled = true;
+                videoPort = ensureVideoSessionOpened();
+            }
             activeCallId = outgoingCallId;
             activeCallPeer = peer;
             outgoingCallId = null;
             outgoingCallPeer = null;
             remoteMediaHost = signal.getHost();
             remoteScreenPort = signal.getScreenUdpPort();
+            remoteVideoPort = signal.getVideoUdpPort();
 
             view.showCallWindow(peer, "Connecting...");
             sendCallSignal(new CallSignal(
@@ -227,10 +292,15 @@ public class ChatCallManager {
                     signal.getFromUsername(),
                     view.resolveLocalAddress(),
                     udpPort,
-                    screenPort
+                    screenPort,
+                    videoPort
             ));
 
             startVoiceStreaming(signal.getHost(), signal.getUdpPort());
+            if (remoteVideoPort > 0) {
+                startLocalVideoStreaming(false);
+                view.setVideoCallAvailable(true);
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
             cleanupCallState(false);
@@ -245,6 +315,12 @@ public class ChatCallManager {
 
         remoteMediaHost = signal.getHost();
         remoteScreenPort = signal.getScreenUdpPort();
+        remoteVideoPort = signal.getVideoUdpPort();
+        if (remoteVideoPort > 0) {
+            videoCallEnabled = true;
+            view.setVideoCallAvailable(true);
+            startLocalVideoStreaming(false);
+        }
         startVoiceStreaming(signal.getHost(), signal.getUdpPort());
     }
 
@@ -287,6 +363,25 @@ public class ChatCallManager {
         view.updateCallStatus("Connected");
     }
 
+    private void handleRemoteVideoStarted(CallSignal signal) {
+        if (activeCallId == null || !activeCallId.equals(signal.getCallId())) {
+            return;
+        }
+
+        view.updateCallStatus("Connected - Video");
+    }
+
+    private void handleRemoteVideoStopped(CallSignal signal) {
+        if (activeCallId == null || !activeCallId.equals(signal.getCallId())) {
+            return;
+        }
+
+        stopLocalVideoStreaming(false);
+        view.clearRemoteScreenFrame();
+        view.clearLocalVideoFrame();
+        view.updateCallStatus("Connected");
+    }
+
     private void startVoiceStreaming(String host, int port) {
         if (voiceCallSession == null || host == null || host.isBlank() || port <= 0) {
             return;
@@ -303,11 +398,86 @@ public class ChatCallManager {
         }
     }
 
+    private void startLocalVideoStreaming(boolean notifyUserOnFailure) {
+        if (videoCallSession == null || remoteMediaHost == null || remoteMediaHost.isBlank() || remoteVideoPort <= 0) {
+            view.setVideoCallActive(false);
+            return;
+        }
+
+        try {
+            videoCallSession.start(remoteMediaHost, remoteVideoPort, view::showLocalVideoFrame);
+            localVideoSending = true;
+            view.setVideoCallActive(true);
+            view.updateCallStatus("Connected - Video");
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            if (notifyUserOnFailure) {
+                view.showError("Unable to start video stream.");
+            }
+            view.setVideoCallActive(false);
+            return;
+        }
+
+        if (activeCallId != null && activeCallPeer != null) {
+            try {
+                sendCallSignal(new CallSignal(
+                        activeCallId,
+                        CallAction.VIDEO_START,
+                        me.getUsername(),
+                        me.getNickname(),
+                        activeCallPeer.getUsername(),
+                        null,
+                        0,
+                        0,
+                        remoteVideoPort
+                ));
+            } catch (Exception signalEx) {
+                signalEx.printStackTrace();
+            }
+        }
+    }
+
+    private void stopLocalVideoStreaming(boolean notifyPeer) {
+        if (!localVideoSending) {
+            view.setVideoCallActive(false);
+            return;
+        }
+
+        if (videoCallSession != null) {
+            videoCallSession.stopSending();
+        }
+        localVideoSending = false;
+        view.setVideoCallActive(false);
+        view.clearLocalVideoFrame();
+        view.updateCallStatus("Connected");
+
+        if (notifyPeer && activeCallId != null && activeCallPeer != null) {
+            sendCallSignal(new CallSignal(
+                    activeCallId,
+                    CallAction.VIDEO_STOP,
+                    me.getUsername(),
+                    me.getNickname(),
+                    activeCallPeer.getUsername(),
+                    null,
+                    0,
+                    0,
+                    remoteVideoPort
+            ));
+        }
+    }
+
     private int ensureVoiceSessionOpened() throws Exception {
         if (voiceCallSession == null) {
             voiceCallSession = new VoiceCallSession();
         }
         return voiceCallSession.open();
+    }
+
+    private int ensureVideoSessionOpened() throws Exception {
+        if (videoCallSession == null) {
+            videoCallSession = new VideoCallSession();
+        }
+        return videoCallSession.open(view::showRemoteVideoFrame);
     }
 
     private int ensureScreenSessionOpened() throws Exception {
@@ -377,6 +547,11 @@ public class ChatCallManager {
                 screenShareSession = null;
             }
 
+            if (videoCallSession != null) {
+                videoCallSession.stop();
+                videoCallSession = null;
+            }
+
             if (voiceCallSession != null) {
                 voiceCallSession.stop();
                 voiceCallSession = null;
@@ -384,13 +559,19 @@ public class ChatCallManager {
 
             remoteMediaHost = null;
             remoteScreenPort = 0;
+            remoteVideoPort = 0;
             localScreenSharing = false;
+            localVideoSending = false;
+            videoCallEnabled = false;
             activeCallId = null;
             activeCallPeer = null;
             outgoingCallId = null;
             outgoingCallPeer = null;
             view.clearRemoteScreenFrame();
+            view.clearLocalVideoFrame();
             view.updateScreenShareButton(false);
+            view.setVideoCallAvailable(false);
+            view.setVideoCallActive(false);
             view.closeCallWindow();
         } finally {
             isEndingCall = false;

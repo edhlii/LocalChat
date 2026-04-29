@@ -19,8 +19,6 @@ public class CallWindowController {
     @FXML
     private Button btnCamera;
     @FXML
-    private Button btnChat;
-    @FXML
     private Button btnEndCall;
     @FXML
     private Button btnMic;
@@ -33,6 +31,12 @@ public class CallWindowController {
     @FXML
     private Label contactNameLabel;
     @FXML
+    private Label participantsTitleLabel;
+    @FXML
+    private Label participantSelfLabel;
+    @FXML
+    private Label participantPeerLabel;
+    @FXML
     private Label remoteVideoPlaceholderLabel;
     @FXML
     private StackPane localPreviewPane;
@@ -40,12 +44,19 @@ public class CallWindowController {
     private Pane remoteVideoPane;
     @FXML
     private ImageView remoteScreenImageView;
+    @FXML
+    private ImageView localPreviewImageView;
+    @FXML
+    private Label localPreviewPlaceholderLabel;
     private User selectedConversationUser;
     private Runnable onEndCall;
     private Consumer<Boolean> onMuteChanged;
     private Consumer<Boolean> onScreenShareChanged;
+    private Consumer<Boolean> onVideoChanged;
     private boolean micMuted;
     private boolean screenSharing;
+    private boolean videoActive;
+    private boolean videoAvailable;
 
     @FXML
     private void initialize() {
@@ -55,6 +66,9 @@ public class CallWindowController {
         if (btnMic != null) {
             btnMic.setOnAction(event -> onMicButtonClick());
         }
+        if (btnCamera != null) {
+            btnCamera.setOnAction(event -> onCameraButtonClick());
+        }
         if (btnShareScreen != null) {
             btnShareScreen.setOnAction(event -> onShareScreenButtonClick());
         }
@@ -62,11 +76,21 @@ public class CallWindowController {
 
     public void init(User selectedConversationUser) {
         this.selectedConversationUser = selectedConversationUser;
+        String peerDisplayName = selectedConversationUser != null
+                ? selectedConversationUser.getNickname()
+                : "Unknown";
 
         if (contactNameLabel != null) {
-            contactNameLabel.setText(selectedConversationUser != null
-                    ? selectedConversationUser.getNickname()
-                    : "Unknown");
+            contactNameLabel.setText(peerDisplayName);
+        }
+        if (participantsTitleLabel != null) {
+            participantsTitleLabel.setText("Participants (2)");
+        }
+        if (participantSelfLabel != null) {
+            participantSelfLabel.setText("You");
+        }
+        if (participantPeerLabel != null) {
+            participantPeerLabel.setText(peerDisplayName);
         }
     }
 
@@ -80,6 +104,10 @@ public class CallWindowController {
 
     public void setOnScreenShareChanged(Consumer<Boolean> onScreenShareChanged) {
         this.onScreenShareChanged = onScreenShareChanged;
+    }
+
+    public void setOnVideoChanged(Consumer<Boolean> onVideoChanged) {
+        this.onVideoChanged = onVideoChanged;
     }
 
     public void updateCallStatus(String statusText) {
@@ -102,6 +130,21 @@ public class CallWindowController {
         }
     }
 
+    public void setVideoCallAvailable(boolean available) {
+        videoAvailable = available;
+        if (btnCamera != null) {
+            btnCamera.setDisable(!available);
+            btnCamera.setText(available ? (videoActive ? "Stop Camera" : "Camera") : "Camera");
+        }
+    }
+
+    public void setVideoCallActive(boolean active) {
+        videoActive = active;
+        if (btnCamera != null) {
+            btnCamera.setText(videoActive ? "Stop Camera" : "Camera");
+        }
+    }
+
     public void showRemoteScreenFrame(byte[] frameBytes) {
         if (frameBytes == null || frameBytes.length == 0) {
             return;
@@ -112,7 +155,26 @@ public class CallWindowController {
             remoteScreenImageView.setVisible(true);
         }
         if (remoteVideoPlaceholderLabel != null) {
+            remoteVideoPlaceholderLabel.setText("Remote video stream");
             remoteVideoPlaceholderLabel.setVisible(false);
+        }
+    }
+
+    public void showRemoteVideoFrame(byte[] frameBytes) {
+        showRemoteScreenFrame(frameBytes);
+    }
+
+    public void showLocalVideoFrame(byte[] frameBytes) {
+        if (frameBytes == null || frameBytes.length == 0) {
+            return;
+        }
+
+        if (localPreviewImageView != null) {
+            localPreviewImageView.setImage(new Image(new ByteArrayInputStream(frameBytes)));
+            localPreviewImageView.setVisible(true);
+        }
+        if (localPreviewPlaceholderLabel != null) {
+            localPreviewPlaceholderLabel.setVisible(false);
         }
     }
 
@@ -124,6 +186,17 @@ public class CallWindowController {
         if (remoteVideoPlaceholderLabel != null) {
             remoteVideoPlaceholderLabel.setText("Remote video stream");
             remoteVideoPlaceholderLabel.setVisible(true);
+        }
+    }
+
+    public void clearLocalVideoFrame() {
+        if (localPreviewImageView != null) {
+            localPreviewImageView.setImage(null);
+            localPreviewImageView.setVisible(false);
+        }
+        if (localPreviewPlaceholderLabel != null) {
+            localPreviewPlaceholderLabel.setText("Camera preview");
+            localPreviewPlaceholderLabel.setVisible(true);
         }
     }
 
@@ -140,6 +213,18 @@ public class CallWindowController {
         setScreenSharingActive(!screenSharing);
         if (onScreenShareChanged != null) {
             onScreenShareChanged.accept(screenSharing);
+        }
+    }
+
+    @FXML
+    private void onCameraButtonClick() {
+        if (!videoAvailable) {
+            return;
+        }
+
+        setVideoCallActive(!videoActive);
+        if (onVideoChanged != null) {
+            onVideoChanged.accept(videoActive);
         }
     }
 

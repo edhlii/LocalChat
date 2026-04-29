@@ -7,11 +7,21 @@ public interface ChatCallView {
 
     void updateCallStatus(String statusText);
 
+    void setVideoCallAvailable(boolean available);
+
+    void setVideoCallActive(boolean active);
+
     void updateScreenShareButton(boolean sharing);
 
     void showRemoteScreenFrame(byte[] frameBytes);
 
+    void showRemoteVideoFrame(byte[] frameBytes);
+
+    void showLocalVideoFrame(byte[] frameBytes);
+
     void clearRemoteScreenFrame();
+
+    void clearLocalVideoFrame();
 
     void showInfo(String message);
 
