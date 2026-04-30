@@ -274,9 +274,15 @@ public class ClientHandler implements Runnable {
                         }
                         break;
                     case MARK_AS_READ:
-                        Integer partnerId = (Integer) data.getData();
-                        if (this.user != null) {
-                            messageDao.updateReadStatus(this.user.getId(), partnerId);
+                        Integer idReceived = (Integer) data.getData();
+
+                        if (idReceived == 0) {
+                            messageDao.updateReadStatus(this.user.getId(), 0, 0);
+                        } else if (idReceived > 0) {
+                            messageDao.updateReadStatus(this.user.getId(), idReceived, 0);
+                        } else {
+                            int realGroupId = Math.abs(idReceived);
+                            messageDao.updateReadStatus(this.user.getId(), 0, realGroupId);
                         }
                         break;
                     case TypeDataPacket.GET_OFFLINE_NOTIFICATIONS:
