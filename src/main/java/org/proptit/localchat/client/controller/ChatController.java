@@ -261,7 +261,6 @@ public class ChatController implements ChatCallView {
             this.allMembers = members;
             if (!isGroupMode) {
                 lvChatList.getItems().clear();
-                conversationUserMap.clear();
                 lvChatList.getItems().add(ANNOUNCEMENT_LABEL);
 
                 for (User u : allMembers) {
@@ -394,7 +393,7 @@ public class ChatController implements ChatCallView {
                         if (usersWithNewMessages.contains(0)) {
                             Label newMsgNotify = new Label("Có tin nhắn mới");
                             newMsgNotify.setFont(javafx.scene.text.Font.font("System", FontWeight.BOLD, 11));
-
+                            newMsgNotify.setTextFill(javafx.scene.paint.Color.WHITE);
                             textInfo.getChildren().add(newMsgNotify);
 
                         }
@@ -477,6 +476,7 @@ public class ChatController implements ChatCallView {
                             if (u != null && usersWithNewMessages.contains(u.getId())) {
                                 Label newMsgNotify = new Label("Có tin nhắn mới");
                                 newMsgNotify.setFont(Font.font("System", FontWeight.BOLD, 11));
+                                newMsgNotify.setTextFill(javafx.scene.paint.Color.WHITE);
                                 textInfo.getChildren().add(newMsgNotify);
                                 nameLbl.setTextFill(Color.web("#AD7BFF"));
                             }
@@ -912,7 +912,7 @@ public class ChatController implements ChatCallView {
             for (User u : users) {
                 this.onlineUserIds.add(u.getId());
             }
-
+            lvOnlinePeople.refresh();
             lvChatList.refresh();
         });
     }
