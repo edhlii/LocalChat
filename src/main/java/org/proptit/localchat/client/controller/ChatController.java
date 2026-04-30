@@ -847,8 +847,9 @@ public class ChatController implements ChatCallView {
                 } else if (isGroupMsg) {
                     usersWithNewMessages.add(-msg.getGroupId());
                 }
-                lvChatList.refresh();
+
             }
+            lvChatList.refresh();
         });
     }
 
@@ -1287,7 +1288,9 @@ public class ChatController implements ChatCallView {
         btnTabGroups.getStyleClass().add("toggle-btn");
 
         selectedConversationGroup = null;
+        selectedConversationUser = null;
         conversationUserMap.clear();
+        clearMessageArea();
         lvChatList.getItems().clear();
 
         lvChatList.getItems().add(ANNOUNCEMENT_LABEL);
@@ -1309,6 +1312,9 @@ public class ChatController implements ChatCallView {
                 lvChatList.getItems().add(label);
             }
         }
+        Platform.runLater(() -> {
+            lvChatList.getSelectionModel().select(ANNOUNCEMENT_LABEL);
+        });
     }
 
     @FXML
@@ -1321,14 +1327,21 @@ public class ChatController implements ChatCallView {
         btnTabAll.getStyleClass().removeAll("toggle-btn", "toggle-btn-active");
         btnTabAll.getStyleClass().add("toggle-btn");
 
-        selectedConversationUser = null;
+
 
         lvChatList.getItems().clear();
         conversationGroupMap.clear();
 
+        selectedConversationUser = null;
+        selectedConversationGroup = null;
+        clearMessageArea();
+
+        messageInput.getParent().setVisible(false);
+        messageInput.getParent().setManaged(false);
+
 
         if (myGroupsList.isEmpty()) {
-            lvChatList.getItems().add("Chưa có nhóm nào");
+            //lvChatList.getItems().add("Chưa có nhóm nào");
             return;
         }
 
@@ -1337,6 +1350,8 @@ public class ChatController implements ChatCallView {
             conversationGroupMap.put(label, group);
             lvChatList.getItems().add(label);
         }
+
+        lvChatList.getSelectionModel().clearSelection();
     }
 
     @FXML
