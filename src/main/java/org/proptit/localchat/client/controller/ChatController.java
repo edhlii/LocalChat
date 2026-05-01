@@ -741,63 +741,7 @@ public class ChatController implements ChatCallView {
         }
     }
 
-//    public void receiveMessage(Message msg) {
-//        Platform.runLater(() -> {
-//            if (me != null && msg.getSender().getId().equals(me.getId())) {
-//                return;
-//            }
-//
-//            String selectedItem = lvChatList.getSelectionModel().getSelectedItem();
-//            if (selectedItem == null) return;
-//
-//            boolean isRealBroadcast = msg.isBroadcast() && msg.getGroupId() == null;
-//
-//            boolean isGroupMsg = msg.getGroupId() != null;
-//
-//
-//            boolean isPrivateMsg = !msg.isBroadcast() && msg.getGroupId() == null;
-//
-//
-//            boolean isShowingAnnouncement = selectedItem.equals(ANNOUNCEMENT_LABEL) && isRealBroadcast;
-//
-//
-//            boolean isChattingWithSender = (!isGroupMode && selectedConversationUser != null &&
-//                    isPrivateMsg && msg.getSender().getId().equals(selectedConversationUser.getId()));
-//
-//
-//            boolean isChattingInGroup = (isGroupMode && selectedConversationGroup != null &&
-//                    isGroupMsg && msg.getGroupId().equals(selectedConversationGroup.getId()));
-//
-//
-//            boolean isCurrentConversation = isShowingAnnouncement || isChattingWithSender || isChattingInGroup;
-//
-//
-//            if (!isCurrentConversation) {
-//                if (isRealBroadcast) {
-//                    usersWithNewMessages.add(0);
-//                } else if (isPrivateMsg) {
-//                    usersWithNewMessages.add(msg.getSender().getId());
-//                } else if (isGroupMsg) {
-//                    usersWithNewMessages.add(-msg.getGroupId());
-//                }
-//                lvChatList.refresh();
-//            }
-//            else {
-//                if (msg instanceof ImageMessage) {
-//                    ImageMessage imgMsg = (ImageMessage) msg;
-//                    Image img = new Image(new ByteArrayInputStream(imgMsg.getImageData()));
-//                    ImageView imageView = new ImageView(img);
-//                    addImageToScreen(imageView, false, msg.getSentAt(), msg.getSender());
-//
-//                } else if (msg instanceof FileMessage) {
-//                    FileMessage fileMsg = (FileMessage) msg;
-//                    addFileToScreen(fileMsg.getContent(), fileMsg.getFileName(), fileMsg.getFileData(), false, msg.getSentAt(),  msg.getSender());
-//                } else {
-//                    addMessageToScreen(msg.getContent(), false, msg.getSentAt(),  msg.getSender());
-//                }
-//            }
-//        });
-//    }
+
     public void receiveMessage(Message msg) {
         Platform.runLater(() -> {
 
@@ -806,8 +750,6 @@ public class ChatController implements ChatCallView {
             }
 
             String selectedItem = lvChatList.getSelectionModel().getSelectedItem();
-
-
             boolean isGroupMsg = msg.getGroupId() != null;
             boolean isRealBroadcast = msg.isBroadcast() && !isGroupMsg;
             boolean isPrivateMsg = !msg.isBroadcast() && !isGroupMsg;
@@ -817,17 +759,18 @@ public class ChatController implements ChatCallView {
             if (selectedItem != null) {
                 if (isRealBroadcast && selectedItem.equals(ANNOUNCEMENT_LABEL)) {
                     isCurrent = true;
-                }
-                else if (isPrivateMsg && !isGroupMode && selectedConversationUser != null
+                } else if (isPrivateMsg && !isGroupMode && selectedConversationUser != null
                         && msg.getSender().getId().equals(selectedConversationUser.getId())) {
                     isCurrent = true;
-                }
-                else if (isGroupMsg && isGroupMode && selectedConversationGroup != null
+                } else if (isGroupMsg && isGroupMode && selectedConversationGroup != null
                         && msg.getGroupId().equals(selectedConversationGroup.getId())) {
                     isCurrent = true;
                 }
             }
+
+
             if (isCurrent) {
+
                 if (msg instanceof ImageMessage) {
                     ImageMessage imgMsg = (ImageMessage) msg;
                     Image img = new Image(new ByteArrayInputStream(imgMsg.getImageData()));
@@ -840,15 +783,54 @@ public class ChatController implements ChatCallView {
                 }
                 scrollPane.setVvalue(1.0);
             } else {
+
                 if (isRealBroadcast) {
                     usersWithNewMessages.add(0);
+                    int idx = lvChatList.getItems().indexOf(ANNOUNCEMENT_LABEL);
+                    if (idx != -1) lvChatList.getItems().set(idx, ANNOUNCEMENT_LABEL);
+
                 } else if (isPrivateMsg) {
                     usersWithNewMessages.add(msg.getSender().getId());
-                } else if (isGroupMsg) {
-                    usersWithNewMessages.add(-msg.getGroupId());
-                }
 
+                    String label = msg.getSender().getNickname() + " (@" + msg.getSender().getUsername() + ")";
+
+                    if (!isGroupMode) {
+
+                        int idx = lvChatList.getItems().indexOf(label);
+                        if (idx != -1) {
+
+                            lvChatList.getItems().set(idx, label);
+                        } else {
+
+                            lvChatList.getItems().add(label);
+                            conversationUserMap.put(label, msg.getSender());
+                        }
+                    }
+                } else if (isGroupMsg) {
+
+
+                    usersWithNewMessages.add(-msg.getGroupId());
+
+                    if (isGroupMode) {
+                        String groupLabel = null;
+                        for (String key : conversationGroupMap.keySet()) {
+                            if (conversationGroupMap.get(key).getId().equals(msg.getGroupId())) {
+                                groupLabel = key;
+                                break;
+                            }
+                        }
+
+                        if (groupLabel != null) {
+                            int idx = lvChatList.getItems().indexOf(groupLabel);
+                            if (idx != -1) {
+                                lvChatList.getItems().set(idx, groupLabel);
+                            }
+                        }
+                    }
+                }
             }
+
+
             lvChatList.refresh();
         });
     }
@@ -1335,6 +1317,8 @@ public class ChatController implements ChatCallView {
         selectedConversationUser = null;
         selectedConversationGroup = null;
         clearMessageArea();
+
+        contactNameTopBar.setText("");
 
         messageInput.getParent().setVisible(false);
         messageInput.getParent().setManaged(false);
