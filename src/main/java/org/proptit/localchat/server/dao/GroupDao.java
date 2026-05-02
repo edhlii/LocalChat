@@ -55,11 +55,38 @@ public class GroupDao {
         }
         return -1;
     }
+//    public List<ChatGroup> getGroupsByUserId(int userId) {
+//        List<ChatGroup> myGroups = new ArrayList<>();
+//        String sql = "SELECT cg.id, cg.name, cg.created_by FROM chat_groups cg " +
+//                "JOIN group_members gm ON cg.id = gm.group_id " +
+//                "WHERE gm.user_id = ?";
+//
+//        try (Connection conn = DbConnection.openConnection();
+//             PreparedStatement ps = conn.prepareStatement(sql)) {
+//
+//            ps.setInt(1, userId);
+//            try (ResultSet rs = ps.executeQuery()) {
+//                while (rs.next()) {
+//                    int groupId = rs.getInt("id");
+//                    String groupName = rs.getString("name");
+//                    int creatorId = rs.getInt("created_by");
+//                    List<User> members = getFullMembersByGroupId(groupId);
+//                    ChatGroup group = new ChatGroup(groupId, groupName, new User(creatorId), members);
+//                    myGroups.add(group);
+//                }
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        return myGroups;
+//    }
     public List<ChatGroup> getGroupsByUserId(int userId) {
         List<ChatGroup> myGroups = new ArrayList<>();
+
+
+        List<ChatGroup> temp = new ArrayList<>();
         String sql = "SELECT cg.id, cg.name, cg.created_by FROM chat_groups cg " +
-                "JOIN group_members gm ON cg.id = gm.group_id " +
-                "WHERE gm.user_id = ?";
+                "JOIN group_members gm ON cg.id = gm.group_id WHERE gm.user_id = ?";
 
         try (Connection conn = DbConnection.openConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -67,12 +94,19 @@ public class GroupDao {
             ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    int groupId = rs.getInt("id");
-                    String groupName = rs.getString("name");
-                    ChatGroup group = new ChatGroup(groupId, groupName, new User("creator"), new ArrayList<>());
-                    myGroups.add(group);
+                    temp.add(new ChatGroup(
+                            rs.getInt("id"),
+                            rs.getString("name"),
+                            new User(rs.getInt("created_by")),
+                            null
+                    ));
                 }
             }
+            for (ChatGroup group : temp) {
+                group.setMembers(getFullMembersByGroupId(group.getId()));
+                myGroups.add(group);
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -93,5 +127,64 @@ public class GroupDao {
             e.printStackTrace();
         }
         return memberIds;
+    }
+
+    public List<User> getFullMembersByGroupId(int groupId) {
+
+        try (Connection conn = DbConnection.openConnection()){
+            List<User> members = new ArrayList<>();
+
+            String sql = "SELECT u.id, u.nickname, u.username FROM users u " +
+                    "JOIN group_members gm ON u.id = gm.user_id " +
+                    "WHERE gm.group_id = ?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, groupId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                User u = new User(rs.getInt("id"));
+                u.setNickname(rs.getString("nickname"));
+                u.setUsername(rs.getString("username"));
+                members.add(u);
+            }
+            return members;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public boolean addMembers(int groupId, List<Integer> userIds) {
+        String sql = "INSERT INTO group_members (group_id, user_id) VALUES (?, ?)";
+        try (Connection conn = DbConnection.openConnection()) {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            for (Integer userId : userIds) {
+                ps.setInt(1, groupId);
+                ps.setInt(2, userId);
+                ps.addBatch();
+            }
+            ps.executeBatch();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean removeMembers(int groupId, List<Integer> userIds) {
+        String sql = "DELETE FROM group_members WHERE group_id = ? AND user_id = ?";
+        try (Connection conn = DbConnection.openConnection()) {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            for (Integer userId : userIds) {
+                ps.setInt(1, groupId);
+                ps.setInt(2, userId);
+                ps.addBatch();
+            }
+            ps.executeBatch();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

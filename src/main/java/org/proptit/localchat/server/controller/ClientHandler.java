@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 public class ClientHandler implements Runnable {
     private Socket socket;
@@ -289,6 +290,48 @@ public class ClientHandler implements Runnable {
                         if (this.user != null) {
                             List<Integer> unreadIds = messageDao.getOfflineNotificationIds(this.user.getId());
                             sendData(new DataPacket(TypeDataPacket.RETURN_OFFLINE_NOTIFICATIONS, unreadIds));
+                        }
+                        break;
+                    case ADD_GROUP_MEMBERS:
+                        ChatGroup addPayload = (ChatGroup) data.getData();
+                        List<Integer> addIds = addPayload.getMembers().stream()
+                                .map(User::getId)
+                                .collect(Collectors.toList());
+
+                        if (groupDao.addMembers(addPayload.getId(), addIds)) {
+                            ChatGroup updatedGroup = groupDao.getGroupsByUserId(this.user.getId()).stream()
+                                    .filter(g -> g.getId().equals(addPayload.getId()))
+                                    .findFirst().orElse(null);
+
+                            if (updatedGroup != null) {
+                                for (ClientHandler ch : server.getClients()) {
+                                    if (ch.getUser() != null) {
+                                        int currentClientId = ch.getUser().getId();
+                                        if (currentClientId == this.user.getId() || addIds.contains(currentClientId)) {
+                                            ch.sendData(new DataPacket(TypeDataPacket.UPDATE_GROUP_SUCCESS, updatedGroup));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        break;
+
+                    case REMOVE_GROUP_MEMBERS:
+                        ChatGroup removePayload = (ChatGroup) data.getData();
+                        List<Integer> removeIds = removePayload.getMembers().stream()
+                                .map(User::getId).collect(Collectors.toList());
+
+                        if (groupDao.removeMembers(removePayload.getId(), removeIds)) {
+                            for (ClientHandler ch : server.getClients()) {
+                                if (ch.getUser() != null && removeIds.contains(ch.getUser().getId())) {
+                                    ChatGroup deleteSignal = new ChatGroup(removePayload.getId(), "DELETED_SIGNAL", null, null);
+                                    ch.sendData(new DataPacket(TypeDataPacket.UPDATE_GROUP_SUCCESS, deleteSignal));
+                                }
+                            }
+                            ChatGroup fullGroupForAdmin = groupDao.getGroupsByUserId(this.user.getId()).stream()
+                                    .filter(g -> g.getId().equals(removePayload.getId()))
+                                    .findFirst().orElse(null);
+                            sendData(new DataPacket(TypeDataPacket.UPDATE_GROUP_SUCCESS, fullGroupForAdmin));
                         }
                         break;
 

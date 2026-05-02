@@ -6,7 +6,7 @@ public class DbConfig {
     public static String user = "root";
     //anh em tu dat mat khau vao day
 
-    public static String password = "ducanh9109pinssd";
+    public static String password = "xxx";
 
 
 }

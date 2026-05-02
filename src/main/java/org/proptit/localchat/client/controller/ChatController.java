@@ -24,6 +24,7 @@ import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.embed.swing.SwingFXUtils;
 import javax.imageio.ImageIO;
@@ -56,48 +57,31 @@ public class ChatController implements ChatCallView {
     private SocketClient client;
     private User me;
     private final Map<String, User> conversationUserMap = new HashMap<>();
-
     private List<User> allMembers = new ArrayList<>();
     private final Set<Integer> onlineUserIds = new HashSet<>();
-
     private User selectedConversationUser;
-
     private final Map<String, Button> pendingFileButtons = new HashMap<>();
-
-
-
     private List<ChatGroup> myGroupsList = new ArrayList<>();
     private final Map<String, ChatGroup> conversationGroupMap = new HashMap<>();
-
     private static final String ANNOUNCEMENT_LABEL = "Thông báo chung";
     private final Set<Integer> usersWithNewMessages = new HashSet<>();
-
-
-
     private ChatCallManager callManager;
     private Stage callStage;
     private CallWindowController callWindowController;
     private boolean videoCallAvailable;
     private boolean videoCallActive;
 
-    @FXML
-    private VBox vboxMessage;
-    @FXML
-    private ScrollPane scrollPane;
-    @FXML
-    private TextField messageInput;
-    @FXML
-    private ListView<String> lvOnlinePeople;
-    @FXML
-    private ListView<String> lvChatList;
-    @FXML
-    private Button sendMessageAllButton;
-    @FXML
-    public Label contactNameTopBar;
+    @FXML private VBox vboxMessage;
+    @FXML private ScrollPane scrollPane;
+    @FXML private TextField messageInput;
+    @FXML private ListView<String> lvOnlinePeople;
+    @FXML private ListView<String> lvChatList;
+    @FXML private Button sendMessageAllButton;
+    @FXML public Label contactNameTopBar;
     @FXML private Button btnTabAll;
     @FXML private Button btnTabGroups;
-    @FXML
-    private TextField txtSearchPeopleChat;
+    @FXML private TextField txtSearchPeopleChat;
+    @FXML private Button btnManageGroup;
 
     private boolean isGroupMode = false;
     private ChatGroup selectedConversationGroup;
@@ -112,6 +96,9 @@ public class ChatController implements ChatCallView {
         });
 
         setupListViewCustomCells();
+
+        btnManageGroup.setVisible(false);
+        btnManageGroup.setManaged(false);
 
         if (lvChatList != null) {
             lvChatList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
@@ -160,10 +147,16 @@ public class ChatController implements ChatCallView {
 
                             client.sendData(new DataPacket(TypeDataPacket.GET_GROUP_HISTORY_REQUEST, selectedConversationGroup.getId()));
                         }
+
+                        selectedConversationGroup = newGroup;
+                        updateManageGroupButtonVisibility();
                     }
                 }
                 else
                 {
+                    selectedConversationGroup = null;
+                    updateManageGroupButtonVisibility();
+
                     User newUser = conversationUserMap.get(newValue);
                     if (newUser != null)
                     {
@@ -1262,6 +1255,15 @@ public class ChatController implements ChatCallView {
     @FXML
     void onTabAllClick(ActionEvent event) {
         isGroupMode = false;
+        selectedConversationGroup = null;
+        updateManageGroupButtonVisibility();
+
+        if (txtSearchPeopleChat != null) {
+            txtSearchPeopleChat.setVisible(true);
+            txtSearchPeopleChat.setManaged(true);
+        }
+
+        isGroupMode = false;
 
         btnTabAll.getStyleClass().removeAll("toggle-btn", "toggle-btn-active");
         btnTabAll.getStyleClass().add("toggle-btn-active");
@@ -1301,6 +1303,15 @@ public class ChatController implements ChatCallView {
 
     @FXML
     void onTabGroupsClick(ActionEvent event) {
+        isGroupMode = true;
+        selectedConversationGroup = null;
+        updateManageGroupButtonVisibility();
+
+        if (txtSearchPeopleChat != null) {
+            txtSearchPeopleChat.setVisible(false);
+            txtSearchPeopleChat.setManaged(false);
+        }
+
         isGroupMode = true;
 
         btnTabGroups.getStyleClass().removeAll("toggle-btn", "toggle-btn-active");
@@ -1360,8 +1371,8 @@ public class ChatController implements ChatCallView {
             myGroupsList.add(newGroup);
 
             if (isGroupMode) {
-                lvChatList.getItems().add("👥 " + newGroup.getName());
-                conversationGroupMap.put("👥 " + newGroup.getName(), newGroup);
+                lvChatList.getItems().add("👥" + newGroup.getName());
+                conversationGroupMap.put("👥" + newGroup.getName(), newGroup);
             }
 
             javafx.stage.Window.getWindows().stream()
@@ -1395,6 +1406,110 @@ public class ChatController implements ChatCallView {
                 usersWithNewMessages.addAll(unreadIds);
                 lvChatList.refresh();
             }
+        });
+    }
+
+    @FXML
+    void onManageGroupClick(ActionEvent event) {
+
+        ContextMenu menu = new ContextMenu();
+        MenuItem addMember = new MenuItem("Thêm thành viên");
+        MenuItem removeMember = new MenuItem("Xóa thành viên");
+
+        addMember.setOnAction(e -> openGroupManagerWindow("ADD"));
+        removeMember.setOnAction(e -> openGroupManagerWindow("REMOVE"));
+
+        menu.getItems().addAll(addMember, removeMember);
+        menu.show(btnManageGroup, javafx.geometry.Side.BOTTOM, 0, 0);
+    }
+
+    private void openGroupManagerWindow(String mode) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/proptit/localchat/manage_group.fxml"));
+            Parent root = loader.load();
+
+            GroupManagerController controller = loader.getController();
+            controller.init(client, me, selectedConversationGroup, allMembers, mode);
+
+            Stage stage = new Stage();
+            stage.setTitle(mode.equals("ADD") ? "Thêm thành viên" : "Xóa thành viên");
+            stage.setScene(new Scene(root));
+            stage.initOwner(btnManageGroup.getScene().getWindow());
+            stage.initModality(Modality.WINDOW_MODAL);
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    private void updateManageGroupButtonVisibility() {
+        if (isGroupMode && selectedConversationGroup != null && me != null) {
+            boolean isCreator = selectedConversationGroup.getCreatedBy() != null &&
+                    selectedConversationGroup.getCreatedBy().getId().equals(me.getId());
+            btnManageGroup.setVisible(isCreator);
+            btnManageGroup.setManaged(isCreator);
+        } else {
+            btnManageGroup.setVisible(false);
+            btnManageGroup.setManaged(false);
+        }
+    }
+    public void updateGroupSilent(ChatGroup group) {
+        if (group == null) return;
+
+        Platform.runLater(() -> {
+            if ("DELETED_SIGNAL".equals(group.getName())) {
+                myGroupsList.removeIf(g -> g.getId().equals(group.getId()));
+                String labelToRemove = null;
+                for (String label : conversationGroupMap.keySet()) {
+                    if (conversationGroupMap.get(label).getId().equals(group.getId())) {
+                        labelToRemove = label;
+                        break;
+                    }
+                }
+                if (labelToRemove != null) {
+                    lvChatList.getItems().remove(labelToRemove);
+                    conversationGroupMap.remove(labelToRemove);
+                }
+                if (selectedConversationGroup != null && selectedConversationGroup.getId().equals(group.getId())) {
+                    clearMessageArea();
+                    selectedConversationGroup = null;
+                    contactNameTopBar.setText("Bạn đã bị xóa khỏi nhóm này");
+                    messageInput.getParent().setVisible(false);
+                    showInfo("Sếp đã bị xóa khỏi nhóm!");
+                }
+                return;
+            }
+
+
+
+            String label = "👥" + group.getName();
+
+            boolean existsInList = false;
+            for (int i = 0; i < myGroupsList.size(); i++) {
+                if (myGroupsList.get(i).getId().equals(group.getId())) {
+                    myGroupsList.set(i, group);
+                    existsInList = true;
+                    break;
+                }
+            }
+            if (!existsInList) myGroupsList.add(group);
+            conversationGroupMap.values().removeIf(g -> g.getId().equals(group.getId()));
+            conversationGroupMap.put(label, group);
+
+            if (isGroupMode) {
+                if (!lvChatList.getItems().contains(label)) {
+                    lvChatList.getItems().add(label);
+                }
+            }
+
+            if (selectedConversationGroup != null && selectedConversationGroup.getId().equals(group.getId())) {
+                this.selectedConversationGroup = group;
+                if (isGroupMode) {
+                    lvChatList.getSelectionModel().select(label);
+                }
+                updateManageGroupButtonVisibility();
+            }
+
+            lvChatList.refresh();
         });
     }
 }

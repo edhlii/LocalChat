@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox alignment="TOP_CENTER" prefHeight="450.0" prefWidth="350.0" spacing="20.0"
+      stylesheets="@create_group.css" styleClass="root"
+      xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="org.proptit.localchat.client.controller.GroupManagerController">
+
+    <children>
+        <!-- Tiêu đề lớn -->
+        <Label fx:id="lblHeader" text="QUẢN LÝ THÀNH VIÊN" styleClass="header-label" />
+
+        <!-- Hiển thị tên nhóm dạng văn bản, không dùng ô nhập -->
+        <VBox alignment="CENTER" spacing="5.0">
+            <Label text="NHÓM" styleClass="field-label" style="-fx-text-fill: #919191; -fx-font-size: 11px;" />
+            <Label fx:id="lblGroupName" text="Tên nhóm ở đây" style="-fx-text-fill: #AD7BFF; -fx-font-size: 18px; -fx-font-weight: bold;" />
+        </VBox>
+
+        <VBox spacing="10.0" VBox.vgrow="ALWAYS">
+            <Label fx:id="lblListTitle" text="CHỌN THÀNH VIÊN" styleClass="field-label" />
+            <ListView fx:id="lvMembers" VBox.vgrow="ALWAYS" styleClass="list-view" />
+        </VBox>
+
+        <Label fx:id="lblError" textFill="#ff5252" wrapText="true" />
+
+        <!-- Chỉ giữ lại một nút bấm duy nhất -->
+        <Button fx:id="btnConfirm" onAction="#onConfirmClick" prefWidth="200.0" text="Xác nhận" styleClass="btn-primary" />
+    </children>
+
+    <padding>
+        <Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
+    </padding>
+</VBox>
