@@ -576,6 +576,8 @@ public class ChatController implements ChatCallView {
         Label lblMessage = new Label(text);
         lblMessage.setWrapText(true);
         lblMessage.setMaxWidth(400);
+        lblMessage.setMinHeight(Region.USE_PREF_SIZE);
+
         lblMessage.setFont(Font.font("System", 16));
 
         Label lblTime = new Label(time);
@@ -591,19 +593,10 @@ public class ChatController implements ChatCallView {
 
         if (!isMe) {
             messageGroup.getChildren().add(lblTime);
-
             messageGroup.setAlignment(Pos.TOP_LEFT);
-
-            lblMessage.setMaxWidth(Region.USE_PREF_SIZE);
-            lblMessage.setMinWidth(Region.USE_PREF_SIZE);
-
-            VBox.setMargin(lblMessage, new Insets(0));
         } else {
             messageGroup.getChildren().add(lblTime);
             messageGroup.setAlignment(Pos.TOP_RIGHT);
-
-            lblMessage.setMaxWidth(Region.USE_PREF_SIZE);
-            lblMessage.setPrefWidth(Region.USE_COMPUTED_SIZE);
         }
 
         messageGroup.getChildren().add(lblMessage);
