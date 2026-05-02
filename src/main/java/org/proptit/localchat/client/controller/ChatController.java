@@ -1472,9 +1472,7 @@ public class ChatController implements ChatCallView {
                 if (selectedConversationGroup != null && selectedConversationGroup.getId().equals(group.getId())) {
                     clearMessageArea();
                     selectedConversationGroup = null;
-                    contactNameTopBar.setText("Bạn đã bị xóa khỏi nhóm này");
                     messageInput.getParent().setVisible(false);
-                    showInfo("Sếp đã bị xóa khỏi nhóm!");
                 }
                 return;
             }
