@@ -17,19 +17,15 @@ public class MessageDao {
 
     public Integer save(Message msg) {
         try (Connection c = DbConnection.openConnection()) {
-
             String sql = "INSERT INTO messages (sender_id, receiver_id, group_id, message_type, content, file_name) VALUES (?, ?, ?, ?, ?, ?)";
             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-
             ps.setInt(1, msg.getSender().getId());
-
 
             if (msg.getReceiver() != null) {
                 ps.setInt(2, msg.getReceiver().getId());
             } else {
                 ps.setNull(2, Types.INTEGER);
             }
-
 
             if (msg.getGroupId() != null && msg.getGroupId() > 0) {
                 ps.setInt(3, msg.getGroupId());

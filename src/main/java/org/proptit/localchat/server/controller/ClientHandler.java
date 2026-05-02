@@ -77,7 +77,6 @@ public class ClientHandler implements Runnable {
                             try {
                                 byte[] fileBytes;
                                 String fileName;
-
                                 if (msg.getTypeMessage() == TypeMessage.IMAGE) {
                                     fileBytes = ((ImageMessage) msg).getImageData();
                                     fileName = ((ImageMessage) msg).getFileName();
@@ -85,9 +84,8 @@ public class ClientHandler implements Runnable {
                                     fileBytes = ((FileMessage) msg).getFileData();
                                     fileName = ((FileMessage) msg).getFileName();
                                 }
-
+                                System.out.println("/" + fileName + "/");
                                 String uuidName = storageFileServicefileService.saveFile(fileBytes, fileName);
-
                                 msg.setContent(uuidName);
 
                                 if (msg.getTypeMessage() == TypeMessage.FILE) {
@@ -104,7 +102,6 @@ public class ClientHandler implements Runnable {
                         server.getChatService().processMessage(this, msg);
 
                         dbExecutor.execute(() -> {
-
                             messageDao.save(msg);
                             System.out.println("da luu tin nhan");
                         });

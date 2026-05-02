@@ -218,10 +218,7 @@ public class ChatController implements ChatCallView {
 
 
         client.sendData(new DataPacket(TypeDataPacket.GET_CHAT_CONTACTS, null));
-
         client.sendData(new DataPacket(TypeDataPacket.GET_MY_GROUPS_REQUEST, me.getId()));
-
-
         client.sendData(new DataPacket(TypeDataPacket.GET_OFFLINE_NOTIFICATIONS, null));
     }
 
@@ -532,10 +529,8 @@ public class ChatController implements ChatCallView {
                 msg = TextMessage.createGroup(me, selectedConversationGroup, messageText);
                 addMessageToScreen(messageText, true, msg.getSentAt(), me);
 
-
             } else {
                 if (selectedConversationUser == null) return;
-
                 msg = TextMessage.createPrivate(me, selectedConversationUser, messageText);
                 addMessageToScreen(messageText, true, msg.getSentAt(), me);
             }
@@ -595,8 +590,6 @@ public class ChatController implements ChatCallView {
         } else {
             lblMessage.setStyle("-fx-background-color: #1E2435; -fx-text-fill: white; -fx-background-radius: 15px; -fx-padding: 8px 12px;");
         }
-
-
         ContextMenu contextMenu = new ContextMenu();
         MenuItem copyItem = new MenuItem("Copy tin nhắn");
         copyItem.setOnAction(e -> {
@@ -605,6 +598,7 @@ public class ChatController implements ChatCallView {
             content.putString(lblMessage.getText());
             clipboard.setContent(content);
         });
+
         contextMenu.getItems().add(copyItem);
         lblMessage.setContextMenu(contextMenu);
 
@@ -744,13 +738,13 @@ public class ChatController implements ChatCallView {
 
             String selectedItem = lvChatList.getSelectionModel().getSelectedItem();
             boolean isGroupMsg = msg.getGroupId() != null;
-            boolean isRealBroadcast = msg.isBroadcast() && !isGroupMsg;
+            boolean isBroadcastMsg = msg.isBroadcast() && !isGroupMsg;
             boolean isPrivateMsg = !msg.isBroadcast() && !isGroupMsg;
 
 
             boolean isCurrent = false;
             if (selectedItem != null) {
-                if (isRealBroadcast && selectedItem.equals(ANNOUNCEMENT_LABEL)) {
+                if (isBroadcastMsg && selectedItem.equals(ANNOUNCEMENT_LABEL)) {
                     isCurrent = true;
                 } else if (isPrivateMsg && !isGroupMode && selectedConversationUser != null
                         && msg.getSender().getId().equals(selectedConversationUser.getId())) {
@@ -763,8 +757,7 @@ public class ChatController implements ChatCallView {
 
 
             if (isCurrent) {
-
-                if (msg instanceof ImageMessage) {
+                if (msg.getTypeMessage() == TypeMessage.IMAGE) {
                     ImageMessage imgMsg = (ImageMessage) msg;
                     Image img = new Image(new ByteArrayInputStream(imgMsg.getImageData()));
                     addImageToScreen(new ImageView(img), false, msg.getSentAt(), msg.getSender());
@@ -776,8 +769,7 @@ public class ChatController implements ChatCallView {
                 }
                 scrollPane.setVvalue(1.0);
             } else {
-
-                if (isRealBroadcast) {
+                if (isBroadcastMsg) {
                     usersWithNewMessages.add(0);
                     int idx = lvChatList.getItems().indexOf(ANNOUNCEMENT_LABEL);
                     if (idx != -1) lvChatList.getItems().set(idx, ANNOUNCEMENT_LABEL);
@@ -1278,14 +1270,21 @@ public class ChatController implements ChatCallView {
         lvChatList.getItems().clear();
 
         lvChatList.getItems().add(ANNOUNCEMENT_LABEL);
-        Collection<User> usersToDisplay = allMembers;
-        if (usersToDisplay == null || usersToDisplay.isEmpty()) {
-            usersToDisplay = conversationUserMap.values();
-        }
 
-        List<User> availableConversations = usersToDisplay.stream()
-                .filter(user -> me == null || !user.getUsername().equalsIgnoreCase(me.getUsername()))
-                .collect(Collectors.toList());
+        Collection<User> usersToDisplay = allMembers;
+//        if (usersToDisplay == null || usersToDisplay.isEmpty()) {
+//            usersToDisplay = conversationUserMap.values();
+//        }
+
+//        List<User> availableConversations = usersToDisplay.stream()
+//                .filter(user -> me == null || !user.getUsername().equalsIgnoreCase(me.getUsername()))
+//                .collect(Collectors.toList());
+        List<User> availableConversations = new ArrayList<>();
+        for (User user : usersToDisplay) {
+            if (me == null || !user.getUsername().equalsIgnoreCase(me.getUsername())) {
+                availableConversations.add(user);
+            }
+        }
 
         if (availableConversations.isEmpty()) {
             lvChatList.getItems().add("No conversations");
