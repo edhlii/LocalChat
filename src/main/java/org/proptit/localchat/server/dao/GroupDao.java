@@ -69,7 +69,27 @@ public class GroupDao {
                 while (rs.next()) {
                     int groupId = rs.getInt("id");
                     String groupName = rs.getString("name");
-                    ChatGroup group = new ChatGroup(groupId, groupName, new User("creator"), new ArrayList<>());
+                    int creatorId = rs.getInt("created_by");
+
+                    User creator = new User("creator");
+                    creator.setId(creatorId);
+                    List<User> members = new ArrayList<>();
+                    String sqlMem = "SELECT u.id, u.nickname, u.username FROM users u " +
+                            "JOIN group_members gm ON u.id = gm.user_id " +
+                            "WHERE gm.group_id = ?";
+                    try (PreparedStatement psMem = conn.prepareStatement(sqlMem)) {
+                        psMem.setInt(1, groupId);
+                        try (ResultSet rsMem = psMem.executeQuery()) {
+                            while (rsMem.next()) {
+                                User mem = new User(rsMem.getString("username"));
+                                mem.setId(rsMem.getInt("id"));
+                                mem.setNickname(rsMem.getString("nickname"));
+                                members.add(mem);
+                            }
+                        }
+                    }
+
+                    ChatGroup group = new ChatGroup(groupId, groupName, creator, members);
                     myGroups.add(group);
                 }
             }
@@ -93,5 +113,18 @@ public class GroupDao {
             e.printStackTrace();
         }
         return memberIds;
+    }
+
+    public boolean leaveGroup(int userId, int groupId) {
+        String sql = "DELETE FROM group_members WHERE user_id = ? AND group_id = ?";
+        try (Connection conn = DbConnection.openConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setInt(2, groupId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

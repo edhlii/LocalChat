@@ -292,3 +292,23 @@
     -fx-focus-color: transparent;
     -fx-faint-focus-color: transparent;
 }
+
+.context-menu {
+    -fx-background-color: #1a1b26;
+    -fx-border-color: #2b2d3e;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 5px;
+}
+.menu-item {
+    -fx-padding: 8px 15px;
+    -fx-background-radius: 4px;
+}
+.menu-item .label {
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-family: "Segoe UI", sans-serif;
+}
+.menu-item:focused {
+    -fx-background-color: #2b2d3e;
+}
