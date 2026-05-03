@@ -1,5 +1,6 @@
 package org.proptit.localchat.client.controller;
 
+import javafx.application.Platform;
 import org.proptit.localchat.client.networks.ScreenShareSession;
 import org.proptit.localchat.client.networks.SocketClient;
 import org.proptit.localchat.client.networks.VideoCallSession;
@@ -89,15 +90,6 @@ public class ChatCallManager {
             return;
         }
 
-        try {
-            prepareLocalMedia();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            cleanupCallState(false);
-            view.showError("Unable to access call devices.");
-            return;
-        }
-
         String callId = UUID.randomUUID().toString();
         activeCallId = callId;
         outgoingCallId = callId;
@@ -110,9 +102,9 @@ public class ChatCallManager {
         activeGroupRoster = new ArrayList<>();
         autoStartVideoWhenConnected = asVideoCall;
 
-        view.showCallWindow(selectedConversationUser, "Calling...");
+        view.showCallWindow(selectedConversationUser, "Preparing call...");
         refreshCallParticipants();
-        sendCallSignal(new CallSignal(
+        startOutgoingCallInitialization(callId, () -> sendCallSignal(new CallSignal(
                 callId,
                 CallAction.INVITE,
                 me.getUsername(),
@@ -122,7 +114,7 @@ public class ChatCallManager {
                 localVoicePort,
                 localScreenPort,
                 localVideoPort
-        ));
+        )));
     }
 
     private void startOutgoingGroupCall(ChatGroup selectedGroup, boolean asVideoCall) {
@@ -133,15 +125,6 @@ public class ChatCallManager {
 
         if (activeCallId != null || outgoingCallId != null) {
             view.showInfo("A call is already in progress.");
-            return;
-        }
-
-        try {
-            prepareLocalMedia();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            cleanupCallState(false);
-            view.showError("Unable to access call devices.");
             return;
         }
 
@@ -157,9 +140,9 @@ public class ChatCallManager {
         activeCallPeer = buildGroupDisplayUser(activeGroupId, activeGroupName);
         autoStartVideoWhenConnected = asVideoCall;
 
-        view.showCallWindow(activeCallPeer, "Calling group...");
+        view.showCallWindow(activeCallPeer, "Preparing group call...");
         refreshCallParticipants();
-        sendCallSignal(new CallSignal(
+        startOutgoingCallInitialization(callId, () -> sendCallSignal(new CallSignal(
                 callId,
                 CallAction.INVITE,
                 me.getUsername(),
@@ -169,7 +152,7 @@ public class ChatCallManager {
                 localVoicePort,
                 localScreenPort,
                 localVideoPort
-        ));
+        )));
     }
 
     public void receiveCallSignal(CallSignal signal) {
@@ -567,6 +550,35 @@ public class ChatCallManager {
         voiceCallSession.start();
         view.setVideoCallAvailable(true);
         view.setVideoCallActive(localVideoSending);
+    }
+
+    private void startOutgoingCallInitialization(String callId, Runnable onReady) {
+        Thread initThread = new Thread(() -> {
+            try {
+                prepareLocalMedia();
+                Platform.runLater(() -> {
+                    if (!isSameCall(callId)) {
+                        return;
+                    }
+                    refreshCallParticipants();
+                    updateConnectedStatus();
+                    if (onReady != null) {
+                        onReady.run();
+                    }
+                });
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                Platform.runLater(() -> {
+                    if (!isSameCall(callId)) {
+                        return;
+                    }
+                    cleanupCallState(false);
+                    view.showError("Unable to access call devices.");
+                });
+            }
+        }, "call-init");
+        initThread.setDaemon(true);
+        initThread.start();
     }
 
     private int ensureVoiceSessionOpened() throws Exception {

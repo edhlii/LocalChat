@@ -964,6 +964,8 @@ public class ChatController implements ChatCallView {
     @Override
     public void showCallWindow(User peer, String statusText) {
         try {
+            boolean groupCall = isGroupCallPeer(peer);
+
             if (callStage != null && callStage.isShowing()) {
                 if (callWindowController != null) {
                     callWindowController.init(peer);
@@ -976,7 +978,10 @@ public class ChatController implements ChatCallView {
                 return;
             }
 
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/proptit/localchat/call_window.fxml"));
+            String fxmlPath = groupCall
+                    ? "/org/proptit/localchat/group_call_view.fxml"
+                    : "/org/proptit/localchat/call_window.fxml";
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Parent root = loader.load();
 
             callWindowController = loader.getController();
@@ -1007,7 +1012,7 @@ public class ChatController implements ChatCallView {
             });
 
             callStage = new Stage();
-            callStage.setTitle("Call - " + peer.getNickname());
+            callStage.setTitle((groupCall ? "Group Call - " : "Call - ") + peer.getNickname());
             callStage.setScene(new Scene(root));
             callStage.setOnCloseRequest(event -> {
                 event.consume();
@@ -1021,6 +1026,12 @@ public class ChatController implements ChatCallView {
             e.printStackTrace();
             showError("Unable to open call window.");
         }
+    }
+
+    private boolean isGroupCallPeer(User peer) {
+        return peer != null
+                && peer.getUsername() != null
+                && peer.getUsername().startsWith("group-");
     }
 
     @Override
