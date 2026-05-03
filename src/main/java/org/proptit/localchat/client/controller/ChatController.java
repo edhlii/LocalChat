@@ -416,7 +416,8 @@ public class ChatController implements ChatCallView {
 
                         if (isGroupMode) {
                             ChatGroup g = conversationGroupMap.get(item);
-                            String displayName = (g != null) ? g.getName() : item.replace("👥", "").trim();
+                            String name = item.contains("@") ? item.substring(item.indexOf("@") + 1).trim() : item;
+                            String displayName = name;
 
 
                             setDefaultAvatar(avatarStack, avatarCircle, displayName, 14);
@@ -1334,7 +1335,7 @@ public class ChatController implements ChatCallView {
         }
 
         for (ChatGroup group : myGroupsList) {
-            String label = "👥" + group.getName();
+            String label = group.getId() + "@"+ group.getName();
             conversationGroupMap.put(label, group);
             lvChatList.getItems().add(label);
         }
@@ -1364,8 +1365,8 @@ public class ChatController implements ChatCallView {
             myGroupsList.add(newGroup);
 
             if (isGroupMode) {
-                lvChatList.getItems().add("👥" + newGroup.getName());
-                conversationGroupMap.put("👥" + newGroup.getName(), newGroup);
+                lvChatList.getItems().add(newGroup.getId() + "@"+ newGroup.getName());
+                conversationGroupMap.put(newGroup.getId() + "@"+ newGroup.getName(), newGroup);
             }
 
             javafx.stage.Window.getWindows().stream()
@@ -1400,7 +1401,7 @@ public class ChatController implements ChatCallView {
             if (isGroupMode) {
                 onTabGroupsClick(null);
                 if (selectedConversationGroup != null) {
-                    lvChatList.getSelectionModel().select("👥" + selectedConversationGroup.getName());
+                    lvChatList.getSelectionModel().select(selectedConversationGroup.getId() + "@"+ selectedConversationGroup.getName());
                 }
             }
         });
@@ -1487,7 +1488,7 @@ public class ChatController implements ChatCallView {
             }
 
 
-            String label = "👥" + group.getName();
+            String label = group.getId() + "@"+ group.getName();
 
             boolean existsInList = false;
             for (int i = 0; i < myGroupsList.size(); i++) {
