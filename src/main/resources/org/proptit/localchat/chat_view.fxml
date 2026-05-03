@@ -89,8 +89,8 @@
                         <Insets left="25.0" right="25.0" />
                     </padding>
 
-                    <Label fx:id="contactNameTopBar" prefHeight="27.0" prefWidth="163.0" styleClass="channel-title" text="Contact name..." />
-                    <Region prefHeight="54.0" prefWidth="399.0" HBox.hgrow="ALWAYS" />
+                    <Label fx:id="contactNameTopBar" prefHeight="27.0" prefWidth="330.0" styleClass="channel-title" text="Contact name..." />
+                    <Region prefHeight="54.0" prefWidth="226.0" HBox.hgrow="ALWAYS" />
                <Button fx:id="btnManageGroup" contentDisplay="CENTER" mnemonicParsing="false" onAction="#onManageGroupClick" prefHeight="34.0" prefWidth="29.0" styleClass="btn-call" text="+" textFill="WHITE">
                   <graphic>
                      <SVGPath fill="WHITE" styleClass="icon-svg" />

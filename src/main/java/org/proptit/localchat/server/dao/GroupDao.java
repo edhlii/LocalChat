@@ -112,6 +112,24 @@ public class GroupDao {
         }
         return myGroups;
     }
+
+    public ChatGroup getGroupById(int groupId) {
+        try (Connection conn = DbConnection.openConnection()){
+            String sql = "SELECT id, name, created_by FROM chat_groups WHERE id = ?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, groupId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                ChatGroup group = new ChatGroup(rs.getInt("id"), rs.getString("name"), new User(rs.getInt("created_by")), null);
+                group.setMembers(getFullMembersByGroupId(groupId));
+                return group;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
     public List<Integer> getMemberIdsByGroupId(int groupId) {
         List<Integer> memberIds = new ArrayList<>();
         String sql = "SELECT user_id FROM group_members WHERE group_id = ?";

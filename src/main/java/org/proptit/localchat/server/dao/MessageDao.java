@@ -243,9 +243,9 @@ public class MessageDao {
                     "LEFT JOIN conversation_status cs ON cs.user_id = ? " +
                     "  AND cs.partner_id = (CASE WHEN m.group_id IS NULL AND m.receiver_id IS NOT NULL THEN m.sender_id ELSE 0 END) " +
                     "  AND cs.group_id = (CASE WHEN m.group_id IS NOT NULL THEN m.group_id ELSE 0 END) " +
-                    "WHERE (m.receiver_id = ? OR m.receiver_id IS NULL OR m.group_id IN (SELECT group_id FROM group_members WHERE user_id = ?)) " +
+                    "WHERE ((m.receiver_id = ?) OR (m.receiver_id IS NULL AND m.group_id IS NULL) OR m.group_id IN (SELECT group_id FROM group_members WHERE user_id = ?)) " +
                     "  AND m.sender_id != ? " +
-                    "  AND m.id > COALESCE(cs.last_read_message_id, 0)";;
+                    "  AND m.id > COALESCE(cs.last_read_message_id, 0)";
 
             PreparedStatement ps = c.prepareStatement(sql);
             ps.setInt(1, myId);
@@ -271,9 +271,9 @@ public class MessageDao {
             String sql = "INSERT INTO conversation_status (user_id, partner_id, group_id, last_read_message_id) " +
                     "SELECT ?, ?, ?, IFNULL(MAX(id), 0) FROM messages " +
                     "WHERE (" +
-                    "  (? = 0 AND ? = 0 AND receiver_id IS NULL AND group_id IS NULL) " + // Thông báo chung
+                    "  (? = 0 AND ? = 0 AND receiver_id IS NULL AND group_id IS NULL) " +
                     "  OR " +
-                    "  (? > 0 AND ((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?))) " + // Chat 1-1
+                    "  (? > 0 AND ((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?))) " +
                     "  OR " +
                     "  (? > 0 AND group_id = ?) " +
                     ") " +

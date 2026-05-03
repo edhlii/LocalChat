@@ -291,15 +291,12 @@ public class ClientHandler implements Runnable {
                         break;
                     case ADD_GROUP_MEMBERS:
                         ChatGroup addPayload = (ChatGroup) data.getData();
-                        List<Integer> addIds = addPayload.getMembers().stream()
-                                .map(User::getId)
-                                .collect(Collectors.toList());
-
+                        List<Integer> addIds = new ArrayList<>();
+                        for (User member : addPayload.getMembers()) {
+                            addIds.add(member.getId());
+                        }
                         if (groupDao.addMembers(addPayload.getId(), addIds)) {
-                            ChatGroup updatedGroup = groupDao.getGroupsByUserId(this.user.getId()).stream()
-                                    .filter(g -> g.getId().equals(addPayload.getId()))
-                                    .findFirst().orElse(null);
-
+                            ChatGroup updatedGroup = groupDao.getGroupById(addPayload.getId());
                             if (updatedGroup != null) {
                                 for (ClientHandler ch : server.getClients()) {
                                     if (ch.getUser() != null) {
@@ -315,8 +312,10 @@ public class ClientHandler implements Runnable {
 
                     case REMOVE_GROUP_MEMBERS:
                         ChatGroup removePayload = (ChatGroup) data.getData();
-                        List<Integer> removeIds = removePayload.getMembers().stream()
-                                .map(User::getId).collect(Collectors.toList());
+                        List<Integer> removeIds = new ArrayList<>();
+                        for (User member : removePayload.getMembers()) {
+                            removeIds.add(member.getId());
+                        }
 
                         if (groupDao.removeMembers(removePayload.getId(), removeIds)) {
                             for (ClientHandler ch : server.getClients()) {
@@ -325,9 +324,7 @@ public class ClientHandler implements Runnable {
                                     ch.sendData(new DataPacket(TypeDataPacket.UPDATE_GROUP_SUCCESS, deleteSignal));
                                 }
                             }
-                            ChatGroup fullGroupForAdmin = groupDao.getGroupsByUserId(this.user.getId()).stream()
-                                    .filter(g -> g.getId().equals(removePayload.getId()))
-                                    .findFirst().orElse(null);
+                            ChatGroup fullGroupForAdmin = groupDao.getGroupById(removePayload.getId());
                             sendData(new DataPacket(TypeDataPacket.UPDATE_GROUP_SUCCESS, fullGroupForAdmin));
                         }
                         break;

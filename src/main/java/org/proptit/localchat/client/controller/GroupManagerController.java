@@ -12,6 +12,7 @@ import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.User;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,14 +27,14 @@ public class GroupManagerController {
 
     private SocketClient client;
     private User me;
-    private ChatGroup targetGroup;
+    private ChatGroup group;
     private String mode;
     private final List<User> selectedUsers = new ArrayList<>();
 
     public void init(SocketClient client, User me, ChatGroup group, List<User> allMembers, String mode) {
         this.client = client;
         this.me = me;
-        this.targetGroup = group;
+        this.group = group;
         this.mode = mode;
 
         lblGroupName.setText(group.getName());
@@ -52,9 +53,14 @@ public class GroupManagerController {
 
 
         List<User> displayList = new ArrayList<>();
-        Set<Integer> currentMemberIds = group.getMembers().stream()
-                .map(User::getId)
-                .collect(Collectors.toSet());
+//        Set<Integer> currentMemberIds = group.getMembers().stream()
+//                .map(User::getId)
+//                .collect(Collectors.toSet());
+
+        Set<Integer> currentMemberIds = new HashSet<>();
+        for (User user : group.getMembers()) {
+            currentMemberIds.add(user.getId());
+        }
 
         if (mode.equals("ADD")) {
             for (User u : allMembers) {
@@ -72,6 +78,10 @@ public class GroupManagerController {
 
         lvMembers.setItems(FXCollections.observableArrayList(displayList));
         setupCellFactory();
+    }
+
+    private static Integer getId(User user) {
+        return user.getId();
     }
 
 
@@ -108,11 +118,9 @@ public class GroupManagerController {
         if (selectedUsers.isEmpty()) {
             return;
         }
-        ChatGroup payload = new ChatGroup(targetGroup.getId(), targetGroup.getName(), me, new ArrayList<>(selectedUsers));
-
+        ChatGroup payload = new ChatGroup(group.getId(), group.getName(), me, new ArrayList<>(selectedUsers));
         TypeDataPacket type = mode.equals("ADD") ?
                 TypeDataPacket.ADD_GROUP_MEMBERS : TypeDataPacket.REMOVE_GROUP_MEMBERS;
-
         if (client != null) {
             client.sendData(new DataPacket(type, payload));
         }

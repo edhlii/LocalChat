@@ -413,9 +413,6 @@ public class ChatController implements ChatCallView {
                         VBox textInfo = new VBox(2);
                         textInfo.setAlignment(Pos.CENTER_LEFT);
 
-
-
-
                         if (isGroupMode) {
                             ChatGroup g = conversationGroupMap.get(item);
                             String displayName = (g != null) ? g.getName() : item.replace("👥", "").trim();
@@ -435,8 +432,6 @@ public class ChatController implements ChatCallView {
                             }
 
                             textInfo.getChildren().add(0, nameLbl);
-
-
                         }
                         else
                         {
@@ -489,10 +484,7 @@ public class ChatController implements ChatCallView {
 
                             Tooltip tip = new Tooltip(u.getUsername());
                             tip.setShowDelay(javafx.util.Duration.millis(200));
-
                             setTooltip(tip);
-
-
                         }
                         root.getChildren().addAll(avatarStack, textInfo);
                         setGraphic(root);
@@ -647,7 +639,7 @@ public class ChatController implements ChatCallView {
         imageView.setPreserveRatio(true);
 
 
-        Label lblTime = new Label(time);
+        Label lblTime = new Label(isMe ? time : (sender.getNickname() + " | " + time));
         lblTime.getStyleClass().add("chat-time");
 
 
@@ -783,7 +775,6 @@ public class ChatController implements ChatCallView {
 
                         int idx = lvChatList.getItems().indexOf(label);
                         if (idx != -1) {
-
                             lvChatList.getItems().set(idx, label);
                         } else {
 
@@ -880,7 +871,7 @@ public class ChatController implements ChatCallView {
 
     private void addFileToScreen(String serverUUID, String fileName, byte[] fileData, boolean isMe, String time, User sender) {
 
-        Label lblTime = new Label(time);
+        Label lblTime = new Label(isMe ? time : (sender.getNickname() + " | " + time));
         lblTime.setStyle("-fx-font-size: 10px; -fx-text-fill: #919191;");
 
 
@@ -1456,7 +1447,11 @@ public class ChatController implements ChatCallView {
 
         Platform.runLater(() -> {
             if ("DELETED_SIGNAL".equals(group.getName())) {
-                myGroupsList.removeIf(g -> g.getId().equals(group.getId()));
+                for (int i = myGroupsList.size() - 1; i >= 0; i--) {
+                    if (myGroupsList.get(i).getId().equals(group.getId())) {
+                        myGroupsList.remove(i);
+                    }
+                }
                 String labelToRemove = null;
                 for (String label : conversationGroupMap.keySet()) {
                     if (conversationGroupMap.get(label).getId().equals(group.getId())) {
@@ -1489,7 +1484,6 @@ public class ChatController implements ChatCallView {
                 }
             }
             if (!existsInList) myGroupsList.add(group);
-            conversationGroupMap.values().removeIf(g -> g.getId().equals(group.getId()));
             conversationGroupMap.put(label, group);
 
             if (isGroupMode) {
