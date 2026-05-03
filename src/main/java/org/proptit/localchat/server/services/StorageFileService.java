@@ -17,19 +17,10 @@ public class StorageFileService {
         if (i > 0) {
             extension = originalName.substring(i);
         }
-
-
         String fileName = UUID.randomUUID().toString() + extension;
-
-
         Path filePath = Paths.get(StorageConfig.UPLOAD_DIR + fileName);
-
-
         Files.write(filePath, fileData);
-
         System.out.println(">>> [FILE] Đã lưu file thành công: " + fileName);
-
-
         return fileName;
     }
 }

@@ -201,6 +201,10 @@ public class SocketClient implements Runnable {
                 List<ChatGroup> loadedGroups = (List<ChatGroup>) data.getData();
                 ChatController.getInstance().setMyGroupsList(loadedGroups);
                 break;
+            case UPDATE_GROUP_SUCCESS:
+                ChatGroup updatedGroup = (ChatGroup) data.getData();
+                ChatController.getInstance().updateGroupSilent(updatedGroup);
+                break;
         }
     }
 

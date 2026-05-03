@@ -17,20 +17,16 @@ public class MessageDao {
 
     public Integer save(Message msg) {
         try (Connection c = DbConnection.openConnection()) {
-            // Thêm cột group_id vào câu lệnh SQL
             String sql = "INSERT INTO messages (sender_id, receiver_id, group_id, message_type, content, file_name) VALUES (?, ?, ?, ?, ?, ?)";
             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-
             ps.setInt(1, msg.getSender().getId());
 
-            // Xử lý receiver_id (nếu là chat 1-1 thì có, còn chat nhóm thì null)
             if (msg.getReceiver() != null) {
                 ps.setInt(2, msg.getReceiver().getId());
             } else {
                 ps.setNull(2, Types.INTEGER);
             }
 
-            // 🌟 NẾU LÀ TIN NHẮN NHÓM THÌ LƯU GROUP ID VÀO
             if (msg.getGroupId() != null && msg.getGroupId() > 0) {
                 ps.setInt(3, msg.getGroupId());
             } else {
@@ -65,7 +61,7 @@ public class MessageDao {
         try (Connection c = DbConnection.openConnection())
         {
             List<Message> history = new ArrayList<>();
-            String sql = "SELECT m.*, u.nickname AS sender_nickname FROM messages m " +
+            String sql = "SELECT m.*, u.nickname AS sender_nickname, u.avatar AS sender_avatar FROM messages m " +
                     "JOIN users u ON m.sender_id = u.id " +
                     "WHERE (sender_id = ? AND receiver_id = ?) " +
                     "OR (sender_id = ? AND receiver_id = ?) " +
@@ -84,7 +80,7 @@ public class MessageDao {
                 User receiver = new User(rs.getInt("receiver_id"));
 
                 sender.setNickname(rs.getString("sender_nickname"));
-
+                sender.setAvatar(rs.getBytes("sender_avatar"));
                 String typeStr = rs.getString("message_type");
                 String content = rs.getString("content");
                 String fileName = rs.getString("file_name");
@@ -130,9 +126,9 @@ public class MessageDao {
         try (Connection c = DbConnection.openConnection())
         {
             List<Message> history = new ArrayList<>();
-            String sql = "SELECT m.*, u.nickname AS sender_nickname FROM messages m " +
+            String sql = "SELECT m.*, u.nickname AS sender_nickname, u.avatar AS sender_avatar FROM messages m " +
                     "JOIN users u ON m.sender_id = u.id " +
-                    "WHERE m.receiver_id IS NULL AND m.group_id IS NULL " + // <--- QUAN TRỌNG
+                    "WHERE m.receiver_id IS NULL AND m.group_id IS NULL " +
                     "ORDER BY sent_at ASC LIMIT 100";
             PreparedStatement ps = c.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
@@ -143,7 +139,7 @@ public class MessageDao {
                 String typeStr = rs.getString("message_type");
                 String content = rs.getString("content");
                 String fileName = rs.getString("file_name");
-
+                sender.setAvatar(rs.getBytes("sender_avatar"));
                 Timestamp dbTimestamp = rs.getTimestamp("sent_at");
                 String formattedDate = "";
                 if (dbTimestamp != null) {
@@ -183,7 +179,7 @@ public class MessageDao {
     public List<Message> getGroupHistory(int groupId) {
         try (Connection c = DbConnection.openConnection()) {
             List<Message> history = new ArrayList<>();
-            String sql = "SELECT m.*, u.nickname AS sender_nickname FROM messages m " +
+            String sql = "SELECT m.*, u.nickname AS sender_nickname, u.avatar AS sender_avatar FROM messages m " +
                     "JOIN users u ON m.sender_id = u.id " +
                     "WHERE m.group_id = ? " +
                     "ORDER BY sent_at ASC LIMIT 100";
@@ -198,6 +194,7 @@ public class MessageDao {
                 String typeStr = rs.getString("message_type");
                 String content = rs.getString("content");
                 String fileName = rs.getString("file_name");
+                sender.setAvatar(rs.getBytes("sender_avatar"));
 
                 Timestamp dbTimestamp = rs.getTimestamp("sent_at");
                 String formattedDate = "";
@@ -237,18 +234,24 @@ public class MessageDao {
             List<Integer> notifyIds = new ArrayList<>();
 
             String sql = "SELECT DISTINCT " +
-                    "  CASE WHEN m.receiver_id IS NULL THEN 0 ELSE m.sender_id END as notify_id " +
+                    "  CASE " +
+                    "    WHEN m.group_id IS NOT NULL THEN -m.group_id " +
+                    "    WHEN m.receiver_id IS NULL THEN 0 " +
+                    "    ELSE m.sender_id " +
+                    "  END as notify_id " +
                     "FROM messages m " +
                     "LEFT JOIN conversation_status cs ON cs.user_id = ? " +
-                    "  AND cs.partner_id = (CASE WHEN m.receiver_id IS NULL THEN 0 ELSE m.sender_id END) " +
-                    "WHERE (m.receiver_id = ? OR m.receiver_id IS NULL) " +
+                    "  AND cs.partner_id = (CASE WHEN m.group_id IS NULL AND m.receiver_id IS NOT NULL THEN m.sender_id ELSE 0 END) " +
+                    "  AND cs.group_id = (CASE WHEN m.group_id IS NOT NULL THEN m.group_id ELSE 0 END) " +
+                    "WHERE ((m.receiver_id = ?) OR (m.receiver_id IS NULL AND m.group_id IS NULL) OR m.group_id IN (SELECT group_id FROM group_members WHERE user_id = ?)) " +
                     "  AND m.sender_id != ? " +
-                    "  AND m.id > COALESCE(cs.last_read_message_id, 0)";;
+                    "  AND m.id > COALESCE(cs.last_read_message_id, 0)";
 
             PreparedStatement ps = c.prepareStatement(sql);
             ps.setInt(1, myId);
             ps.setInt(2, myId);
             ps.setInt(3, myId);
+            ps.setInt(4, myId);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 notifyIds.add(rs.getInt("notify_id"));
@@ -260,31 +263,35 @@ public class MessageDao {
         return null;
     }
 
-    public void updateReadStatus(int myId, int partnerId) {
+    public void updateReadStatus(int myId, int partnerId, int groupId) {
 
 
         try (Connection c = DbConnection.openConnection())
         {
-            String sql = "INSERT INTO conversation_status (user_id, partner_id, last_read_message_id) " +
-                    "SELECT ?, ?, IFNULL(MAX(id), 0) FROM messages " +
+            String sql = "INSERT INTO conversation_status (user_id, partner_id, group_id, last_read_message_id) " +
+                    "SELECT ?, ?, ?, IFNULL(MAX(id), 0) FROM messages " +
                     "WHERE (" +
-                    "  (? = 0 AND receiver_id IS NULL) " +
+                    "  (? = 0 AND ? = 0 AND receiver_id IS NULL AND group_id IS NULL) " +
                     "  OR " +
                     "  (? > 0 AND ((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?))) " +
+                    "  OR " +
+                    "  (? > 0 AND group_id = ?) " +
                     ") " +
                     "ON DUPLICATE KEY UPDATE last_read_message_id = VALUES(last_read_message_id)";
             PreparedStatement ps = c.prepareStatement(sql);
 
             ps.setInt(1, myId);
             ps.setInt(2, partnerId);
-
-            ps.setInt(3, partnerId);
-
+            ps.setInt(3, groupId);
             ps.setInt(4, partnerId);
-            ps.setInt(5, partnerId);
-            ps.setInt(6, myId);
-            ps.setInt(7, myId);
-            ps.setInt(8, partnerId);
+            ps.setInt(5, groupId);
+            ps.setInt(6, partnerId);
+            ps.setInt(7, partnerId);
+            ps.setInt(8, myId);
+            ps.setInt(9, myId);
+            ps.setInt(10, partnerId);
+            ps.setInt(11, groupId);
+            ps.setInt(12, groupId);
 
             ps.executeUpdate();
             System.out.println("DEBUG: Đã cập nhật mốc đọc cho " + (partnerId == 0 ? "Thông báo chung" : "User " + partnerId));

@@ -105,3 +105,12 @@ ADD COLUMN group_id INT DEFAULT NULL AFTER receiver_id;
 
 ALTER TABLE messages
 ADD FOREIGN KEY (group_id) REFERENCES chat_groups(id) ON DELETE CASCADE;
+
+----------
+USE localchat;
+ALTER TABLE conversation_status
+ADD COLUMN group_id INT DEFAULT 0 AFTER partner_id;
+
+ALTER TABLE conversation_status
+DROP PRIMARY KEY,
+ADD PRIMARY KEY (user_id, partner_id, group_id);
