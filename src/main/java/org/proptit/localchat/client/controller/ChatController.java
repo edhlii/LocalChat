@@ -1,6 +1,7 @@
 package org.proptit.localchat.client.controller;
 
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -509,8 +510,8 @@ public class ChatController implements ChatCallView {
 
     @FXML
     void onSendButtonClick(ActionEvent event) {
-        String messageText = messageInput.getText();
-        if (!messageText.trim().isEmpty()) {
+        String messageText = messageInput.getText().trim();
+        if (!messageText.isEmpty()) {
             Message msg = null;
             String selectedItem = lvChatList.getSelectionModel().getSelectedItem();
             if (selectedItem == null) return;
@@ -590,6 +591,7 @@ public class ChatController implements ChatCallView {
         }
 
         VBox messageGroup = new VBox(3);
+        messageGroup.setFillWidth(false);
 
         if (!isMe) {
             messageGroup.getChildren().add(lblTime);
@@ -1305,20 +1307,67 @@ public class ChatController implements ChatCallView {
 
     private void showGroupMembers() {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Thành viên nhóm");
-        alert.setHeaderText("Danh sách thành viên: " + selectedConversationGroup.getName());
-        ListView<String> lv = new ListView<>();
+        alert.setTitle("Thông tin nhóm");
+        alert.setHeaderText(null);
+        alert.setGraphic(null);
 
-        for (User u : selectedConversationGroup.getMembers()) {
-            String role = (u.getId().equals(selectedConversationGroup.getCreatedBy().getId())) ? " (Trưởng nhóm)" : "";
-            lv.getItems().add(u.getNickname() + role);
-        }
+        VBox root = new VBox(15);
+        root.setAlignment(Pos.TOP_CENTER);
+        root.setPadding(new Insets(10, 25, 10, 25));
 
-        lv.setPrefHeight(200);
+        root.setPrefWidth(350);
+        root.setPrefHeight(450);
 
-        alert.getDialogPane().setContent(lv);
+        Label titleLabel = new Label("DANH SÁCH THÀNH VIÊN");
+        titleLabel.getStyleClass().add("header-label");
+
+        VBox groupInfoBox = new VBox(2);
+        groupInfoBox.setAlignment(Pos.CENTER);
+        Label labelNhom = new Label("NHÓM");
+        labelNhom.setStyle("-fx-text-fill: #7a829a; -fx-font-size: 11px; -fx-font-weight: bold;");
+        Label groupName = new Label(selectedConversationGroup.getName().toUpperCase());
+        groupName.setStyle("-fx-text-fill: #b388ff; -fx-font-size: 18px; -fx-font-weight: bold;");
+        groupInfoBox.getChildren().addAll(labelNhom, groupName);
+
+        Label listTitle = new Label("DANH SÁCH THÀNH VIÊN");
+        listTitle.setStyle("-fx-text-fill: #7a829a; -fx-font-size: 11px; -fx-font-weight: bold;");
+        HBox listTitleWrapper = new HBox(listTitle);
+        listTitleWrapper.setAlignment(Pos.CENTER_LEFT);
+
+        ListView<User> lv = new ListView<>();
+        lv.getStyleClass().add("list-view");
+
+        VBox.setVgrow(lv, javafx.scene.layout.Priority.ALWAYS);
+
+        lv.setItems(FXCollections.observableArrayList(selectedConversationGroup.getMembers()));
+        lv.setCellFactory(param -> new ListCell<User>() {
+            @Override
+            protected void updateItem(User user, boolean empty) {
+                super.updateItem(user, empty);
+                if (empty || user == null) {
+                    setGraphic(null);
+                    setText(null);
+                } else {
+                    String role = (user.getId().equals(selectedConversationGroup.getCreatedBy().getId())) ? " (Trưởng nhóm)" : "";
+                    Label name = new Label(user.getNickname() + role + " (@" + user.getUsername() + ")");
+                    name.setStyle("-fx-text-fill: white; -fx-font-size: 14px;");
+
+                    HBox cell = new HBox(10, name);
+                    cell.setAlignment(Pos.CENTER_LEFT);
+                    cell.setPadding(new Insets(5, 0, 5, 5));
+                    setGraphic(cell);
+                }
+            }
+        });
+
+        root.getChildren().addAll(titleLabel, groupInfoBox, listTitleWrapper, lv);
+        alert.getDialogPane().setContent(root);
+
         java.net.URL cssUrl = getClass().getResource("/org/proptit/localchat/create_group.css");
-        if (cssUrl != null) alert.getDialogPane().getStylesheets().add(cssUrl.toExternalForm());
+        if (cssUrl != null) {
+            alert.getDialogPane().getStylesheets().add(cssUrl.toExternalForm());
+            alert.getDialogPane().getStyleClass().add("dialog-pane");
+        }
 
         alert.show();
     }
