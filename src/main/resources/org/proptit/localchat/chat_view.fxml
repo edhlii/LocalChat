@@ -10,30 +10,23 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.shape.Circle?>
 <?import javafx.scene.shape.SVGPath?>
+<?import javafx.scene.text.Font?>
 
 <HBox prefHeight="720.0" prefWidth="1145.0" stylesheets="@chat.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.proptit.localchat.client.controller.ChatController">
     <children>
 
         <VBox prefWidth="280.0" styleClass="sidebar-container" HBox.hgrow="NEVER">
             <children>
-                <HBox alignment="CENTER_LEFT" prefHeight="55.0" prefWidth="278.0" styleClass="sidebar-header">
+                <HBox alignment="CENTER_LEFT" prefHeight="55.0" prefWidth="290.0" styleClass="sidebar-header">
                     <children>
-                        <VBox alignment="CENTER_LEFT" spacing="2.0">
+                        <VBox alignment="CENTER" spacing="2.0">
 
-                            <Label styleClass="workspace-name" text="LocalChat" />
-                            <HBox alignment="CENTER_LEFT" spacing="5.0">
-                                <Circle fill="#23A559" radius="4.0" />
-                                <Label styleClass="status-text" text="Connected" />
-                            </HBox>
-
-                            <Label alignment="CENTER" prefHeight="60.0" prefWidth="260.0" styleClass="workspace-name" />
+                            <Label prefHeight="66.0" prefWidth="221.0" styleClass="workspace-name" text="     LocalChat." textAlignment="CENTER" />
 
                         </VBox>
 
                         <Region HBox.hgrow="ALWAYS" />
-                        <Button minWidth="30.0" onAction="#onCreateGroupClick" style="-fx-background-color: #3A3B3C; -fx-text-fill: #E4E6EB; -fx-background-radius: 6; -fx-font-weight: bold; -fx-cursor: hand; -fx-font-size: 14px;" text="+" />
 
                     </children>
                     <padding>
@@ -41,7 +34,7 @@
                     </padding>
                 </HBox>
 
-                <VBox prefWidth="279.0" spacing="5.0" VBox.vgrow="NEVER">
+                   <VBox prefHeight="146.0" prefWidth="278.0" spacing="5.0" VBox.vgrow="NEVER">
                     <padding>
                         <Insets left="20.0" right="20.0" top="15.0" />
                     </padding>
@@ -50,7 +43,7 @@
                         <Region HBox.hgrow="ALWAYS" />
                         <Label styleClass="status-dot" text="●" textFill="#23A559" />
                     </HBox>
-                    <ListView fx:id="lvOnlinePeople" prefHeight="130.0" styleClass="custom-list-view" />
+                    <ListView fx:id="lvOnlinePeople" prefHeight="74.0" prefWidth="238.0" styleClass="custom-list-view" />
                 </VBox>
 
                 <VBox prefHeight="241.0" prefWidth="278.0" spacing="5.0" VBox.vgrow="ALWAYS">
@@ -70,17 +63,10 @@
                             <Button fx:id="btnTabAll" maxWidth="Infinity" onAction="#onTabAllClick" styleClass="toggle-btn-active" text="All" HBox.hgrow="ALWAYS" />
 
                             <Button fx:id="btnTabGroups" maxWidth="Infinity" onAction="#onTabGroupsClick" styleClass="toggle-btn" text="Groups" HBox.hgrow="ALWAYS" />
+                           <Button minWidth="30.0" onAction="#onCreateGroupClick" style="-fx-background-color: #3A3B3C; -fx-text-fill: #E4E6EB; -fx-background-radius: 6; -fx-font-weight: bold; -fx-cursor: hand; -fx-font-size: 14px;" text="+" />
                         </children>
                     </HBox>
-                    
-<!--                    <ListView fx:id="lvChatList" styleClass="custom-list-view" VBox.vgrow="ALWAYS" />-->
-
-               <HBox prefHeight="49.0" prefWidth="238.0">
-                  <children>
-                     <Label contentDisplay="BOTTOM" prefHeight="35.0" prefWidth="19.0" text="🔍" textFill="#8b92a5" />
-                     <TextField fx:id="txtSearchPeopleChat" prefHeight="35.0" prefWidth="224.0" promptText="Search people by username/nickname" styleClass="search-field" />
-                  </children>
-               </HBox>
+               <TextField fx:id="txtSearchPeopleChat" prefHeight="35.0" prefWidth="224.0" promptText="🔍 Search people by username/nickname" styleClass="search-field" />
                     <ListView fx:id="lvChatList" prefHeight="270.0" prefWidth="238.0" styleClass="custom-list-view" VBox.vgrow="ALWAYS">
                   <padding>
                      <Insets bottom="100.0" />
@@ -103,18 +89,32 @@
                         <Insets left="25.0" right="25.0" />
                     </padding>
 
-                    <Label fx:id="contactNameTopBar" prefHeight="27.0" prefWidth="163.0" styleClass="channel-title" text="Contact name..." />
-                    <Region prefHeight="117.0" prefWidth="492.0" HBox.hgrow="ALWAYS" />
+                    <Label fx:id="contactNameTopBar" prefHeight="27.0" prefWidth="330.0" styleClass="channel-title" text="Contact name..." />
+                    <Region prefHeight="54.0" prefWidth="226.0" HBox.hgrow="ALWAYS" />
+               <Button fx:id="btnManageGroup" contentDisplay="CENTER" mnemonicParsing="false" onAction="#onManageGroupClick" prefHeight="34.0" prefWidth="29.0" styleClass="btn-call" text="+" textFill="WHITE">
+                  <graphic>
+                     <SVGPath fill="WHITE" styleClass="icon-svg" />
+                  </graphic>
+                  <font>
+                     <Font name="System Bold" size="19.0" />
+                  </font>
+               </Button>
 
                     <Button fx:id="callButton" mnemonicParsing="false" onAction="#onCallButtonClick" prefHeight="33.0" prefWidth="106.0" styleClass="btn-call" text="Call" textFill="WHITE">
                         <graphic>
-                            <SVGPath content="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" styleClass="icon-svg" />
+                            <SVGPath content="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" fill="WHITE" styleClass="icon-svg" />
                         </graphic>
                     </Button>
 
                     <Button fx:id="videoCallButton" mnemonicParsing="false" onAction="#onVideoCallButtonClick" prefHeight="33.0" prefWidth="113.0" styleClass="btn-video-call" text="Video" textFill="WHITE">
                         <graphic>
                             <SVGPath content="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" fill="WHITE" styleClass="icon-svg" />
+                        </graphic>
+                    </Button>
+
+                    <Button fx:id="btnGroupInfo" mnemonicParsing="false" onAction="#onGroupInfoClick" styleClass="btn-icon" textFill="WHITE" visible="false">
+                        <graphic>
+                            <SVGPath content="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" styleClass="icon-svg" />
                         </graphic>
                     </Button>
                 </HBox>

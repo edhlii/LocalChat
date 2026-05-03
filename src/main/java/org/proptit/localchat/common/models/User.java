@@ -6,28 +6,29 @@ public class User implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Integer id;
-    private String userame;
+    private String username;
     private String password;
     private String nickname;
     private String role;
     private byte[] avatar;
 
-    public User(Integer id, String userame, String password, String nickname, String role, byte[] avatar) {
+    public User(Integer id, String username, String password, String nickname, String role, byte[] avatar) {
         this.id = id;
-        this.userame = userame;
+        this.username = username;
         this.password = password;
         this.nickname = nickname;
         this.role = role;
         this.avatar = avatar;
     }
 
+
     public User(Integer id) {
         this.id = id;
     }
 
-    public String getUserame() {
-        return userame;
-    }
+
+
+
 
     public byte[] getAvatar() {
         return avatar;
@@ -39,7 +40,7 @@ public class User implements Serializable {
 
     public User(String username)
     {
-        this.userame = username;
+        this.username = username;
     }
 
     public Integer getId() {
@@ -47,7 +48,7 @@ public class User implements Serializable {
     }
 
     public String getUsername() {
-        return userame;
+        return username;
     }
 
     public String getNickname() {
@@ -64,7 +65,7 @@ public class User implements Serializable {
 
     public User(String userame, String password) {
         this.password = password;
-        this.userame = userame;
+        this.username = userame;
     }
 
     public String getRole() {
@@ -83,12 +84,12 @@ public class User implements Serializable {
         this.id = id;
     }
 
-    public void setUserame(String userame) {
-        this.userame = userame;
-    }
 
     public void setNickname(String nickname) {
         this.nickname = nickname;
     }
 
+    public void setUsername(String username) {
+        this.username = username;
+    }
 }

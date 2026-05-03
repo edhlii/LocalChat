@@ -52,8 +52,6 @@ public class LoginController {
                     mainWindowController.setMe((User)data);
                     socketClient.setController(mainWindowController);
 
-
-
                     stage.setScene(new Scene(root));
                     stage.setTitle("LocalChat - " + ((User)data).getNickname());
 

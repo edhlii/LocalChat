@@ -97,6 +97,7 @@
 .btn-secondary:hover {
     -fx-background-color: #2b2d3e;
 }
+
 .dialog-pane {
     -fx-background-color: #1a1b26;
     -fx-border-color: #2b2d3e;
@@ -123,9 +124,45 @@
     -fx-text-fill: black;
     -fx-font-weight: bold;
     -fx-background-radius: 6px;
-    -fx-padding: 8px 16px;
+    -fx-padding: 8px 25px;
     -fx-cursor: hand;
 }
 .dialog-pane .button:hover {
     -fx-background-color: #cba8ff;
+}
+.dialog-pane .button-bar {
+    -fx-padding: 10 135 15 0;
+}
+.dialog-pane > .button-bar > .container {
+    -fx-alignment: center-right;
+}
+
+.dialog-pane .list-view {
+    -fx-background-color: #0f1015;
+    -fx-border-color: #3A404F;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 2px;
+}
+
+.dialog-pane .list-cell {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.dialog-pane .list-cell:filled:hover {
+    -fx-background-color: #1f2233;
+    -fx-background-radius: 4px;
+}
+
+.dialog-pane .list-view .scroll-bar:vertical {
+    -fx-background-color: transparent;
+}
+.dialog-pane .list-view .scroll-bar:vertical .thumb {
+    -fx-background-color: #2A3042;
+    -fx-background-radius: 4px;
+}
+.dialog-pane .list-view .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #3A404F;
 }

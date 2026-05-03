@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 public class ClientHandler implements Runnable {
     private Socket socket;
@@ -76,7 +77,6 @@ public class ClientHandler implements Runnable {
                             try {
                                 byte[] fileBytes;
                                 String fileName;
-
                                 if (msg.getTypeMessage() == TypeMessage.IMAGE) {
                                     fileBytes = ((ImageMessage) msg).getImageData();
                                     fileName = ((ImageMessage) msg).getFileName();
@@ -84,9 +84,8 @@ public class ClientHandler implements Runnable {
                                     fileBytes = ((FileMessage) msg).getFileData();
                                     fileName = ((FileMessage) msg).getFileName();
                                 }
-
+                                System.out.println("/" + fileName + "/");
                                 String uuidName = storageFileServicefileService.saveFile(fileBytes, fileName);
-
                                 msg.setContent(uuidName);
 
                                 if (msg.getTypeMessage() == TypeMessage.FILE) {
@@ -103,7 +102,6 @@ public class ClientHandler implements Runnable {
                         server.getChatService().processMessage(this, msg);
 
                         dbExecutor.execute(() -> {
-
                             messageDao.save(msg);
                             System.out.println("da luu tin nhan");
                         });
@@ -274,9 +272,15 @@ public class ClientHandler implements Runnable {
                         }
                         break;
                     case MARK_AS_READ:
-                        Integer partnerId = (Integer) data.getData();
-                        if (this.user != null) {
-                            messageDao.updateReadStatus(this.user.getId(), partnerId);
+                        Integer idReceived = (Integer) data.getData();
+
+                        if (idReceived == 0) {
+                            messageDao.updateReadStatus(this.user.getId(), 0, 0);
+                        } else if (idReceived > 0) {
+                            messageDao.updateReadStatus(this.user.getId(), idReceived, 0);
+                        } else {
+                            int realGroupId = Math.abs(idReceived);
+                            messageDao.updateReadStatus(this.user.getId(), 0, realGroupId);
                         }
                         break;
                     case TypeDataPacket.GET_OFFLINE_NOTIFICATIONS:
@@ -285,10 +289,61 @@ public class ClientHandler implements Runnable {
                             sendData(new DataPacket(TypeDataPacket.RETURN_OFFLINE_NOTIFICATIONS, unreadIds));
                         }
                         break;
+                    case ADD_GROUP_MEMBERS:
+                        ChatGroup addPayload = (ChatGroup) data.getData();
+                        List<Integer> addIds = new ArrayList<>();
+                        for (User member : addPayload.getMembers()) {
+                            addIds.add(member.getId());
+                        }
+                        if (groupDao.addMembers(addPayload.getId(), addIds)) {
+                            ChatGroup updatedGroup = groupDao.getGroupById(addPayload.getId());
+                            if (updatedGroup != null) {
+                                for (ClientHandler ch : server.getClients()) {
+                                    if (ch.getUser() != null) {
+                                        int currentClientId = ch.getUser().getId();
+                                        if (currentClientId == this.user.getId() || addIds.contains(currentClientId)) {
+                                            ch.sendData(new DataPacket(TypeDataPacket.UPDATE_GROUP_SUCCESS, updatedGroup));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        break;
 
+                    case REMOVE_GROUP_MEMBERS:
+                        ChatGroup removePayload = (ChatGroup) data.getData();
+                        List<Integer> removeIds = new ArrayList<>();
+                        for (User member : removePayload.getMembers()) {
+                            removeIds.add(member.getId());
+                        }
 
-
-
+                        if (groupDao.removeMembers(removePayload.getId(), removeIds)) {
+                            for (ClientHandler ch : server.getClients()) {
+                                if (ch.getUser() != null && removeIds.contains(ch.getUser().getId())) {
+                                    ChatGroup deleteSignal = new ChatGroup(removePayload.getId(), "DELETED_SIGNAL", null, null);
+                                    ch.sendData(new DataPacket(TypeDataPacket.UPDATE_GROUP_SUCCESS, deleteSignal));
+                                }
+                            }
+                            ChatGroup fullGroupForAdmin = groupDao.getGroupById(removePayload.getId());
+                            sendData(new DataPacket(TypeDataPacket.UPDATE_GROUP_SUCCESS, fullGroupForAdmin));
+                        }
+                        break;
+                    case LEAVE_GROUP_REQUEST:
+                        int groupIdToLeave = (int) data.getData();
+                        boolean left = groupDao.leaveGroup(this.user.getId(), groupIdToLeave);
+                        if (left) {
+                            System.out.println(this.user.getNickname() + " đã rời nhóm " + groupIdToLeave);
+                            List<ChatGroup> myUpdatedGroups = groupDao.getGroupsByUserId(this.user.getId());
+                            sendData(new DataPacket(TypeDataPacket.RETURN_MY_GROUPS, myUpdatedGroups));
+                            List<Integer> remainingMemberIds = groupDao.getMemberIdsByGroupId(groupIdToLeave);
+                            for (ClientHandler clientHandler : server.getClients()) {
+                                if (clientHandler.getUser() != null && remainingMemberIds.contains(clientHandler.getUser().getId())) {
+                                    List<ChatGroup> updatedGroups = groupDao.getGroupsByUserId(clientHandler.getUser().getId());
+                                    clientHandler.sendData(new DataPacket(TypeDataPacket.RETURN_MY_GROUPS, updatedGroups));
+                                }
+                            }
+                        }
+                        break;
                 }
             }
 

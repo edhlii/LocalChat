@@ -30,7 +30,6 @@ public class ChatService {
             }
             return;
         }
-
         else if (msg.isBroadcast()) {
             if (sender.isManager()) {
                 sendAll(senderHandler, msg);
@@ -59,7 +58,6 @@ public class ChatService {
 
     private void sendPrivate(Message msg) {
         DataPacket packet = new DataPacket(TypeDataPacket.CHAT_MESSAGE, msg);
-
         for (ClientHandler client : clients) {
             if (client.getUser().getId().equals(msg.getReceiver().getId())) {
                 client.sendData(packet);
