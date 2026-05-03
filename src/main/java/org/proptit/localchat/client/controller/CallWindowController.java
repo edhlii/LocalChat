@@ -5,12 +5,16 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.proptit.localchat.common.models.User;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class CallWindowController {
@@ -33,10 +37,6 @@ public class CallWindowController {
     @FXML
     private Label participantsTitleLabel;
     @FXML
-    private Label participantSelfLabel;
-    @FXML
-    private Label participantPeerLabel;
-    @FXML
     private Label remoteVideoPlaceholderLabel;
     @FXML
     private StackPane localPreviewPane;
@@ -48,6 +48,8 @@ public class CallWindowController {
     private ImageView localPreviewImageView;
     @FXML
     private Label localPreviewPlaceholderLabel;
+    @FXML
+    private VBox participantListBox;
     private User selectedConversationUser;
     private Runnable onEndCall;
     private Consumer<Boolean> onMuteChanged;
@@ -57,6 +59,7 @@ public class CallWindowController {
     private boolean screenSharing;
     private boolean videoActive;
     private boolean videoAvailable;
+    private final List<String> currentParticipants = new ArrayList<>();
 
     @FXML
     private void initialize() {
@@ -83,15 +86,51 @@ public class CallWindowController {
         if (contactNameLabel != null) {
             contactNameLabel.setText(peerDisplayName);
         }
+        updateCallParticipants(java.util.Arrays.asList("You", peerDisplayName));
+    }
+
+    public void updateCallParticipants(List<String> participantLabels) {
+        currentParticipants.clear();
+        if (participantLabels != null) {
+            for (String label : participantLabels) {
+                if (label != null && !label.isBlank()) {
+                    currentParticipants.add(label);
+                }
+            }
+        }
+
         if (participantsTitleLabel != null) {
-            participantsTitleLabel.setText("Participants (2)");
+            participantsTitleLabel.setText("Participants (" + currentParticipants.size() + ")");
         }
-        if (participantSelfLabel != null) {
-            participantSelfLabel.setText("You");
+        if (participantListBox != null) {
+            participantListBox.getChildren().clear();
+            if (currentParticipants.isEmpty()) {
+                Label emptyLabel = new Label("No participants yet");
+                emptyLabel.setTextFill(javafx.scene.paint.Color.web("#b9c8e8"));
+                participantListBox.getChildren().add(emptyLabel);
+                return;
+            }
+
+            for (String label : currentParticipants) {
+                participantListBox.getChildren().add(createParticipantRow(label));
+            }
         }
-        if (participantPeerLabel != null) {
-            participantPeerLabel.setText(peerDisplayName);
-        }
+    }
+
+    private HBox createParticipantRow(String participantLabel) {
+        HBox row = new HBox(8.0);
+        row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+        javafx.scene.shape.Circle statusDot = new javafx.scene.shape.Circle(4.0);
+        statusDot.setStroke(javafx.scene.paint.Color.TRANSPARENT);
+        statusDot.setFill(javafx.scene.paint.Color.web("#32d296"));
+
+        Label nameLabel = new Label(participantLabel);
+        nameLabel.setTextFill(javafx.scene.paint.Color.web("#d7e3ff"));
+        nameLabel.setWrapText(true);
+
+        row.getChildren().addAll(statusDot, nameLabel);
+        return row;
     }
 
     public void setOnEndCall(Runnable onEndCall) {

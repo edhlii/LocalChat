@@ -2,8 +2,12 @@ package org.proptit.localchat.client.controller;
 
 import org.proptit.localchat.common.models.User;
 
+import java.util.List;
+
 public interface ChatCallView {
     void showCallWindow(User peer, String statusText);
+
+    void updateCallParticipants(List<String> participantLabels);
 
     void updateCallStatus(String statusText);
 

@@ -10,8 +10,12 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class VoiceCallSession {
     private static final AudioFormat AUDIO_FORMAT = new AudioFormat(16000.0f, 16, 1, true, false);
@@ -24,6 +28,7 @@ public class VoiceCallSession {
     private Thread playbackThread;
     private volatile boolean running;
     private volatile boolean muted;
+    private volatile List<InetSocketAddress> remoteTargets = List.of();
 
     public synchronized int open() throws SocketException, LineUnavailableException {
         if (socket != null && !socket.isClosed()) {
@@ -44,7 +49,7 @@ public class VoiceCallSession {
         return socket.getLocalPort();
     }
 
-    public synchronized void start(String remoteHost, int remotePort) throws IOException {
+    public synchronized void start() {
         if (running) {
             return;
         }
@@ -53,12 +58,11 @@ public class VoiceCallSession {
         }
 
         running = true;
-        InetAddress remoteAddress = InetAddress.getByName(remoteHost);
 
         micLine.start();
         speakerLine.start();
 
-        captureThread = new Thread(() -> captureLoop(remoteAddress, remotePort), "voice-capture");
+        captureThread = new Thread(this::captureLoop, "voice-capture");
         playbackThread = new Thread(this::playbackLoop, "voice-playback");
         captureThread.setDaemon(true);
         playbackThread.setDaemon(true);
@@ -66,7 +70,13 @@ public class VoiceCallSession {
         playbackThread.start();
     }
 
-    private void captureLoop(InetAddress remoteAddress, int remotePort) {
+    public synchronized void start(String remoteHost, int remotePort) throws IOException {
+        InetAddress remoteAddress = InetAddress.getByName(remoteHost);
+        setRemoteTargets(List.of(new InetSocketAddress(remoteAddress, remotePort)));
+        start();
+    }
+
+    private void captureLoop() {
         try {
             byte[] buffer = new byte[FRAME_BYTES];
             while (running) {
@@ -83,14 +93,45 @@ public class VoiceCallSession {
                     }
                 }
 
-                DatagramPacket packet = new DatagramPacket(payload, payload.length, remoteAddress, remotePort);
-                socket.send(packet);
+                List<InetSocketAddress> targetsSnapshot = remoteTargets;
+                if (targetsSnapshot == null || targetsSnapshot.isEmpty()) {
+                    continue;
+                }
+
+                for (InetSocketAddress target : targetsSnapshot) {
+                    if (target == null || target.getAddress() == null || target.getPort() <= 0) {
+                        continue;
+                    }
+                    DatagramPacket packet = new DatagramPacket(payload, payload.length, target.getAddress(), target.getPort());
+                    socket.send(packet);
+                }
             }
         } catch (Exception ex) {
             if (running) {
                 ex.printStackTrace();
             }
         }
+    }
+
+    public void setRemoteTargets(Collection<InetSocketAddress> targets) {
+        if (targets == null || targets.isEmpty()) {
+            remoteTargets = List.of();
+            return;
+        }
+        List<InetSocketAddress> copy = new ArrayList<>();
+        for (InetSocketAddress target : targets) {
+            if (target != null && target.getAddress() != null && target.getPort() > 0) {
+                copy.add(target);
+            }
+        }
+        remoteTargets = copy;
+    }
+
+    public synchronized int getLocalPort() {
+        if (socket == null || socket.isClosed()) {
+            return 0;
+        }
+        return socket.getLocalPort();
     }
 
     private void playbackLoop() {
@@ -141,5 +182,6 @@ public class VoiceCallSession {
             socket.close();
             socket = null;
         }
+        remoteTargets = List.of();
     }
 }

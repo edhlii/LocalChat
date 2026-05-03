@@ -18,7 +18,11 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -42,6 +46,7 @@ public class ScreenShareSession {
 
     private volatile boolean opened;
     private volatile boolean sending;
+    private volatile List<InetSocketAddress> remoteTargets = List.of();
 
     private final AtomicInteger frameCounter = new AtomicInteger(1);
 
@@ -62,14 +67,46 @@ public class ScreenShareSession {
     }
 
     public synchronized void startSending(String remoteHost, int remotePort) {
-        if (!opened || sending || remoteHost == null || remoteHost.isBlank() || remotePort <= 0) {
+        try {
+            InetAddress remoteAddress = InetAddress.getByName(remoteHost);
+            setRemoteTargets(List.of(new InetSocketAddress(remoteAddress, remotePort)));
+            startSending();
+        } catch (Exception ignore) {
+            // ignore invalid destination and keep sender disabled
+        }
+    }
+
+    public synchronized void startSending() {
+        if (!opened || sending) {
             return;
         }
 
         sending = true;
-        senderThread = new Thread(() -> senderLoop(remoteHost, remotePort), "screen-share-sender");
+        senderThread = new Thread(this::senderLoop, "screen-share-sender");
         senderThread.setDaemon(true);
         senderThread.start();
+    }
+
+    public void setRemoteTargets(Collection<InetSocketAddress> targets) {
+        if (targets == null || targets.isEmpty()) {
+            remoteTargets = List.of();
+            return;
+        }
+
+        List<InetSocketAddress> copy = new ArrayList<>();
+        for (InetSocketAddress target : targets) {
+            if (target != null && target.getAddress() != null && target.getPort() > 0) {
+                copy.add(target);
+            }
+        }
+        remoteTargets = copy;
+    }
+
+    public synchronized int getLocalPort() {
+        if (socket == null || socket.isClosed()) {
+            return 0;
+        }
+        return socket.getLocalPort();
     }
 
     public synchronized void stopSending() {
@@ -95,15 +132,21 @@ public class ScreenShareSession {
         }
     }
 
-    private void senderLoop(String remoteHost, int remotePort) {
+    private void senderLoop() {
         try {
             Robot robot = new Robot(resolveCaptureDevice());
             Rectangle captureArea = resolveCaptureArea();
-            InetAddress remoteAddress = InetAddress.getByName(remoteHost);
 
             while (opened && sending) {
                 byte[] frame = captureFrame(robot, captureArea);
-                sendFrame(remoteAddress, remotePort, frame);
+
+                List<InetSocketAddress> targetsSnapshot = remoteTargets;
+                for (InetSocketAddress target : targetsSnapshot) {
+                    if (target == null || target.getAddress() == null || target.getPort() <= 0) {
+                        continue;
+                    }
+                    sendFrame(target.getAddress(), target.getPort(), frame);
+                }
                 Thread.sleep(FRAME_INTERVAL_MS);
             }
         } catch (InterruptedException ignore) {
@@ -115,10 +158,11 @@ public class ScreenShareSession {
         } finally {
             sending = false;
         }
+        remoteTargets = List.of();
     }
 
     private void receiverLoop(Consumer<byte[]> onFrameReceived) {
-        Map<Integer, FrameAssembly> frameMap = new HashMap<>();
+        Map<String, FrameAssembly> frameMap = new HashMap<>();
         byte[] packetBuffer = new byte[RECEIVE_BUFFER];
 
         while (opened) {
@@ -134,6 +178,7 @@ public class ScreenShareSession {
                 int frameId = header.getInt();
                 int totalChunks = header.getInt();
                 int chunkIndex = header.getInt();
+                String streamKey = buildStreamKey(packet.getAddress(), packet.getPort(), frameId);
 
                 if (totalChunks <= 0 || chunkIndex < 0 || chunkIndex >= totalChunks) {
                     continue;
@@ -143,16 +188,16 @@ public class ScreenShareSession {
                 byte[] payload = new byte[payloadLength];
                 System.arraycopy(packet.getData(), HEADER_SIZE, payload, 0, payloadLength);
 
-                FrameAssembly assembly = frameMap.computeIfAbsent(frameId, id -> new FrameAssembly(totalChunks));
+                FrameAssembly assembly = frameMap.computeIfAbsent(streamKey, id -> new FrameAssembly(totalChunks));
                 assembly.addChunk(chunkIndex, payload);
 
                 if (assembly.isComplete()) {
                     if (onFrameReceived != null) {
                         onFrameReceived.accept(assembly.combine());
                     }
-                    frameMap.clear();
+                    frameMap.remove(streamKey);
                 } else {
-                    frameMap.entrySet().removeIf(entry -> entry.getKey() < frameId - 2);
+                    frameMap.entrySet().removeIf(entry -> isOlderFrame(entry.getKey(), packet.getAddress(), packet.getPort(), frameId - 2));
                 }
             } catch (SocketTimeoutException ignore) {
                 // timeout keeps the loop responsive while waiting for data
@@ -217,6 +262,29 @@ public class ScreenShareSession {
         }
 
         return baos.toByteArray();
+    }
+
+    private String buildStreamKey(InetAddress address, int port, int frameId) {
+        String host = address != null ? address.getHostAddress() : "unknown";
+        return host + ':' + port + ':' + frameId;
+    }
+
+    private boolean isOlderFrame(String streamKey, InetAddress address, int port, int minFrameId) {
+        if (streamKey == null || address == null) {
+            return false;
+        }
+
+        String prefix = address.getHostAddress() + ':' + port + ':';
+        if (!streamKey.startsWith(prefix)) {
+            return false;
+        }
+
+        try {
+            int frameId = Integer.parseInt(streamKey.substring(prefix.length()));
+            return frameId < minFrameId;
+        } catch (Exception ex) {
+            return false;
+        }
     }
 
     private void sendFrame(InetAddress remoteAddress, int remotePort, byte[] frameBytes) throws IOException {

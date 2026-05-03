@@ -5,14 +5,26 @@ import org.proptit.localchat.client.networks.SocketClient;
 import org.proptit.localchat.client.networks.VideoCallSession;
 import org.proptit.localchat.client.networks.VoiceCallSession;
 import org.proptit.localchat.common.enums.TypeDataPacket;
+import org.proptit.localchat.common.models.ChatGroup;
 import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.User;
 import org.proptit.localchat.common.models.call.CallAction;
 import org.proptit.localchat.common.models.call.CallSignal;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ChatCallManager {
+    private static final String GROUP_TARGET_PREFIX = "__group__:";
+
     private final SocketClient client;
     private final User me;
     private final ChatCallView view;
@@ -20,17 +32,29 @@ public class ChatCallManager {
     private VoiceCallSession voiceCallSession;
     private ScreenShareSession screenShareSession;
     private VideoCallSession videoCallSession;
+
+    private final Map<String, User> remoteParticipants = new ConcurrentHashMap<>();
+    private final Map<String, RemoteEndpoint> endpointsByUsername = new ConcurrentHashMap<>();
+
     private String activeCallId;
-    private User activeCallPeer;
     private String outgoingCallId;
+    private User activeCallPeer;
     private User outgoingCallPeer;
-    private boolean isEndingCall;
-    private String remoteMediaHost;
-    private int remoteScreenPort;
-    private int remoteVideoPort;
+
+    private boolean activeGroupCall;
+    private Integer activeGroupId;
+    private String activeGroupName;
+    private List<String> activeGroupRoster = new ArrayList<>();
+
+    private int localVoicePort;
+    private int localScreenPort;
+    private int localVideoPort;
+
     private boolean localScreenSharing;
-    private boolean videoCallEnabled;
     private boolean localVideoSending;
+    private boolean videoCallEnabled;
+    private boolean autoStartVideoWhenConnected;
+    private boolean isEndingCall;
 
     public ChatCallManager(SocketClient client, User me, ChatCallView view) {
         this.client = client;
@@ -39,14 +63,22 @@ public class ChatCallManager {
     }
 
     public void startOutgoingCall(User selectedConversationUser) {
-        startOutgoingCall(selectedConversationUser, false);
+        startOutgoingDirectCall(selectedConversationUser, false);
     }
 
     public void startOutgoingVideoCall(User selectedConversationUser) {
-        startOutgoingCall(selectedConversationUser, true);
+        startOutgoingDirectCall(selectedConversationUser, true);
     }
 
-    private void startOutgoingCall(User selectedConversationUser, boolean asVideoCall) {
+    public void startOutgoingGroupCall(ChatGroup selectedGroup) {
+        startOutgoingGroupCall(selectedGroup, false);
+    }
+
+    public void startOutgoingGroupVideoCall(ChatGroup selectedGroup) {
+        startOutgoingGroupCall(selectedGroup, true);
+    }
+
+    private void startOutgoingDirectCall(User selectedConversationUser, boolean asVideoCall) {
         if (selectedConversationUser == null) {
             view.showInfo("Please select a user to start a call.");
             return;
@@ -57,36 +89,86 @@ public class ChatCallManager {
             return;
         }
 
-        String callId = UUID.randomUUID().toString();
-        outgoingCallId = callId;
-        outgoingCallPeer = selectedConversationUser;
-        videoCallEnabled = asVideoCall;
-        view.setVideoCallAvailable(asVideoCall);
-        view.setVideoCallActive(false);
-
-        int videoPort = 0;
         try {
-            if (asVideoCall) {
-                videoPort = ensureVideoSessionOpened();
-            }
+            prepareLocalMedia();
         } catch (Exception ex) {
             ex.printStackTrace();
             cleanupCallState(false);
-            view.showError("Unable to access video devices.");
+            view.showError("Unable to access call devices.");
             return;
         }
 
+        String callId = UUID.randomUUID().toString();
+        activeCallId = callId;
+        outgoingCallId = callId;
+        outgoingCallPeer = selectedConversationUser;
+        activeCallPeer = selectedConversationUser;
+
+        activeGroupCall = false;
+        activeGroupId = null;
+        activeGroupName = null;
+        activeGroupRoster = new ArrayList<>();
+        autoStartVideoWhenConnected = asVideoCall;
+
         view.showCallWindow(selectedConversationUser, "Calling...");
+        refreshCallParticipants();
         sendCallSignal(new CallSignal(
                 callId,
                 CallAction.INVITE,
                 me.getUsername(),
                 me.getNickname(),
                 selectedConversationUser.getUsername(),
-                null,
-            0,
-            0,
-            videoPort
+                view.resolveLocalAddress(),
+                localVoicePort,
+                localScreenPort,
+                localVideoPort
+        ));
+    }
+
+    private void startOutgoingGroupCall(ChatGroup selectedGroup, boolean asVideoCall) {
+        if (selectedGroup == null) {
+            view.showInfo("Please select a group to start a call.");
+            return;
+        }
+
+        if (activeCallId != null || outgoingCallId != null) {
+            view.showInfo("A call is already in progress.");
+            return;
+        }
+
+        try {
+            prepareLocalMedia();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            cleanupCallState(false);
+            view.showError("Unable to access call devices.");
+            return;
+        }
+
+        String callId = UUID.randomUUID().toString();
+        activeCallId = callId;
+        outgoingCallId = callId;
+        outgoingCallPeer = null;
+
+        activeGroupCall = true;
+        activeGroupId = selectedGroup.getId();
+        activeGroupName = selectedGroup.getName();
+        activeGroupRoster = buildRosterFromGroup(selectedGroup);
+        activeCallPeer = buildGroupDisplayUser(activeGroupId, activeGroupName);
+        autoStartVideoWhenConnected = asVideoCall;
+
+        view.showCallWindow(activeCallPeer, "Calling group...");
+        refreshCallParticipants();
+        sendCallSignal(new CallSignal(
+                callId,
+                CallAction.INVITE,
+                me.getUsername(),
+                me.getNickname(),
+                groupTarget(activeGroupId),
+                view.resolveLocalAddress(),
+                localVoicePort,
+                localScreenPort,
+                localVideoPort
         ));
     }
 
@@ -139,31 +221,26 @@ public class ChatCallManager {
     }
 
     public void setScreenSharing(boolean sharing) {
-        if (activeCallId == null || activeCallPeer == null) {
+        if (activeCallId == null) {
             view.updateScreenShareButton(false);
             return;
         }
 
         if (sharing) {
-            if (screenShareSession == null || remoteMediaHost == null || remoteMediaHost.isBlank() || remoteScreenPort <= 0) {
+            List<InetSocketAddress> screenTargets = buildRemoteTargets(false, true, false);
+            if (screenShareSession == null || screenTargets.isEmpty()) {
                 view.showInfo("Screen sharing is not ready yet.");
                 view.updateScreenShareButton(false);
                 return;
             }
 
-            screenShareSession.startSending(remoteMediaHost, remoteScreenPort);
+            screenShareSession.setRemoteTargets(screenTargets);
+            screenShareSession.startSending();
             localScreenSharing = true;
-            sendCallSignal(new CallSignal(
-                    activeCallId,
-                    CallAction.SHARE_START,
-                    me.getUsername(),
-                    me.getNickname(),
-                    activeCallPeer.getUsername(),
-                    null,
-                    0,
-                    0
-            ));
-            view.updateCallStatus("Connected - Sharing screen");
+            broadcastInCall(CallAction.SHARE_START, localVideoPort);
+            view.updateCallStatus(activeGroupCall
+                    ? "Connected (" + remoteParticipants.size() + ") - Sharing screen"
+                    : "Connected - Sharing screen");
             return;
         }
 
@@ -171,7 +248,7 @@ public class ChatCallManager {
     }
 
     public void setVideoStreaming(boolean active) {
-        if (!videoCallEnabled || activeCallId == null || activeCallPeer == null || remoteMediaHost == null || remoteVideoPort <= 0) {
+        if (activeCallId == null || !videoCallEnabled) {
             view.setVideoCallActive(false);
             return;
         }
@@ -185,7 +262,9 @@ public class ChatCallManager {
     }
 
     private void handleIncomingInvite(CallSignal signal) {
-        if (activeCallId != null || outgoingCallId != null) {
+        boolean alreadyInAnotherCall = (activeCallId != null || outgoingCallId != null)
+                && (activeCallId == null || !activeCallId.equals(signal.getCallId()));
+        if (alreadyInAnotherCall) {
             sendCallSignal(new CallSignal(
                     signal.getCallId(),
                     CallAction.REJECT,
@@ -193,6 +272,7 @@ public class ChatCallManager {
                     me.getNickname(),
                     signal.getFromUsername(),
                     null,
+                    0,
                     0,
                     0
             ));
@@ -210,36 +290,69 @@ public class ChatCallManager {
                     signal.getFromUsername(),
                     null,
                     0,
+                    0,
                     0
             ));
             return;
         }
 
+        Integer groupId = parseGroupId(signal.getToUsername());
+        boolean isGroupInvite = groupId != null;
+
         try {
-            int udpPort = ensureVoiceSessionOpened();
-            int screenPort = ensureScreenSessionOpened();
-            int videoPort = 0;
-            if (signal.getVideoUdpPort() > 0) {
-                videoCallEnabled = true;
-                videoPort = ensureVideoSessionOpened();
-            }
+            prepareLocalMedia();
             activeCallId = signal.getCallId();
-            activeCallPeer = caller;
-            view.showCallWindow(caller, "Connecting...");
+            outgoingCallId = null;
+            outgoingCallPeer = null;
+            autoStartVideoWhenConnected = signal.getVideoUdpPort() > 0;
+
+            activeGroupCall = isGroupInvite;
+            activeGroupId = groupId;
+            activeGroupName = isGroupInvite ? "Group #" + groupId : null;
+
+            if (isGroupInvite) {
+                activeCallPeer = buildGroupDisplayUser(groupId, activeGroupName);
+                view.showCallWindow(activeCallPeer, "Joining group call...");
+            } else {
+                activeCallPeer = caller;
+                view.showCallWindow(caller, "Connecting...");
+            }
+
+            addOrUpdateRemoteEndpoint(caller.getUsername(), signal.getHost(), signal.getUdpPort(), signal.getScreenUdpPort(), signal.getVideoUdpPort());
+            remoteParticipants.put(caller.getUsername(), caller);
+            refreshCallParticipants();
+            refreshMediaTargets();
+            updateConnectedStatus();
+
+            String acceptTarget = isGroupInvite ? groupTarget(groupId) : signal.getFromUsername();
             sendCallSignal(new CallSignal(
                     signal.getCallId(),
                     CallAction.ACCEPT,
                     me.getUsername(),
                     me.getNickname(),
-                    signal.getFromUsername(),
+                    acceptTarget,
                     view.resolveLocalAddress(),
-                    udpPort,
-                    screenPort,
-                    videoPort
+                    localVoicePort,
+                    localScreenPort,
+                    localVideoPort
             ));
 
-            if (videoPort > 0) {
-                view.setVideoCallAvailable(true);
+            if (isGroupInvite) {
+                sendCallSignal(new CallSignal(
+                        signal.getCallId(),
+                        CallAction.READY,
+                        me.getUsername(),
+                        me.getNickname(),
+                        signal.getFromUsername(),
+                        view.resolveLocalAddress(),
+                        localVoicePort,
+                        localScreenPort,
+                        localVideoPort
+                ));
+            }
+
+            if (autoStartVideoWhenConnected) {
+                startLocalVideoStreaming(false);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -253,79 +366,96 @@ public class ChatCallManager {
                     signal.getFromUsername(),
                     null,
                     0,
+                    0,
                     0
             ));
         }
     }
 
     private void handleCallAccepted(CallSignal signal) {
-        if (outgoingCallId == null || !outgoingCallId.equals(signal.getCallId())) {
+        if (!isSameCall(signal.getCallId())) {
             return;
         }
 
-        User peer = outgoingCallPeer != null
-                ? outgoingCallPeer
-                : view.resolveUser(signal.getFromUsername(), signal.getFromNickname());
-
-        try {
-            int udpPort = ensureVoiceSessionOpened();
-            int screenPort = ensureScreenSessionOpened();
-            int videoPort = 0;
-            if (signal.getVideoUdpPort() > 0 || videoCallEnabled) {
-                videoCallEnabled = true;
-                videoPort = ensureVideoSessionOpened();
-            }
-            activeCallId = outgoingCallId;
-            activeCallPeer = peer;
-            outgoingCallId = null;
-            outgoingCallPeer = null;
-            remoteMediaHost = signal.getHost();
-            remoteScreenPort = signal.getScreenUdpPort();
-            remoteVideoPort = signal.getVideoUdpPort();
-
-            view.showCallWindow(peer, "Connecting...");
-            sendCallSignal(new CallSignal(
-                    activeCallId,
-                    CallAction.READY,
-                    me.getUsername(),
-                    me.getNickname(),
-                    signal.getFromUsername(),
-                    view.resolveLocalAddress(),
-                    udpPort,
-                    screenPort,
-                    videoPort
-            ));
-
-            startVoiceStreaming(signal.getHost(), signal.getUdpPort());
-            if (remoteVideoPort > 0) {
-                startLocalVideoStreaming(false);
-                view.setVideoCallAvailable(true);
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            cleanupCallState(false);
-            view.showError("Unable to start voice call.");
+        User peer = view.resolveUser(signal.getFromUsername(), signal.getFromNickname());
+        if (peer == null || peer.getUsername() == null || peer.getUsername().equalsIgnoreCase(me.getUsername())) {
+            return;
         }
+
+        remoteParticipants.put(peer.getUsername(), peer);
+        addOrUpdateRemoteEndpoint(peer.getUsername(), signal.getHost(), signal.getUdpPort(), signal.getScreenUdpPort(), signal.getVideoUdpPort());
+        refreshMediaTargets();
+
+        if (!activeGroupCall) {
+            outgoingCallId = null;
+            activeCallPeer = peer;
+            view.showCallWindow(peer, "Connecting...");
+        } else if (outgoingCallId != null) {
+            outgoingCallId = null;
+        }
+
+        refreshCallParticipants();
+
+        sendCallSignal(new CallSignal(
+                signal.getCallId(),
+                CallAction.READY,
+                me.getUsername(),
+                me.getNickname(),
+                peer.getUsername(),
+                view.resolveLocalAddress(),
+                localVoicePort,
+                localScreenPort,
+                localVideoPort
+        ));
+
+        if (autoStartVideoWhenConnected && !localVideoSending) {
+            startLocalVideoStreaming(false);
+        }
+
+        updateConnectedStatus();
     }
 
     private void handleCallReady(CallSignal signal) {
-        if (activeCallId == null || !activeCallId.equals(signal.getCallId())) {
+        if (!isSameCall(signal.getCallId())) {
             return;
         }
 
-        remoteMediaHost = signal.getHost();
-        remoteScreenPort = signal.getScreenUdpPort();
-        remoteVideoPort = signal.getVideoUdpPort();
-        if (remoteVideoPort > 0) {
-            videoCallEnabled = true;
-            view.setVideoCallAvailable(true);
+        User peer = view.resolveUser(signal.getFromUsername(), signal.getFromNickname());
+        if (peer == null || peer.getUsername() == null || peer.getUsername().equalsIgnoreCase(me.getUsername())) {
+            return;
+        }
+
+        remoteParticipants.put(peer.getUsername(), peer);
+        addOrUpdateRemoteEndpoint(peer.getUsername(), signal.getHost(), signal.getUdpPort(), signal.getScreenUdpPort(), signal.getVideoUdpPort());
+        refreshMediaTargets();
+
+        if (!activeGroupCall) {
+            outgoingCallId = null;
+            activeCallPeer = peer;
+            view.showCallWindow(peer, "Connected");
+        }
+
+        refreshCallParticipants();
+
+        if (autoStartVideoWhenConnected && !localVideoSending) {
             startLocalVideoStreaming(false);
         }
-        startVoiceStreaming(signal.getHost(), signal.getUdpPort());
+
+        updateConnectedStatus();
     }
 
     private void handleCallRejected(CallSignal signal) {
         if (outgoingCallId == null || !outgoingCallId.equals(signal.getCallId())) {
+            return;
+        }
+
+        if (activeGroupCall) {
+            String nickname = signal.getFromNickname() != null && !signal.getFromNickname().isBlank()
+                    ? signal.getFromNickname()
+                    : signal.getFromUsername();
+            if (nickname != null && !nickname.isBlank()) {
+                view.showInfo(nickname + " declined the group call.");
+            }
             return;
         }
 
@@ -335,135 +465,108 @@ public class ChatCallManager {
     }
 
     private void handleRemoteHangup(CallSignal signal) {
-        boolean isActive = activeCallId != null && activeCallId.equals(signal.getCallId());
-        boolean isOutgoing = outgoingCallId != null && outgoingCallId.equals(signal.getCallId());
-        if (!isActive && !isOutgoing) {
+        if (!isSameCall(signal.getCallId())) {
             return;
         }
 
-        cleanupCallState(false);
-        view.showInfo("Call ended by remote user.");
-        view.closeCallWindow();
+        if (!activeGroupCall) {
+            cleanupCallState(false);
+            view.showInfo("Call ended by remote user.");
+            view.closeCallWindow();
+            return;
+        }
+
+        String username = signal.getFromUsername();
+        if (username != null) {
+            remoteParticipants.remove(username);
+            endpointsByUsername.remove(username);
+            refreshMediaTargets();
+        }
+
+        refreshCallParticipants();
+
+        updateConnectedStatus();
+
+        if (remoteParticipants.isEmpty() && outgoingCallId == null) {
+            view.updateCallStatus("Waiting for participants...");
+            stopLocalScreenShare(false);
+            if (!localVideoSending) {
+                view.clearRemoteScreenFrame();
+            }
+        }
     }
 
     private void handleRemoteShareStarted(CallSignal signal) {
-        if (activeCallId == null || !activeCallId.equals(signal.getCallId())) {
+        if (!isSameCall(signal.getCallId())) {
             return;
         }
 
+        if (activeGroupCall) {
+            view.updateCallStatus("Connected (" + remoteParticipants.size() + ") - Remote is sharing");
+            return;
+        }
         view.updateCallStatus("Connected - Remote is sharing");
     }
 
     private void handleRemoteShareStopped(CallSignal signal) {
-        if (activeCallId == null || !activeCallId.equals(signal.getCallId())) {
+        if (!isSameCall(signal.getCallId())) {
             return;
         }
 
         view.clearRemoteScreenFrame();
-        view.updateCallStatus("Connected");
+        updateConnectedStatus();
     }
 
     private void handleRemoteVideoStarted(CallSignal signal) {
-        if (activeCallId == null || !activeCallId.equals(signal.getCallId())) {
+        if (!isSameCall(signal.getCallId())) {
             return;
         }
 
+        if (signal.getFromUsername() != null && !signal.getFromUsername().equalsIgnoreCase(me.getUsername())) {
+            addOrUpdateRemoteEndpoint(
+                    signal.getFromUsername(),
+                    signal.getHost(),
+                    0,
+                    0,
+                    signal.getVideoUdpPort());
+            refreshMediaTargets();
+        }
+
+        if (activeGroupCall) {
+            view.updateCallStatus("Connected (" + remoteParticipants.size() + ") - Video");
+            return;
+        }
         view.updateCallStatus("Connected - Video");
     }
 
     private void handleRemoteVideoStopped(CallSignal signal) {
-        if (activeCallId == null || !activeCallId.equals(signal.getCallId())) {
+        if (!isSameCall(signal.getCallId())) {
             return;
         }
 
-        stopLocalVideoStreaming(false);
-        view.clearRemoteScreenFrame();
-        view.clearLocalVideoFrame();
-        view.updateCallStatus("Connected");
-    }
-
-    private void startVoiceStreaming(String host, int port) {
-        if (voiceCallSession == null || host == null || host.isBlank() || port <= 0) {
-            return;
-        }
-
-        try {
-            voiceCallSession.start(host, port);
-            view.showCallWindow(activeCallPeer != null ? activeCallPeer : outgoingCallPeer, "Connected");
-            view.updateCallStatus("Connected");
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            view.showError("Unable to start audio stream.");
-            cleanupCallState(true);
-        }
-    }
-
-    private void startLocalVideoStreaming(boolean notifyUserOnFailure) {
-        if (videoCallSession == null || remoteMediaHost == null || remoteMediaHost.isBlank() || remoteVideoPort <= 0) {
-            view.setVideoCallActive(false);
-            return;
-        }
-
-        try {
-            videoCallSession.start(remoteMediaHost, remoteVideoPort, view::showLocalVideoFrame);
-            localVideoSending = true;
-            view.setVideoCallActive(true);
-            view.updateCallStatus("Connected - Video");
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            if (notifyUserOnFailure) {
-                view.showError("Unable to start video stream.");
-            }
-            view.setVideoCallActive(false);
-            return;
-        }
-
-        if (activeCallId != null && activeCallPeer != null) {
-            try {
-                sendCallSignal(new CallSignal(
-                        activeCallId,
-                        CallAction.VIDEO_START,
-                        me.getUsername(),
-                        me.getNickname(),
-                        activeCallPeer.getUsername(),
-                        null,
-                        0,
-                        0,
-                        remoteVideoPort
-                ));
-            } catch (Exception signalEx) {
-                signalEx.printStackTrace();
+        if (signal.getFromUsername() != null) {
+            RemoteEndpoint endpoint = endpointsByUsername.get(signal.getFromUsername());
+            if (endpoint != null) {
+                endpoint.videoPort = 0;
+                refreshMediaTargets();
             }
         }
-    }
 
-    private void stopLocalVideoStreaming(boolean notifyPeer) {
         if (!localVideoSending) {
-            view.setVideoCallActive(false);
-            return;
+            view.clearRemoteScreenFrame();
         }
+        updateConnectedStatus();
+    }
 
-        if (videoCallSession != null) {
-            videoCallSession.stopSending();
-        }
-        localVideoSending = false;
-        view.setVideoCallActive(false);
-        view.clearLocalVideoFrame();
-        view.updateCallStatus("Connected");
+    private void prepareLocalMedia() throws Exception {
+        localVoicePort = ensureVoiceSessionOpened();
+        localScreenPort = ensureScreenSessionOpened();
+        localVideoPort = ensureVideoSessionOpened();
+        videoCallEnabled = true;
 
-        if (notifyPeer && activeCallId != null && activeCallPeer != null) {
-            sendCallSignal(new CallSignal(
-                    activeCallId,
-                    CallAction.VIDEO_STOP,
-                    me.getUsername(),
-                    me.getNickname(),
-                    activeCallPeer.getUsername(),
-                    null,
-                    0,
-                    0,
-                    remoteVideoPort
-            ));
-        }
+        voiceCallSession.start();
+        view.setVideoCallAvailable(true);
+        view.setVideoCallActive(localVideoSending);
     }
 
     private int ensureVoiceSessionOpened() throws Exception {
@@ -487,6 +590,53 @@ public class ChatCallManager {
         return screenShareSession.open(view::showRemoteScreenFrame);
     }
 
+    private void startLocalVideoStreaming(boolean notifyUserOnFailure) {
+        if (!videoCallEnabled || videoCallSession == null) {
+            view.setVideoCallActive(false);
+            return;
+        }
+
+        try {
+            videoCallSession.start(view::showLocalVideoFrame);
+            localVideoSending = true;
+            view.setVideoCallActive(true);
+            refreshMediaTargets();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            if (notifyUserOnFailure) {
+                view.showError("Unable to start video stream.");
+            }
+            view.setVideoCallActive(false);
+            return;
+        }
+
+        broadcastInCall(CallAction.VIDEO_START, localVideoPort);
+        if (activeGroupCall) {
+            view.updateCallStatus("Connected (" + remoteParticipants.size() + ") - Video");
+        } else {
+            view.updateCallStatus("Connected - Video");
+        }
+    }
+
+    private void stopLocalVideoStreaming(boolean notifyPeer) {
+        if (!localVideoSending) {
+            view.setVideoCallActive(false);
+            return;
+        }
+
+        if (videoCallSession != null) {
+            videoCallSession.stopSending();
+        }
+        localVideoSending = false;
+        view.setVideoCallActive(false);
+        view.clearLocalVideoFrame();
+
+        if (notifyPeer) {
+            broadcastInCall(CallAction.VIDEO_STOP, localVideoPort);
+        }
+        updateConnectedStatus();
+    }
+
     private void stopLocalScreenShare(boolean notifyPeer) {
         if (!localScreenSharing) {
             view.updateScreenShareButton(false);
@@ -498,20 +648,206 @@ public class ChatCallManager {
         }
         localScreenSharing = false;
         view.updateScreenShareButton(false);
-        view.updateCallStatus("Connected");
 
-        if (notifyPeer && activeCallId != null && activeCallPeer != null) {
-            sendCallSignal(new CallSignal(
-                    activeCallId,
-                    CallAction.SHARE_STOP,
-                    me.getUsername(),
-                    me.getNickname(),
-                    activeCallPeer.getUsername(),
-                    null,
-                    0,
-                    0
-            ));
+        if (notifyPeer) {
+            broadcastInCall(CallAction.SHARE_STOP, localVideoPort);
         }
+        updateConnectedStatus();
+    }
+
+    private void refreshMediaTargets() {
+        if (voiceCallSession != null) {
+            voiceCallSession.setRemoteTargets(buildRemoteTargets(true, false, false));
+        }
+        if (videoCallSession != null) {
+            videoCallSession.setRemoteTargets(buildRemoteTargets(false, false, true));
+        }
+        if (screenShareSession != null && localScreenSharing) {
+            screenShareSession.setRemoteTargets(buildRemoteTargets(false, true, false));
+        }
+    }
+
+    private List<InetSocketAddress> buildRemoteTargets(boolean requireVoice, boolean requireScreen, boolean requireVideo) {
+        List<InetSocketAddress> targets = new ArrayList<>();
+        for (RemoteEndpoint endpoint : endpointsByUsername.values()) {
+            if (endpoint == null || endpoint.host == null || endpoint.host.isBlank()) {
+                continue;
+            }
+
+            int port = endpoint.voicePort;
+            if (requireScreen) {
+                port = endpoint.screenPort;
+            } else if (requireVideo) {
+                port = endpoint.videoPort;
+            }
+
+            if ((requireVoice || requireScreen || requireVideo) && port <= 0) {
+                continue;
+            }
+
+            try {
+                InetAddress address = InetAddress.getByName(endpoint.host);
+                targets.add(new InetSocketAddress(address, port));
+            } catch (Exception ignore) {
+                // ignore invalid participant endpoint
+            }
+        }
+        return targets;
+    }
+
+    private void addOrUpdateRemoteEndpoint(String username, String host, int voicePort, int screenPort, int videoPort) {
+        if (username == null || username.isBlank()) {
+            return;
+        }
+
+        RemoteEndpoint endpoint = endpointsByUsername.computeIfAbsent(username, ignored -> new RemoteEndpoint());
+        if (host != null && !host.isBlank()) {
+            endpoint.host = host;
+        }
+        if (voicePort > 0) {
+            endpoint.voicePort = voicePort;
+        }
+        if (screenPort > 0) {
+            endpoint.screenPort = screenPort;
+        }
+        if (videoPort > 0) {
+            endpoint.videoPort = videoPort;
+        }
+    }
+
+    private boolean isSameCall(String callId) {
+        if (callId == null) {
+            return false;
+        }
+        if (activeCallId != null && activeCallId.equals(callId)) {
+            return true;
+        }
+        return outgoingCallId != null && outgoingCallId.equals(callId);
+    }
+
+    private void updateConnectedStatus() {
+        if (activeGroupCall) {
+            int participantCount = remoteParticipants.size();
+            if (outgoingCallId != null && participantCount == 0) {
+                view.updateCallStatus("Calling group...");
+                return;
+            }
+
+            if (localScreenSharing) {
+                view.updateCallStatus("Connected (" + participantCount + ") - Sharing screen");
+                return;
+            }
+
+            if (localVideoSending) {
+                view.updateCallStatus("Connected (" + participantCount + ") - Video");
+                return;
+            }
+
+            view.updateCallStatus("Connected (" + participantCount + ")");
+            return;
+        }
+
+        if (localScreenSharing) {
+            view.updateCallStatus("Connected - Sharing screen");
+            return;
+        }
+        if (localVideoSending) {
+            view.updateCallStatus("Connected - Video");
+            return;
+        }
+        view.updateCallStatus("Connected");
+    }
+
+    private void refreshCallParticipants() {
+        view.updateCallParticipants(buildParticipantLabels());
+    }
+
+    private List<String> buildParticipantLabels() {
+        List<String> labels = new ArrayList<>();
+        labels.add("You");
+
+        if (activeGroupCall) {
+            if (remoteParticipants.isEmpty() && !activeGroupRoster.isEmpty()) {
+                for (String label : activeGroupRoster) {
+                    if (label != null && !label.isBlank() && !labels.contains(label)) {
+                        labels.add(label);
+                    }
+                }
+                return labels;
+            }
+
+            Set<String> participantNames = new LinkedHashSet<>();
+            for (User participant : remoteParticipants.values()) {
+                String displayName = participantDisplayName(participant);
+                if (displayName != null && !displayName.isBlank()) {
+                    participantNames.add(displayName);
+                }
+            }
+            labels.addAll(participantNames);
+            return labels;
+        }
+
+        String peerDisplayName = participantDisplayName(activeCallPeer != null ? activeCallPeer : outgoingCallPeer);
+        if (peerDisplayName != null && !peerDisplayName.isBlank()) {
+            labels.add(peerDisplayName);
+        }
+        return labels;
+    }
+
+    private List<String> buildRosterFromGroup(ChatGroup selectedGroup) {
+        List<String> roster = new ArrayList<>();
+        if (selectedGroup == null || selectedGroup.getMembers() == null) {
+            return roster;
+        }
+
+        for (User member : selectedGroup.getMembers()) {
+            String displayName = participantDisplayName(member);
+            if (displayName != null && !displayName.isBlank() && !roster.contains(displayName)) {
+                roster.add(displayName);
+            }
+        }
+        return roster;
+    }
+
+    private String participantDisplayName(User participant) {
+        if (participant == null) {
+            return null;
+        }
+        if (participant.getNickname() != null && !participant.getNickname().isBlank()) {
+            return participant.getNickname();
+        }
+        return participant.getUsername();
+    }
+
+    private void broadcastInCall(CallAction action, int videoPort) {
+        if (activeCallId == null || action == null) {
+            return;
+        }
+
+        String target;
+        if (activeGroupCall && activeGroupId != null) {
+            target = groupTarget(activeGroupId);
+        } else {
+            target = activeCallPeer != null
+                    ? activeCallPeer.getUsername()
+                    : (outgoingCallPeer != null ? outgoingCallPeer.getUsername() : null);
+        }
+
+        if (target == null || target.isBlank()) {
+            return;
+        }
+
+        sendCallSignal(new CallSignal(
+                activeCallId,
+                action,
+                me.getUsername(),
+                me.getNickname(),
+                target,
+                view.resolveLocalAddress(),
+                localVoicePort,
+                localScreenPort,
+                videoPort
+        ));
     }
 
     private void cleanupCallState(boolean notifyPeer) {
@@ -521,22 +857,36 @@ public class ChatCallManager {
         isEndingCall = true;
 
         try {
-            if (notifyPeer) {
-                String target = activeCallPeer != null
-                        ? activeCallPeer.getUsername()
-                        : (outgoingCallPeer != null ? outgoingCallPeer.getUsername() : null);
-                String callId = activeCallId != null ? activeCallId : outgoingCallId;
-                if (target != null && callId != null) {
+            if (notifyPeer && activeCallId != null) {
+                if (activeGroupCall && activeGroupId != null) {
                     sendCallSignal(new CallSignal(
-                            callId,
+                            activeCallId,
                             CallAction.HANGUP,
                             me.getUsername(),
                             me.getNickname(),
-                            target,
+                            groupTarget(activeGroupId),
                             null,
+                            0,
                             0,
                             0
                     ));
+                } else {
+                    String target = activeCallPeer != null
+                            ? activeCallPeer.getUsername()
+                            : (outgoingCallPeer != null ? outgoingCallPeer.getUsername() : null);
+                    if (target != null) {
+                        sendCallSignal(new CallSignal(
+                                activeCallId,
+                                CallAction.HANGUP,
+                                me.getUsername(),
+                                me.getNickname(),
+                                target,
+                                null,
+                                0,
+                                0,
+                                0
+                        ));
+                    }
                 }
             }
 
@@ -557,16 +907,27 @@ public class ChatCallManager {
                 voiceCallSession = null;
             }
 
-            remoteMediaHost = null;
-            remoteScreenPort = 0;
-            remoteVideoPort = 0;
+            remoteParticipants.clear();
+            endpointsByUsername.clear();
+
+            localVoicePort = 0;
+            localScreenPort = 0;
+            localVideoPort = 0;
+
             localScreenSharing = false;
             localVideoSending = false;
             videoCallEnabled = false;
+            autoStartVideoWhenConnected = false;
+
             activeCallId = null;
-            activeCallPeer = null;
             outgoingCallId = null;
+            activeCallPeer = null;
             outgoingCallPeer = null;
+
+            activeGroupCall = false;
+            activeGroupId = null;
+            activeGroupName = null;
+
             view.clearRemoteScreenFrame();
             view.clearLocalVideoFrame();
             view.updateScreenShareButton(false);
@@ -583,5 +944,34 @@ public class ChatCallManager {
             return;
         }
         client.sendData(new DataPacket(TypeDataPacket.CALL_SIGNAL, signal));
+    }
+
+    private String groupTarget(int groupId) {
+        return GROUP_TARGET_PREFIX + groupId;
+    }
+
+    private Integer parseGroupId(String target) {
+        if (target == null || !target.startsWith(GROUP_TARGET_PREFIX)) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(target.substring(GROUP_TARGET_PREFIX.length()));
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private User buildGroupDisplayUser(Integer groupId, String groupName) {
+        String displayName = (groupName != null && !groupName.isBlank()) ? groupName : ("Group #" + groupId);
+        User groupUser = new User("group-" + groupId);
+        groupUser.setNickname(displayName);
+        return groupUser;
+    }
+
+    private static class RemoteEndpoint {
+        private String host;
+        private int voicePort;
+        private int screenPort;
+        private int videoPort;
     }
 }

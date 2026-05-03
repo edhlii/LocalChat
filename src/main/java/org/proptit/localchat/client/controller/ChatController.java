@@ -930,15 +930,29 @@ public class ChatController implements ChatCallView {
     }
 
     public void onCallButtonClick(ActionEvent actionEvent) {
-        if (callManager != null) {
-            callManager.startOutgoingCall(selectedConversationUser);
+        if (callManager == null) {
+            return;
         }
+
+        if (isGroupMode && selectedConversationGroup != null) {
+            callManager.startOutgoingGroupCall(selectedConversationGroup);
+            return;
+        }
+
+        callManager.startOutgoingCall(selectedConversationUser);
     }
 
     public void onVideoCallButtonClick(ActionEvent actionEvent) {
-        if (callManager != null) {
-            callManager.startOutgoingVideoCall(selectedConversationUser);
+        if (callManager == null) {
+            return;
         }
+
+        if (isGroupMode && selectedConversationGroup != null) {
+            callManager.startOutgoingGroupVideoCall(selectedConversationGroup);
+            return;
+        }
+
+        callManager.startOutgoingVideoCall(selectedConversationUser);
     }
 
     public void receiveCallSignal(CallSignal signal) {
@@ -1007,6 +1021,15 @@ public class ChatController implements ChatCallView {
             e.printStackTrace();
             showError("Unable to open call window.");
         }
+    }
+
+    @Override
+    public void updateCallParticipants(List<String> participantLabels) {
+        Platform.runLater(() -> {
+            if (callWindowController != null) {
+                callWindowController.updateCallParticipants(participantLabels);
+            }
+        });
     }
 
     @Override
@@ -1274,6 +1297,24 @@ public class ChatController implements ChatCallView {
                 onTabGroupsClick(null);
             }
         });
+    }
+    // Room / group call helpers (minimal integration points)
+    public void receiveRoomPeerList(java.util.List<String> peers) {
+        System.out.println("ROOM_PEER_LIST: " + peers);
+    }
+
+    public void onPeerJoined(String username) {
+        System.out.println("Peer joined room: " + username);
+    }
+
+    public void onPeerLeft(String username) {
+        System.out.println("Peer left room: " + username);
+    }
+
+    public void handleRoomCallSignal(org.proptit.localchat.common.models.call.RoomCallSignal roomSignal) {
+        if (callManager != null && roomSignal != null && roomSignal.getSignal() != null) {
+            callManager.receiveCallSignal(roomSignal.getSignal());
+        }
     }
     public void setOfflineMessages(List<Integer> unreadIds) {
         Platform.runLater(() -> {
