@@ -1,6 +1,7 @@
 package org.proptit.localchat.client.controller;
 
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -82,6 +83,7 @@ public class ChatController implements ChatCallView {
     @FXML private Button btnTabGroups;
     @FXML private TextField txtSearchPeopleChat;
     @FXML private Button btnManageGroup;
+    @FXML private Button btnGroupInfo;
 
     private boolean isGroupMode = false;
     private ChatGroup selectedConversationGroup;
@@ -103,7 +105,6 @@ public class ChatController implements ChatCallView {
         if (lvChatList != null) {
             lvChatList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
                 if (newValue == null) return;
-
                 if (newValue.equals(ANNOUNCEMENT_LABEL)) {
                     usersWithNewMessages.remove(0);
                     lvChatList.refresh();
@@ -115,6 +116,8 @@ public class ChatController implements ChatCallView {
                     clearMessageArea();
 
                     contactNameTopBar.setText(ANNOUNCEMENT_LABEL);
+                    btnGroupInfo.setVisible(false);
+                    btnGroupInfo.setManaged(false);
 
                     boolean canSend = me.isManager();
                     messageInput.getParent().setVisible(canSend);
@@ -127,11 +130,12 @@ public class ChatController implements ChatCallView {
 
                 messageInput.getParent().setVisible(true);
                 messageInput.getParent().setManaged(true);
-
                 if (isGroupMode) {
                     ChatGroup newGroup = conversationGroupMap.get(newValue);
                     if (newGroup != null) {
                         contactNameTopBar.setText(newGroup.getName());
+                        btnGroupInfo.setVisible(true);
+                        btnGroupInfo.setManaged(true);
 
                         if (usersWithNewMessages.contains(-newGroup.getId())) {
                             usersWithNewMessages.remove(-newGroup.getId());
@@ -156,15 +160,15 @@ public class ChatController implements ChatCallView {
                 {
                     selectedConversationGroup = null;
                     updateManageGroupButtonVisibility();
-
                     User newUser = conversationUserMap.get(newValue);
-                    if (newUser != null)
-                    {
+                    if (newUser != null) {
                         contactNameTopBar.setText(newUser.getNickname());
                         messageInput.getParent().setVisible(true);
                         messageInput.getParent().setManaged(true);
-                        if(selectedConversationUser == null || newUser.getId() != selectedConversationUser.getId())
-                        {
+                        btnGroupInfo.setVisible(false);
+                        btnGroupInfo.setManaged(false);
+
+                        if(selectedConversationUser == null || newUser.getId() != selectedConversationUser.getId()) {
                             usersWithNewMessages.remove(newUser.getId());
                             lvChatList.refresh();
 
@@ -174,12 +178,9 @@ public class ChatController implements ChatCallView {
                             clearMessageArea();
                             System.out.println("DEBUG: Load lịch sử với " + selectedConversationUser.getNickname());
                             client.sendData(new DataPacket(TypeDataPacket.GET_HISTORY_REQUEST, selectedConversationUser.getId()));
-
-
                         }
                     }
                 }
-
             });
         }
 
@@ -507,8 +508,8 @@ public class ChatController implements ChatCallView {
 
     @FXML
     void onSendButtonClick(ActionEvent event) {
-        String messageText = messageInput.getText();
-        if (!messageText.trim().isEmpty()) {
+        String messageText = messageInput.getText().trim();
+        if (!messageText.isEmpty()) {
             Message msg = null;
             String selectedItem = lvChatList.getSelectionModel().getSelectedItem();
             if (selectedItem == null) return;
@@ -572,6 +573,8 @@ public class ChatController implements ChatCallView {
         Label lblMessage = new Label(text);
         lblMessage.setWrapText(true);
         lblMessage.setMaxWidth(400);
+        lblMessage.setMinHeight(Region.USE_PREF_SIZE);
+
         lblMessage.setFont(Font.font("System", 16));
 
         Label lblTime = new Label(isMe ? time : (sender.getNickname() + " | " + time));
@@ -1385,8 +1388,20 @@ public class ChatController implements ChatCallView {
     public void setMyGroupsList(List<ChatGroup> groups) {
         Platform.runLater(() -> {
             this.myGroupsList = groups;
+            if (selectedConversationGroup != null) {
+                for (ChatGroup g : groups) {
+                    if (g.getId() == selectedConversationGroup.getId()) {
+                        selectedConversationGroup = g;
+                        break;
+                    }
+                }
+            }
+
             if (isGroupMode) {
                 onTabGroupsClick(null);
+                if (selectedConversationGroup != null) {
+                    lvChatList.getSelectionModel().select("👥" + selectedConversationGroup.getName());
+                }
             }
         });
     }
@@ -1472,7 +1487,6 @@ public class ChatController implements ChatCallView {
             }
 
 
-
             String label = "👥" + group.getName();
 
             boolean existsInList = false;
@@ -1501,6 +1515,103 @@ public class ChatController implements ChatCallView {
             }
 
             lvChatList.refresh();
+
+        });
+    }
+
+    @FXML
+    void onGroupInfoClick(ActionEvent event) {
+        if (selectedConversationGroup == null) return;
+        ContextMenu contextMenu = new ContextMenu();
+        MenuItem viewMembersItem = new MenuItem("Thành viên trong đoạn chat");
+        viewMembersItem.setOnAction(e -> showGroupMembers());
+        MenuItem leaveGroupItem = new MenuItem("Rời nhóm");
+        leaveGroupItem.setOnAction(e -> handleLeaveGroup());
+
+        contextMenu.getItems().addAll(viewMembersItem, leaveGroupItem);
+        contextMenu.show(btnGroupInfo, javafx.geometry.Side.BOTTOM, 0, 5);
+    }
+
+    private void showGroupMembers() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Thông tin nhóm");
+        alert.setHeaderText(null);
+        alert.setGraphic(null);
+
+        VBox root = new VBox(15);
+        root.setAlignment(Pos.TOP_CENTER);
+        root.setPadding(new Insets(10, 25, 10, 25));
+
+        root.setPrefWidth(350);
+        root.setPrefHeight(450);
+
+        Label titleLabel = new Label("DANH SÁCH THÀNH VIÊN");
+        titleLabel.getStyleClass().add("header-label");
+
+        VBox groupInfoBox = new VBox(2);
+        groupInfoBox.setAlignment(Pos.CENTER);
+        Label labelNhom = new Label("NHÓM");
+        labelNhom.setStyle("-fx-text-fill: #7a829a; -fx-font-size: 11px; -fx-font-weight: bold;");
+        Label groupName = new Label(selectedConversationGroup.getName().toUpperCase());
+        groupName.setStyle("-fx-text-fill: #b388ff; -fx-font-size: 18px; -fx-font-weight: bold;");
+        groupInfoBox.getChildren().addAll(labelNhom, groupName);
+
+        Label listTitle = new Label("DANH SÁCH THÀNH VIÊN");
+        listTitle.setStyle("-fx-text-fill: #7a829a; -fx-font-size: 11px; -fx-font-weight: bold;");
+        HBox listTitleWrapper = new HBox(listTitle);
+        listTitleWrapper.setAlignment(Pos.CENTER_LEFT);
+
+        ListView<User> lv = new ListView<>();
+        lv.getStyleClass().add("list-view");
+
+        VBox.setVgrow(lv, javafx.scene.layout.Priority.ALWAYS);
+
+        lv.setItems(FXCollections.observableArrayList(selectedConversationGroup.getMembers()));
+        lv.setCellFactory(param -> new ListCell<User>() {
+            @Override
+            protected void updateItem(User user, boolean empty) {
+                super.updateItem(user, empty);
+                if (empty || user == null) {
+                    setGraphic(null);
+                    setText(null);
+                } else {
+                    String role = (user.getId().equals(selectedConversationGroup.getCreatedBy().getId())) ? " (Trưởng nhóm)" : "";
+                    Label name = new Label(user.getNickname() + role + " (@" + user.getUsername() + ")");
+                    name.setStyle("-fx-text-fill: white; -fx-font-size: 14px;");
+
+                    HBox cell = new HBox(10, name);
+                    cell.setAlignment(Pos.CENTER_LEFT);
+                    cell.setPadding(new Insets(5, 0, 5, 5));
+                    setGraphic(cell);
+                }
+            }
+        });
+
+        root.getChildren().addAll(titleLabel, groupInfoBox, listTitleWrapper, lv);
+        alert.getDialogPane().setContent(root);
+
+        java.net.URL cssUrl = getClass().getResource("/org/proptit/localchat/create_group.css");
+        if (cssUrl != null) {
+            alert.getDialogPane().getStylesheets().add(cssUrl.toExternalForm());
+            alert.getDialogPane().getStyleClass().add("dialog-pane");
+        }
+
+        alert.show();
+    }
+
+    private void handleLeaveGroup() {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Bạn có chắc chắn muốn rời khỏi nhóm này không?", ButtonType.YES, ButtonType.NO);
+        confirm.setHeaderText(null);
+        java.net.URL cssUrl = getClass().getResource("/org/proptit/localchat/create_group.css");
+        if (cssUrl != null) confirm.getDialogPane().getStylesheets().add(cssUrl.toExternalForm());
+
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.YES) {
+                client.sendData(new DataPacket(TypeDataPacket.LEAVE_GROUP_REQUEST, selectedConversationGroup.getId()));
+                btnTabAll.fire();
+                contactNameTopBar.setText("");
+                vboxMessage.getChildren().clear();
+            }
         });
     }
 }

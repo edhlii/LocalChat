@@ -328,10 +328,22 @@ public class ClientHandler implements Runnable {
                             sendData(new DataPacket(TypeDataPacket.UPDATE_GROUP_SUCCESS, fullGroupForAdmin));
                         }
                         break;
-
-
-
-
+                    case LEAVE_GROUP_REQUEST:
+                        int groupIdToLeave = (int) data.getData();
+                        boolean left = groupDao.leaveGroup(this.user.getId(), groupIdToLeave);
+                        if (left) {
+                            System.out.println(this.user.getNickname() + " đã rời nhóm " + groupIdToLeave);
+                            List<ChatGroup> myUpdatedGroups = groupDao.getGroupsByUserId(this.user.getId());
+                            sendData(new DataPacket(TypeDataPacket.RETURN_MY_GROUPS, myUpdatedGroups));
+                            List<Integer> remainingMemberIds = groupDao.getMemberIdsByGroupId(groupIdToLeave);
+                            for (ClientHandler clientHandler : server.getClients()) {
+                                if (clientHandler.getUser() != null && remainingMemberIds.contains(clientHandler.getUser().getId())) {
+                                    List<ChatGroup> updatedGroups = groupDao.getGroupsByUserId(clientHandler.getUser().getId());
+                                    clientHandler.sendData(new DataPacket(TypeDataPacket.RETURN_MY_GROUPS, updatedGroups));
+                                }
+                            }
+                        }
+                        break;
                 }
             }
 

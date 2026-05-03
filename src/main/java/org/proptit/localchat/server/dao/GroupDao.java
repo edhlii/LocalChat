@@ -147,6 +147,7 @@ public class GroupDao {
         return memberIds;
     }
 
+
     public List<User> getFullMembersByGroupId(int groupId) {
 
         try (Connection conn = DbConnection.openConnection()){
@@ -204,5 +205,17 @@ public class GroupDao {
             e.printStackTrace();
             return false;
         }
+    }
+    public boolean leaveGroup(int userId, int groupId) {
+        String sql = "DELETE FROM group_members WHERE user_id = ? AND group_id = ?";
+        try (Connection conn = DbConnection.openConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setInt(2, groupId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }
