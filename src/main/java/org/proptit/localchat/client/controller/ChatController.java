@@ -68,6 +68,9 @@ public class ChatController implements ChatCallView {
     @FXML private Button btnManageGroup;
     @FXML private Button btnGroupInfo;
 
+    private boolean isGroupMode = false;
+    private ChatGroup selectedConversationGroup;
+
     public void init(SocketClient client, User me) {
         this.client = client;
         this.me = me;
