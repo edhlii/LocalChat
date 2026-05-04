@@ -14,8 +14,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -576,7 +574,7 @@ public class ChatController implements ChatCallView {
     }
 
 
-    private void addMessageToScreen(String text, boolean isMe, String time) {
+    private void addMessageToScreen(String text, boolean isMe, String time, User me) {
         Label lblMessage = new Label(text);
         lblMessage.setWrapText(true);
         lblMessage.setMaxWidth(400);
