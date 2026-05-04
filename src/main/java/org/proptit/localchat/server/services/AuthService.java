@@ -15,8 +15,7 @@ public class AuthService {
     private MessageDao messageDao;
 
 
-    public AuthService(UserDao userDao, MessageDao messageDao)
-    {
+    public AuthService(UserDao userDao, MessageDao messageDao) {
         this.userDao = userDao;
         this.messageDao = messageDao;
 
@@ -30,15 +29,13 @@ public class AuthService {
             return;
         }
         User validatedUser = userDao.findByUsername(loginInfo.getUsername());
-        
 
-        if(validatedUser != null && PasswordUtils.checkPassword(loginInfo.getPassword(), validatedUser.getPassword()))
-        {
+
+        if (validatedUser != null && PasswordUtils.checkPassword(loginInfo.getPassword(), validatedUser.getPassword())) {
             handler.setUser(validatedUser);
             handler.sendData(new DataPacket(TypeDataPacket.LOGIN_SUCCESS, validatedUser));
             handler.getServer().broadcastOnlineUsers();
-        }
-        else {
+        } else {
             System.out.println("log: login failed");
             handler.sendData(new DataPacket(TypeDataPacket.LOGIN_FAILED, null));
         }

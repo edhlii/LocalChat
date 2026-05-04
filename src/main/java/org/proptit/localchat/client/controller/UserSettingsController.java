@@ -26,13 +26,20 @@ import java.nio.file.Files;
 
 
 public class UserSettingsController {
-    @FXML private Circle circleAvatar;
-    @FXML private Label lblUsername;
-    @FXML private Label lblNickname;
-    @FXML private Label lblError;
-    @FXML private TextField txtEditNickname;
-    @FXML private Button btnEditNickname;
-    @FXML private Label lblRole;
+    @FXML
+    private Circle circleAvatar;
+    @FXML
+    private Label lblUsername;
+    @FXML
+    private Label lblNickname;
+    @FXML
+    private Label lblError;
+    @FXML
+    private TextField txtEditNickname;
+    @FXML
+    private Button btnEditNickname;
+    @FXML
+    private Label lblRole;
     private ChangePasswordController changePasswordController;
 
     private User me;
@@ -61,6 +68,7 @@ public class UserSettingsController {
             circleAvatar.setFill(new ImagePattern(new Image(new ByteArrayInputStream(me.getAvatar()))));
         }
     }
+
     @FXML
     void onSaveClick(ActionEvent event) {
         me.setNickname(lblNickname.getText());
@@ -74,7 +82,7 @@ public class UserSettingsController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/proptit/localchat/change_password.fxml"));
             Parent root = loader.load();
 
-            changePasswordController  = loader.getController();
+            changePasswordController = loader.getController();
             changePasswordController.setup(client, me);
 
             Stage stage = new Stage();
@@ -111,6 +119,7 @@ public class UserSettingsController {
             }
         }
     }
+
     @FXML
     void onChangeNicknameClick(ActionEvent event) {
         if (btnEditNickname.getText().equals("Edit")) {
@@ -135,6 +144,7 @@ public class UserSettingsController {
             switchToViewMode();
         }
     }
+
     private void switchToViewMode() {
         txtEditNickname.setVisible(false);
         txtEditNickname.setManaged(false);
@@ -144,10 +154,12 @@ public class UserSettingsController {
 
         btnEditNickname.setText("Edit");
     }
+
     private void setAvatarToCircle(byte[] bytes) {
         Image img = new Image(new ByteArrayInputStream(bytes));
         circleAvatar.setFill(new ImagePattern(img));
     }
+
     public void closeWindow(User updatedUser) {
         Platform.runLater(() -> {
             Stage stage = (Stage) lblNickname.getScene().getWindow();

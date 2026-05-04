@@ -59,20 +59,18 @@ public class SocketClient implements Runnable {
             in = new ObjectInputStream(socket.getInputStream());
 
 
-
             Object response;
             while (isRunning && (response = in.readObject()) != null) {
                 handleServerPacket((DataPacket) response);
             }
-        }
-        catch (IOException | ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException e) {
             System.err.println("Can not connect to Server: " + e.getMessage());
         } finally {
             closeEverything();
         }
     }
 
-        private void handleServerPacket(DataPacket data) {
+    private void handleServerPacket(DataPacket data) {
         switch (data.getTypeDataPacket()) {
             case TypeDataPacket.LOGIN_SUCCESS:
                 this.user = (User) data.getData();
@@ -101,7 +99,7 @@ public class SocketClient implements Runnable {
                 }
                 break;
             case TypeDataPacket.ADD_ACCOUNT_SUCCESS:
-                User user = (User)data.getData();
+                User user = (User) data.getData();
                 Platform.runLater(() -> {
                     controller.addMemberToUI(user);
                 });
@@ -120,21 +118,20 @@ public class SocketClient implements Runnable {
                 List<Message> history = (List<Message>) data.getData();
                 controller.getChatAreaController().loadHistory(history);
                 break;
-            case TypeDataPacket.DOWNLOAD_IMAGE_RESPONSE:
-                {
-                    ImageMessage imageMessage = (ImageMessage)data.getData();
-                    ImageView targetIv = pendingImages.get(imageMessage.getFileName());
-                    if (targetIv != null && imageMessage.getImageData() != null) {
-                        Image img = new Image(new ByteArrayInputStream(imageMessage.getImageData()));
-                        Platform.runLater(() -> {
-                            targetIv.setImage(img);
-                            pendingImages.remove(imageMessage.getFileName());
-                        });
-                    }
+            case TypeDataPacket.DOWNLOAD_IMAGE_RESPONSE: {
+                ImageMessage imageMessage = (ImageMessage) data.getData();
+                ImageView targetIv = pendingImages.get(imageMessage.getFileName());
+                if (targetIv != null && imageMessage.getImageData() != null) {
+                    Image img = new Image(new ByteArrayInputStream(imageMessage.getImageData()));
+                    Platform.runLater(() -> {
+                        targetIv.setImage(img);
+                        pendingImages.remove(imageMessage.getFileName());
+                    });
                 }
-                break;
+            }
+            break;
             case TypeDataPacket.DOWNLOAD_FILE_RESPONSE:
-                FileMessage fileMessage = (FileMessage)data.getData();
+                FileMessage fileMessage = (FileMessage) data.getData();
                 controller.getChatAreaController().handleFileDownloadResponse(fileMessage.getFileName(), fileMessage.getFileData());
                 break;
             case TypeDataPacket.RETURN_CHAT_CONTACTS:
@@ -237,7 +234,6 @@ public class SocketClient implements Runnable {
     public void setController(MainWindowController controller) {
         this.controller = controller;
     }
-
 
 
     public void sendRequestDownload(String fileName, ImageView imageView) {

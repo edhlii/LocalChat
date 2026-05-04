@@ -34,6 +34,7 @@ public abstract class Message implements Serializable {
     }
 
     public abstract String getFileName();
+
     public abstract void setFileName(String fileName);
 
     public TypeMessage getTypeMessage() {

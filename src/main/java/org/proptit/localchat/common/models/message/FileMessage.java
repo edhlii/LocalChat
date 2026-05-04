@@ -54,10 +54,18 @@ public class FileMessage extends Message implements Serializable {
         return msg;
     }
 
-    public byte[] getFileData() { return fileData; }
+    public byte[] getFileData() {
+        return fileData;
+    }
+
     @Override
-    public String getFileName() { return fileName; }
-    public String getFileExtension() { return fileExtension; }
+    public String getFileName() {
+        return fileName;
+    }
+
+    public String getFileExtension() {
+        return fileExtension;
+    }
 
     public void setFileData(byte[] fileData) {
         this.fileData = fileData;
