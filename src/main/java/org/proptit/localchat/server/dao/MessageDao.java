@@ -55,11 +55,11 @@ public class MessageDao {
         }
         return -1;
     }
+
     public List<Message> getHistory(int user1Id, int user2Id) {
 
 
-        try (Connection c = DbConnection.openConnection())
-        {
+        try (Connection c = DbConnection.openConnection()) {
             List<Message> history = new ArrayList<>();
             String sql = "SELECT m.*, u.nickname AS sender_nickname, u.avatar AS sender_avatar FROM messages m " +
                     "JOIN users u ON m.sender_id = u.id " +
@@ -99,15 +99,12 @@ public class MessageDao {
                     msg.setContent(content);
                     msg.setTypeMessage(TypeMessage.IMAGE);
                     msg.setFileName(fileName);
-                }
-                else if(typeStr.equals("FILE"))
-                {
+                } else if (typeStr.equals("FILE")) {
                     msg = new FileMessage(sender);
                     msg.setContent(content);
                     msg.setTypeMessage(TypeMessage.FILE);
                     msg.setFileName(fileName);
-                }
-                else
+                } else
                     msg = TextMessage.createPrivate(sender, receiver, content);
                 msg.setId(rs.getInt("id"));
                 msg.setSentAt(formattedDate);
@@ -123,8 +120,7 @@ public class MessageDao {
     public List<Message> getBroadCastHistory() {
 
 
-        try (Connection c = DbConnection.openConnection())
-        {
+        try (Connection c = DbConnection.openConnection()) {
             List<Message> history = new ArrayList<>();
             String sql = "SELECT m.*, u.nickname AS sender_nickname, u.avatar AS sender_avatar FROM messages m " +
                     "JOIN users u ON m.sender_id = u.id " +
@@ -154,15 +150,12 @@ public class MessageDao {
                     msg.setContent(content);
                     msg.setTypeMessage(TypeMessage.IMAGE);
                     msg.setFileName(fileName);
-                }
-                else if(typeStr.equals("FILE"))
-                {
+                } else if (typeStr.equals("FILE")) {
                     msg = new FileMessage(sender);
                     msg.setContent(content);
                     msg.setTypeMessage(TypeMessage.FILE);
                     msg.setFileName(fileName);
-                }
-                else
+                } else
                     msg = TextMessage.createBroadcast(sender, content);
                 msg.setId(rs.getInt("id"));
                 msg.setSentAt(formattedDate);
@@ -266,8 +259,7 @@ public class MessageDao {
     public void updateReadStatus(int myId, int partnerId, int groupId) {
 
 
-        try (Connection c = DbConnection.openConnection())
-        {
+        try (Connection c = DbConnection.openConnection()) {
             String sql = "INSERT INTO conversation_status (user_id, partner_id, group_id, last_read_message_id) " +
                     "SELECT ?, ?, ?, IFNULL(MAX(id), 0) FROM messages " +
                     "WHERE (" +

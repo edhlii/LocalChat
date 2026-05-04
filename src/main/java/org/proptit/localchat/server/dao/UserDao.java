@@ -12,8 +12,7 @@ import java.util.List;
 
 public class UserDao {
     public List<User> getAllUsers() {
-        try (Connection c = DbConnection.openConnection())
-        {
+        try (Connection c = DbConnection.openConnection()) {
             List<User> users = new ArrayList<>();
             String sql = "SELECT * FROM users";
             PreparedStatement ps = c.prepareStatement(sql);
@@ -21,8 +20,7 @@ public class UserDao {
             while (rs.next())
                 users.add(mapRowToUser(rs));
             return users;
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
 
         }
@@ -32,15 +30,12 @@ public class UserDao {
 
     public boolean deleteUser(int userId) {
 
-        try (Connection c = DbConnection.openConnection())
-        {
+        try (Connection c = DbConnection.openConnection()) {
             String sql = "DELETE FROM users WHERE id = ?";
             PreparedStatement ps = c.prepareStatement(sql);
             ps.setInt(1, userId);
             return ps.executeUpdate() > 0;
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             System.out.println("Loi DB ko xoa duoc");
             e.printStackTrace();
         }
@@ -49,8 +44,7 @@ public class UserDao {
 
     public boolean addUser(User user) {
 
-        try (Connection c = DbConnection.openConnection())
-        {
+        try (Connection c = DbConnection.openConnection()) {
             String sql = "INSERT INTO users (username, password, nickname, role) VALUES (?, ?, ?, ?)";
             PreparedStatement ps = c.prepareStatement(sql);
             ps.setString(1, user.getUsername());
@@ -67,11 +61,11 @@ public class UserDao {
 
     public User findByUsername(String username) {
 
-        try (Connection c = DbConnection.openConnection()){
-             String sql = "SELECT * FROM users WHERE username = ?";
-             PreparedStatement ps = c.prepareStatement(sql);
-             ps.setString(1, username);
-             ResultSet rs = ps.executeQuery();
+        try (Connection c = DbConnection.openConnection()) {
+            String sql = "SELECT * FROM users WHERE username = ?";
+            PreparedStatement ps = c.prepareStatement(sql);
+            ps.setString(1, username);
+            ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
                 return new User(
@@ -116,6 +110,7 @@ public class UserDao {
         }
         return false;
     }
+
     public boolean updateProfileInfo(int userId, String nickname, byte[] avatar) {
         try (Connection c = DbConnection.openConnection()) {
             String sql = "UPDATE users SET nickname = ?, avatar = ? WHERE id = ?";

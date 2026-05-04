@@ -28,6 +28,7 @@ public class ImageMessage extends Message implements Serializable {
         msg.setTypeMessage(TypeMessage.IMAGE);
         return msg;
     }
+
     public static ImageMessage createGroup(User sender, ChatGroup group, byte[] imageData, String extension) {
         ImageMessage msg = new ImageMessage(sender, imageData, "image." + extension);
         msg.setGroupId(group.getId());
@@ -35,6 +36,7 @@ public class ImageMessage extends Message implements Serializable {
         msg.setTypeMessage(TypeMessage.IMAGE);
         return msg;
     }
+
     public static ImageMessage createPrivate(User sender, User receiver, byte[] imageData, String fileName) {
         ImageMessage msg = new ImageMessage(sender, imageData, fileName);
         msg.setReceiver(receiver);
@@ -52,8 +54,7 @@ public class ImageMessage extends Message implements Serializable {
         return fileName;
     }
 
-    public void setFileName(String fileName)
-    {
+    public void setFileName(String fileName) {
         this.fileName = fileName;
     }
 

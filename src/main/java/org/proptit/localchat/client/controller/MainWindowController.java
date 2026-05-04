@@ -71,6 +71,7 @@ public class MainWindowController {
     public void receiveMessage(Message msg) {
         chatAreaController.receiveMessage(msg);
     }
+
     public void updateChatContacts(List<User> contactList) {
         chatAreaController.setAllMembers(contactList);
     }

@@ -1,30 +1,40 @@
 package org.proptit.localchat.client.controller;
 
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyCode;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.embed.swing.SwingFXUtils;
+
 import javax.imageio.ImageIO;
 
 import org.proptit.localchat.common.models.ChatGroup;
 import org.proptit.localchat.client.networks.SocketClient;
 import org.proptit.localchat.common.enums.TypeDataPacket;
-import org.proptit.localchat.common.models.ChatGroup;
+import org.proptit.localchat.common.enums.TypeMessage;
 import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.User;
 import org.proptit.localchat.common.models.call.CallSignal;
@@ -39,34 +49,61 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.Files;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ChatController implements ChatCallView {
     private static ChatController instance;
-    public ChatController() { instance = this; }
-    public static ChatController getInstance() { return instance; }
+
+    public ChatController() {
+        instance = this;
+    }
+
+    public static ChatController getInstance() {
+        return instance;
+    }
+
     private SocketClient client;
     private User me;
-    private ChatMessageRenderer messageRenderer;
-    private ChatConversationManager conversationManager;
+    private final Map<String, User> conversationUserMap = new HashMap<>();
+    private List<User> allMembers = new ArrayList<>();
+    private final Set<Integer> onlineUserIds = new HashSet<>();
+    private User selectedConversationUser;
+    private final Map<String, Button> pendingFileButtons = new HashMap<>();
+    private List<ChatGroup> myGroupsList = new ArrayList<>();
+    private final Map<String, ChatGroup> conversationGroupMap = new HashMap<>();
+    private static final String ANNOUNCEMENT_LABEL = "Thông báo chung";
+    private final Set<Integer> usersWithNewMessages = new HashSet<>();
     private ChatCallManager callManager;
     private Stage callStage;
     private CallWindowController callWindowController;
     private boolean videoCallAvailable;
     private boolean videoCallActive;
 
-    @FXML private VBox vboxMessage;
-    @FXML private ScrollPane scrollPane;
-    @FXML private TextField messageInput;
-    @FXML private ListView<String> lvOnlinePeople;
-    @FXML private ListView<String> lvChatList;
-    @FXML private Button sendMessageAllButton;
-    @FXML public Label contactNameTopBar;
-    @FXML private Button btnTabAll;
-    @FXML private Button btnTabGroups;
-    @FXML private TextField txtSearchPeopleChat;
-    @FXML private Button btnManageGroup;
-    @FXML private Button btnGroupInfo;
+    @FXML
+    private VBox vboxMessage;
+    @FXML
+    private ScrollPane scrollPane;
+    @FXML
+    private TextField messageInput;
+    @FXML
+    private ListView<String> lvOnlinePeople;
+    @FXML
+    private ListView<String> lvChatList;
+    @FXML
+    private Button sendMessageAllButton;
+    @FXML
+    public Label contactNameTopBar;
+    @FXML
+    private Button btnTabAll;
+    @FXML
+    private Button btnTabGroups;
+    @FXML
+    private TextField txtSearchPeopleChat;
+    @FXML
+    private Button btnManageGroup;
+    @FXML
+    private Button btnGroupInfo;
 
     private boolean isGroupMode = false;
     private ChatGroup selectedConversationGroup;
@@ -74,12 +111,11 @@ public class ChatController implements ChatCallView {
     public void init(SocketClient client, User me) {
         this.client = client;
         this.me = me;
-        this.messageRenderer = new ChatMessageRenderer(vboxMessage, scrollPane, client);
-        this.conversationManager = new ChatConversationManager(client, me, lvOnlinePeople, lvChatList, txtSearchPeopleChat, messageInput, contactNameTopBar, sendMessageAllButton, btnTabAll, btnTabGroups, btnManageGroup, btnGroupInfo, messageRenderer);
         this.callManager = new ChatCallManager(client, me, this);
 
-        vboxMessage.heightProperty().addListener((observable, oldValue, newValue) -> scrollPane.setVvalue(1.0));
-        conversationManager.install();
+        vboxMessage.heightProperty().addListener((observable, oldValue, newValue) -> {
+            scrollPane.setVvalue(1.0);
+        });
 
         setupListViewCustomCells();
 
@@ -139,9 +175,7 @@ public class ChatController implements ChatCallView {
                         selectedConversationGroup = newGroup;
                         updateManageGroupButtonVisibility();
                     }
-                }
-                else
-                {
+                } else {
                     selectedConversationGroup = null;
                     updateManageGroupButtonVisibility();
                     User newUser = conversationUserMap.get(newValue);
@@ -152,7 +186,7 @@ public class ChatController implements ChatCallView {
                         btnGroupInfo.setVisible(false);
                         btnGroupInfo.setManaged(false);
 
-                        if(selectedConversationUser == null || newUser.getId() != selectedConversationUser.getId()) {
+                        if (selectedConversationUser == null || newUser.getId() != selectedConversationUser.getId()) {
                             usersWithNewMessages.remove(newUser.getId());
                             lvChatList.refresh();
 
@@ -168,11 +202,44 @@ public class ChatController implements ChatCallView {
             });
         }
 
+        boolean isManager = me.isManager();
+        if (sendMessageAllButton != null) {
+            sendMessageAllButton.setVisible(isManager);
+            sendMessageAllButton.setManaged(isManager);
+        }
+
+        if (lvOnlinePeople != null) {
+            lvOnlinePeople.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal != null && conversationUserMap.containsKey(newVal)) {
+
+                    lvChatList.getSelectionModel().select(newVal);
+
+
+                    selectedConversationUser = conversationUserMap.get(newVal);
+                    contactNameTopBar.setText(selectedConversationUser.getNickname());
+                    clearMessageArea();
+                }
+            });
+        }
+
+        if (txtSearchPeopleChat != null) {
+            txtSearchPeopleChat.textProperty().addListener((observable, oldValue, newValue) -> {
+                renderChatListByKeyword(newValue);
+            });
+        }
+
+        messageInput.setOnKeyPressed(event -> {
+            if (event.getCode() == javafx.scene.input.KeyCode.ENTER) {
+                onSendButtonClick(new ActionEvent());
+                event.consume();
+            }
+        });
+
+
         client.sendData(new DataPacket(TypeDataPacket.GET_CHAT_CONTACTS, null));
         client.sendData(new DataPacket(TypeDataPacket.GET_MY_GROUPS_REQUEST, me.getId()));
         client.sendData(new DataPacket(TypeDataPacket.GET_OFFLINE_NOTIFICATIONS, null));
     }
-
 
 
     private void renderChatListByKeyword(String keyword) {
@@ -271,7 +338,6 @@ public class ChatController implements ChatCallView {
 
                                 if (!img.isError()) {
                                     avatarCircle.setFill(new javafx.scene.paint.ImagePattern(img));
-                                    //avatarContainer.getChildren().clear();
                                     avatarContainer.getChildren().add(avatarCircle);
                                 } else {
                                     setDefaultAvatar(avatarContainer, avatarCircle, name, 22);
@@ -319,9 +385,7 @@ public class ChatController implements ChatCallView {
                         setGraphic(null);
                         setText(null);
                         setTooltip(null);
-                    }
-                    else if(item.equals(ANNOUNCEMENT_LABEL))
-                    {
+                    } else if (item.equals(ANNOUNCEMENT_LABEL)) {
                         HBox root = new HBox(12);
                         root.setAlignment(Pos.CENTER_LEFT);
                         root.setPadding(new Insets(8, 12, 8, 12));
@@ -350,8 +414,7 @@ public class ChatController implements ChatCallView {
                         root.getChildren().addAll(icon, textInfo);
                         setGraphic(root);
                         setText(null);
-                    }
-                    else {
+                    } else {
                         HBox root = new HBox(12);
                         root.setAlignment(Pos.CENTER_LEFT);
                         root.setPadding(new Insets(8, 12, 8, 12));
@@ -384,9 +447,7 @@ public class ChatController implements ChatCallView {
                             }
 
                             textInfo.getChildren().add(0, nameLbl);
-                        }
-                        else
-                        {
+                        } else {
                             String name = item.contains("(@") ? item.substring(0, item.indexOf("(@")).trim() : item;
                             User u = conversationUserMap.get(item);
                             if (u != null && u.getAvatar() != null && u.getAvatar().length != 0) {
@@ -406,8 +467,6 @@ public class ChatController implements ChatCallView {
                             } else {
                                 setDefaultAvatar(avatarStack, avatarCircle, name, 14);
                             }
-
-
 
 
                             if (u != null && onlineUserIds.contains(u.getId())) {
@@ -459,49 +518,36 @@ public class ChatController implements ChatCallView {
 
     @FXML
     void onSendButtonClick(ActionEvent event) {
-        if (conversationManager == null || messageRenderer == null) {
-            return;
-        }
-
         String messageText = messageInput.getText().trim();
-        if (messageText.isEmpty()) {
-            return;
-        }
+        if (!messageText.isEmpty()) {
+            Message msg = null;
+            String selectedItem = lvChatList.getSelectionModel().getSelectedItem();
+            if (selectedItem == null) return;
+            if (selectedItem.equals(ANNOUNCEMENT_LABEL)) {
+                msg = TextMessage.createBroadcast(me, messageText);
+                addMessageToScreen(messageText, true, msg.getSentAt(), me);
 
-        String selectedItem = lvChatList.getSelectionModel().getSelectedItem();
-        if (selectedItem == null) {
-            return;
-        }
+            } else if (isGroupMode) {
+                if (selectedConversationGroup == null) return;
+                msg = TextMessage.createGroup(me, selectedConversationGroup, messageText);
+                addMessageToScreen(messageText, true, msg.getSentAt(), me);
 
-        Message msg = null;
-        if (selectedItem.equals(ChatConversationManager.ANNOUNCEMENT_LABEL)) {
-            msg = TextMessage.createBroadcast(me, messageText);
-            messageRenderer.addMessageToScreen(messageText, true, msg.getSentAt());
-        } else if (conversationManager.isGroupMode()) {
-            ChatGroup selectedGroup = conversationManager.getSelectedConversationGroup();
-            if (selectedGroup == null) {
-                return;
-            }
-            msg = TextMessage.createGroup(me, selectedGroup, messageText);
-            messageRenderer.addMessageToScreen(messageText, true, msg.getSentAt());
-        } else {
-            User selectedUser = conversationManager.getSelectedConversationUser();
-            if (selectedUser == null) {
-                return;
-            }
-            msg = TextMessage.createPrivate(me, selectedUser, messageText);
-            messageRenderer.addMessageToScreen(messageText, true, msg.getSentAt());
-        }
-
-        if (msg != null) {
-            DataPacket packet = new DataPacket(TypeDataPacket.CHAT_MESSAGE, msg);
-            if (client != null) {
-                System.out.println("CLIENT GUI: Đã đóng gói và bắt đầu gửi đi...");
-                client.sendData(packet);
             } else {
-                System.out.println("Không có kết nối mạng");
+                if (selectedConversationUser == null) return;
+                msg = TextMessage.createPrivate(me, selectedConversationUser, messageText);
+                addMessageToScreen(messageText, true, msg.getSentAt(), me);
             }
-            messageInput.clear();
+
+            if (msg != null) {
+                DataPacket packet = new DataPacket(TypeDataPacket.CHAT_MESSAGE, msg);
+                if (client != null) {
+                    System.out.println("CLIENT GUI: Đã đóng gói và bắt đầu gửi đi...");
+                    client.sendData(packet);
+                } else {
+                    System.out.println("Không có kết nối mạng");
+                }
+                messageInput.clear();
+            }
         }
     }
 
@@ -515,25 +561,22 @@ public class ChatController implements ChatCallView {
 
                 if (msg.getTypeMessage() == TypeMessage.TEXT)
                     addMessageToScreen(msg.getContent(), isMe, msg.getSentAt(), msg.getSender());
-                else if(msg.getTypeMessage() == TypeMessage.IMAGE)
-                {
+                else if (msg.getTypeMessage() == TypeMessage.IMAGE) {
                     ImageView imageView = new ImageView();
                     imageView.setFitWidth(250);
                     imageView.setPreserveRatio(true);
 
-                    addImageToScreen(imageView, isMe, msg.getSentAt(),  msg.getSender());
+                    addImageToScreen(imageView, isMe, msg.getSentAt(), msg.getSender());
                     client.sendRequestDownload(msg.getContent(), imageView);
-                }
-                else
-                {
-                    addFileToScreen(msg.getContent(), msg.getFileName(), null, isMe, msg.getSentAt(),  msg.getSender());
+                } else {
+                    addFileToScreen(msg.getContent(), msg.getFileName(), null, isMe, msg.getSentAt(), msg.getSender());
                 }
             }
         });
     }
 
 
-    private void addMessageToScreen(String text, boolean isMe, String time, User sender) {
+    private void addMessageToScreen(String text, boolean isMe, String time) {
         Label lblMessage = new Label(text);
         lblMessage.setWrapText(true);
         lblMessage.setMaxWidth(400);
@@ -541,7 +584,7 @@ public class ChatController implements ChatCallView {
 
         lblMessage.setFont(Font.font("System", 16));
 
-        Label lblTime = new Label(isMe ? time : (sender.getNickname() + " | " + time));
+        Label lblTime = new Label(time);
         lblTime.getStyleClass().add("chat-time");
 
         if (isMe) {
@@ -549,53 +592,27 @@ public class ChatController implements ChatCallView {
         } else {
             lblMessage.setStyle("-fx-background-color: #1E2435; -fx-text-fill: white; -fx-background-radius: 15px; -fx-padding: 8px 12px;");
         }
-        ContextMenu contextMenu = new ContextMenu();
-        MenuItem copyItem = new MenuItem("Copy tin nhắn");
-        copyItem.setOnAction(e -> {
-            Clipboard clipboard = Clipboard.getSystemClipboard();
-            ClipboardContent content = new ClipboardContent();
-            content.putString(lblMessage.getText());
-            clipboard.setContent(content);
-        });
-
-        contextMenu.getItems().add(copyItem);
-        lblMessage.setContextMenu(contextMenu);
-
-
-
-        lblMessage.setMaxWidth(Region.USE_PREF_SIZE);
-        lblMessage.setPrefWidth(Region.USE_COMPUTED_SIZE);
-
 
         VBox messageGroup = new VBox(3);
-        HBox hboxContainer = new HBox(10);
-        hboxContainer.setPadding(new Insets(5, 10, 5, 10));
+        messageGroup.setFillWidth(false);
 
         if (!isMe) {
-            StackPane avatarPane = new StackPane();
-            Circle avatarCircle = new Circle(16, Color.web("#2A3042"));
-            avatarCircle.setStroke(Color.WHITE);
-            avatarCircle.setStrokeWidth(1);
-
-
-            if (sender != null && sender.getAvatar() != null && sender.getAvatar().length > 0) {
-                Image img = new Image(new ByteArrayInputStream(sender.getAvatar()));
-                avatarCircle.setFill(new javafx.scene.paint.ImagePattern(img));
-                avatarPane.getChildren().add(avatarCircle);
-            } else {
-                setDefaultAvatar(avatarPane, avatarCircle, sender.getNickname(), 12);
-            }
-
-            messageGroup.getChildren().addAll(lblTime, lblMessage);
+            messageGroup.getChildren().add(lblTime);
             messageGroup.setAlignment(Pos.TOP_LEFT);
-            hboxContainer.getChildren().addAll(avatarPane, messageGroup);
-            hboxContainer.setAlignment(Pos.CENTER_LEFT);
-
         } else {
-            messageGroup.getChildren().addAll(lblTime, lblMessage);
+            messageGroup.getChildren().add(lblTime);
             messageGroup.setAlignment(Pos.TOP_RIGHT);
-            hboxContainer.getChildren().add(messageGroup);
+        }
+
+        messageGroup.getChildren().add(lblMessage);
+        HBox hboxContainer = new HBox(messageGroup);
+        hboxContainer.setPadding(new Insets(5, 10, 5, 10));
+        messageGroup.setFillWidth(false);
+
+        if (isMe) {
             hboxContainer.setAlignment(Pos.CENTER_RIGHT);
+        } else {
+            hboxContainer.setAlignment(Pos.CENTER_LEFT);
         }
         vboxMessage.getChildren().add(hboxContainer);
     }
@@ -617,10 +634,7 @@ public class ChatController implements ChatCallView {
             if (imageView.getImage() == null) return;
             FileChooser fileChooser = new FileChooser();
             fileChooser.setTitle("Lưu ảnh tải về");
-            fileChooser.getExtensionFilters().addAll(
-                    new FileChooser.ExtensionFilter("PNG Files", "*.png"),
-                    new FileChooser.ExtensionFilter("JPG Files", "*.jpg")
-            );
+            fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("PNG Files", "*.png"), new FileChooser.ExtensionFilter("JPG Files", "*.jpg"));
             fileChooser.setInitialFileName("downloaded_image.png");
 
             Stage stage = (Stage) imageView.getScene().getWindow();
@@ -705,11 +719,9 @@ public class ChatController implements ChatCallView {
             if (selectedItem != null) {
                 if (isBroadcastMsg && selectedItem.equals(ANNOUNCEMENT_LABEL)) {
                     isCurrent = true;
-                } else if (isPrivateMsg && !isGroupMode && selectedConversationUser != null
-                        && msg.getSender().getId().equals(selectedConversationUser.getId())) {
+                } else if (isPrivateMsg && !isGroupMode && selectedConversationUser != null && msg.getSender().getId().equals(selectedConversationUser.getId())) {
                     isCurrent = true;
-                } else if (isGroupMsg && isGroupMode && selectedConversationGroup != null
-                        && msg.getGroupId().equals(selectedConversationGroup.getId())) {
+                } else if (isGroupMsg && isGroupMode && selectedConversationGroup != null && msg.getGroupId().equals(selectedConversationGroup.getId())) {
                     isCurrent = true;
                 }
             }
@@ -780,70 +792,59 @@ public class ChatController implements ChatCallView {
 
     @FXML
     void onFileButtonClick(ActionEvent event) {
-        File file = FileUtils.chooseFile((Stage) ((javafx.scene.Node) event.getSource()).getScene().getWindow());
-        if (file == null) {
-            return;
-        }
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
 
-        try {
-            byte[] fileBytes = Files.readAllBytes(file.toPath());
-            String fileName = file.getName();
+        File file = FileUtils.chooseFile(stage);
 
-            String extension = "";
-            int i = fileName.lastIndexOf('.');
-            if (i > 0) {
-                extension = fileName.substring(i + 1).toLowerCase();
-            }
+        if (file != null) {
+            try {
+                byte[] fileBytes = Files.readAllBytes(file.toPath());
+                String fileName = file.getName();
 
-            boolean isImage = extension.matches("(png|jpg|jpeg|gif)");
-            String selectedItem = lvChatList.getSelectionModel().getSelectedItem();
-            if (selectedItem == null) {
-                return;
-            }
-
-            Message msg = null;
-            if (isImage) {
-                if (selectedItem.equals(ChatConversationManager.ANNOUNCEMENT_LABEL)) {
-                    msg = ImageMessage.createBroadcast(me, fileBytes, extension);
-                } else if (conversationManager.isGroupMode()) {
-                    ChatGroup selectedGroup = conversationManager.getSelectedConversationGroup();
-                    if (selectedGroup == null) {
-                        return;
-                    }
-                    msg = ImageMessage.createGroup(me, selectedGroup, fileBytes, extension);
-                } else {
-                    User selectedUser = conversationManager.getSelectedConversationUser();
-                    if (selectedUser == null) {
-                        return;
-                    }
-                    msg = ImageMessage.createPrivate(me, selectedUser, fileBytes, extension);
+                String extension = "";
+                int i = fileName.lastIndexOf('.');
+                if (i > 0) {
+                    extension = fileName.substring(i + 1).toLowerCase();
                 }
-                messageRenderer.addImageToScreen(new ImageView(new Image(new ByteArrayInputStream(fileBytes))), true, msg.getSentAt(), me);
-            } else {
-                if (selectedItem.equals(ChatConversationManager.ANNOUNCEMENT_LABEL)) {
-                    msg = FileMessage.createBroadcast(me, fileBytes, fileName, extension);
-                } else if (conversationManager.isGroupMode()) {
-                    ChatGroup selectedGroup = conversationManager.getSelectedConversationGroup();
-                    if (selectedGroup == null) {
-                        return;
-                    }
-                    msg = FileMessage.createGroup(me, selectedGroup, fileBytes, fileName, extension);
-                } else {
-                    User selectedUser = conversationManager.getSelectedConversationUser();
-                    if (selectedUser == null) {
-                        return;
-                    }
-                    msg = FileMessage.createPrivate(me, selectedUser, fileBytes, fileName, extension);
-                }
-                messageRenderer.addFileToScreen(null, fileName, fileBytes, true, msg.getSentAt(), me);
-            }
 
-            if (msg != null) {
-                client.sendData(new DataPacket(TypeDataPacket.CHAT_MESSAGE, msg));
+                boolean isImage = extension.matches("(png|jpg|jpeg|gif)");
+
+                String selectedItem = lvChatList.getSelectionModel().getSelectedItem();
+                if (selectedItem == null) return;
+
+                Message msg = null;
+
+                if (isImage) {
+                    if (selectedItem.equals(ANNOUNCEMENT_LABEL)) {
+                        msg = ImageMessage.createBroadcast(me, fileBytes, extension);
+                    } else if (isGroupMode) {
+                        if (selectedConversationGroup == null) return;
+                        msg = ImageMessage.createGroup(me, selectedConversationGroup, fileBytes, extension);
+                    } else {
+                        if (selectedConversationUser == null) return;
+                        msg = ImageMessage.createPrivate(me, selectedConversationUser, fileBytes, extension);
+                    }
+                    addImageToScreen(new ImageView(new Image(new ByteArrayInputStream(fileBytes))), true, msg.getSentAt(), me);
+                } else {
+                    if (selectedItem.equals(ANNOUNCEMENT_LABEL)) {
+                        msg = FileMessage.createBroadcast(me, fileBytes, fileName, extension);
+                    } else if (isGroupMode) {
+                        if (selectedConversationGroup == null) return;
+                        msg = FileMessage.createGroup(me, selectedConversationGroup, fileBytes, fileName, extension);
+                    } else {
+                        if (selectedConversationUser == null) return;
+                        msg = FileMessage.createPrivate(me, selectedConversationUser, fileBytes, fileName, extension);
+                    }
+                    addFileToScreen(null, fileName, fileBytes, true, msg.getSentAt(), me);
+                }
+                if (msg != null) {
+                    client.sendData(new DataPacket(TypeDataPacket.CHAT_MESSAGE, msg));
+
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.out.println("Lỗi khi đọc file!");
             }
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            System.out.println("Lỗi khi đọc file!");
         }
     }
 
@@ -851,9 +852,6 @@ public class ChatController implements ChatCallView {
 
         Label lblTime = new Label(isMe ? time : (sender.getNickname() + " | " + time));
         lblTime.setStyle("-fx-font-size: 10px; -fx-text-fill: #919191;");
-
-
-
 
 
         HBox fileBox = new HBox(10);
@@ -869,13 +867,10 @@ public class ChatController implements ChatCallView {
         btnDownload.setStyle("-fx-background-color: #AD7BFF; -fx-text-fill: black; -fx-background-radius: 5px; -fx-cursor: hand;");
 
         btnDownload.setOnAction(e -> {
-            if(fileData != null)
-            {
+            if (fileData != null) {
                 System.out.println("hello");
                 downloadFile(fileName, fileData);
-            }
-            else
-            {
+            } else {
                 btnDownload.setText("Đang lấy...");
                 btnDownload.setDisable(true);
                 pendingFileButtons.put(serverUUID, btnDownload);
@@ -945,18 +940,17 @@ public class ChatController implements ChatCallView {
         }
     }
 
+
     public void updateOnlinePeople(List<User> users) {
         Platform.runLater(() -> {
             if (lvOnlinePeople == null || lvChatList == null) return;
 
 
-            List<String> onlineNames = users.stream()
-                    .map(user -> {
-                        String label = user.getNickname() + " (@" + user.getUsername() + ")";
-                        conversationUserMap.put(label, user);
-                        return label;
-                    })
-                    .collect(Collectors.toList());
+            List<String> onlineNames = users.stream().map(user -> {
+                String label = user.getNickname() + " (@" + user.getUsername() + ")";
+                conversationUserMap.put(label, user);
+                return label;
+            }).collect(Collectors.toList());
             lvOnlinePeople.getItems().setAll(onlineNames);
 
             this.onlineUserIds.clear();
@@ -970,27 +964,25 @@ public class ChatController implements ChatCallView {
 
     public void handleFileDownloadResponse(String fileName, byte[] fileData) {
         Platform.runLater(() -> {
-            if (messageRenderer != null) {
-                messageRenderer.handleFileDownloadResponse(fileName, fileData);
+            Button btn = pendingFileButtons.get(fileName);
+            if (btn != null) {
+                btn.setText("Tải về");
+                btn.setDisable(false);
+                pendingFileButtons.remove(fileName);
+                downloadFile(fileName, fileData);
             }
         });
     }
 
     public void onCallButtonClick(ActionEvent actionEvent) {
         if (callManager != null) {
-            callManager.startOutgoingCall(conversationManager != null ? conversationManager.getSelectedConversationUser() : null);
+            callManager.startOutgoingCall(selectedConversationUser);
         }
     }
 
     public void onVideoCallButtonClick(ActionEvent actionEvent) {
         if (callManager != null) {
-            callManager.startOutgoingVideoCall(conversationManager != null ? conversationManager.getSelectedConversationUser() : null);
-        }
-    }
-
-    public void receiveMessage(Message msg) {
-        if (conversationManager != null) {
-            conversationManager.handleReceivedMessage(msg);
+            callManager.startOutgoingVideoCall(selectedConversationUser);
         }
     }
 
@@ -1056,8 +1048,8 @@ public class ChatController implements ChatCallView {
                 closeCallWindow();
             });
             callStage.show();
-        } catch (IOException ex) {
-            ex.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
             showError("Unable to open call window.");
         }
     }
@@ -1161,22 +1153,25 @@ public class ChatController implements ChatCallView {
 
     @Override
     public boolean confirmIncomingCall(User caller) {
-        Alert confirm = new Alert(
-                Alert.AlertType.CONFIRMATION,
-                caller.getNickname() + " is calling you.",
-                ButtonType.YES,
-                ButtonType.NO
-        );
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, caller.getNickname() + " is calling you.", ButtonType.YES, ButtonType.NO);
         confirm.setTitle("Incoming Call");
         confirm.setHeaderText("Accept voice call?");
         return confirm.showAndWait().orElse(ButtonType.NO) == ButtonType.YES;
     }
 
+
     @Override
     public User resolveUser(String username, String nickname) {
-        if (conversationManager != null) {
-            return conversationManager.resolveUser(username, nickname);
+
+        String searchKey = nickname + " (@" + username + ")";
+
+
+        User onlineUser = conversationUserMap.get(searchKey);
+
+        if (onlineUser != null) {
+            return onlineUser;
         }
+
 
         User user = new User(username);
         user.setNickname((nickname != null && !nickname.isBlank()) ? nickname : username);
@@ -1185,10 +1180,6 @@ public class ChatController implements ChatCallView {
 
     @Override
     public String resolveLocalAddress() {
-        if (conversationManager != null) {
-            return conversationManager.resolveLocalAddress();
-        }
-
         try {
             return InetAddress.getLocalHost().getHostAddress();
         } catch (Exception ex) {
@@ -1212,8 +1203,13 @@ public class ChatController implements ChatCallView {
 
     @FXML
     void onTabAllClick(ActionEvent event) {
-        if (conversationManager != null) {
-            conversationManager.onTabAllClick();
+        isGroupMode = false;
+        selectedConversationGroup = null;
+        updateManageGroupButtonVisibility();
+
+        if (txtSearchPeopleChat != null) {
+            txtSearchPeopleChat.setVisible(true);
+            txtSearchPeopleChat.setManaged(true);
         }
 
         isGroupMode = false;
@@ -1233,13 +1229,6 @@ public class ChatController implements ChatCallView {
         lvChatList.getItems().add(ANNOUNCEMENT_LABEL);
 
         Collection<User> usersToDisplay = allMembers;
-//        if (usersToDisplay == null || usersToDisplay.isEmpty()) {
-//            usersToDisplay = conversationUserMap.values();
-//        }
-
-//        List<User> availableConversations = usersToDisplay.stream()
-//                .filter(user -> me == null || !user.getUsername().equalsIgnoreCase(me.getUsername()))
-//                .collect(Collectors.toList());
         List<User> availableConversations = new ArrayList<>();
         for (User user : usersToDisplay) {
             if (me == null || !user.getUsername().equalsIgnoreCase(me.getUsername())) {
@@ -1263,8 +1252,13 @@ public class ChatController implements ChatCallView {
 
     @FXML
     void onTabGroupsClick(ActionEvent event) {
-        if (conversationManager != null) {
-            conversationManager.onTabGroupsClick();
+        isGroupMode = true;
+        selectedConversationGroup = null;
+        updateManageGroupButtonVisibility();
+
+        if (txtSearchPeopleChat != null) {
+            txtSearchPeopleChat.setVisible(false);
+            txtSearchPeopleChat.setManaged(false);
         }
 
         isGroupMode = true;
@@ -1274,7 +1268,6 @@ public class ChatController implements ChatCallView {
 
         btnTabAll.getStyleClass().removeAll("toggle-btn", "toggle-btn-active");
         btnTabAll.getStyleClass().add("toggle-btn");
-
 
 
         lvChatList.getItems().clear();
@@ -1291,12 +1284,11 @@ public class ChatController implements ChatCallView {
 
 
         if (myGroupsList.isEmpty()) {
-            //lvChatList.getItems().add("Chưa có nhóm nào");
             return;
         }
 
         for (ChatGroup group : myGroupsList) {
-            String label = group.getId() + "@"+ group.getName();
+            String label = group.getId() + "@" + group.getName();
             conversationGroupMap.put(label, group);
             lvChatList.getItems().add(label);
         }
@@ -1306,8 +1298,18 @@ public class ChatController implements ChatCallView {
 
     @FXML
     void onCreateGroupClick(ActionEvent event) {
-        if (conversationManager != null) {
-            conversationManager.onCreateGroupClick();
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/proptit/localchat/create_group.fxml"));
+            Stage stage = new Stage();
+            stage.setTitle("Tạo Nhóm Mới");
+            stage.setScene(new Scene(loader.load()));
+
+            CreateGroupController controller = loader.getController();
+            controller.setup(this.client, this.me, this.allMembers);
+
+            stage.show();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -1316,16 +1318,11 @@ public class ChatController implements ChatCallView {
             myGroupsList.add(newGroup);
 
             if (isGroupMode) {
-                lvChatList.getItems().add(newGroup.getId() + "@"+ newGroup.getName());
-                conversationGroupMap.put(newGroup.getId() + "@"+ newGroup.getName(), newGroup);
+                lvChatList.getItems().add(newGroup.getId() + "@" + newGroup.getName());
+                conversationGroupMap.put(newGroup.getId() + "@" + newGroup.getName(), newGroup);
             }
 
-            javafx.stage.Window.getWindows().stream()
-                    .filter(w -> w instanceof Stage)
-                    .map(w -> (Stage) w)
-                    .filter(stage -> "Tạo Nhóm Mới".equals(stage.getTitle()))
-                    .findFirst()
-                    .ifPresent(Stage::close);
+            javafx.stage.Window.getWindows().stream().filter(w -> w instanceof Stage).map(w -> (Stage) w).filter(stage -> "Tạo Nhóm Mới".equals(stage.getTitle())).findFirst().ifPresent(Stage::close);
 
             Alert alert = new Alert(Alert.AlertType.INFORMATION, "Đã tạo nhóm: " + newGroup.getName());
             alert.setHeaderText(null);
@@ -1352,27 +1349,57 @@ public class ChatController implements ChatCallView {
             if (isGroupMode) {
                 onTabGroupsClick(null);
                 if (selectedConversationGroup != null) {
-                    lvChatList.getSelectionModel().select(selectedConversationGroup.getId() + "@"+ selectedConversationGroup.getName());
+                    lvChatList.getSelectionModel().select(selectedConversationGroup.getId() + "@" + selectedConversationGroup.getName());
                 }
             }
         });
     }
+
     public void setOfflineMessages(List<Integer> unreadIds) {
-        if (conversationManager != null) {
-            conversationManager.setOfflineMessages(unreadIds);
-        }
+        Platform.runLater(() -> {
+            if (unreadIds != null && !unreadIds.isEmpty()) {
+                usersWithNewMessages.addAll(unreadIds);
+                lvChatList.refresh();
+            }
+        });
     }
 
     @FXML
     void onManageGroupClick(ActionEvent event) {
-        if (conversationManager != null) {
-            conversationManager.onManageGroupClick();
+
+        ContextMenu menu = new ContextMenu();
+        MenuItem addMember = new MenuItem("Thêm thành viên");
+        MenuItem removeMember = new MenuItem("Xóa thành viên");
+
+        addMember.setOnAction(e -> openGroupManagerWindow("ADD"));
+        removeMember.setOnAction(e -> openGroupManagerWindow("REMOVE"));
+
+        menu.getItems().addAll(addMember, removeMember);
+        menu.show(btnManageGroup, javafx.geometry.Side.BOTTOM, 0, 0);
+    }
+
+    private void openGroupManagerWindow(String mode) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/proptit/localchat/manage_group.fxml"));
+            Parent root = loader.load();
+
+            GroupManagerController controller = loader.getController();
+            controller.init(client, me, selectedConversationGroup, allMembers, mode);
+
+            Stage stage = new Stage();
+            stage.setTitle(mode.equals("ADD") ? "Thêm thành viên" : "Xóa thành viên");
+            stage.setScene(new Scene(root));
+            stage.initOwner(btnManageGroup.getScene().getWindow());
+            stage.initModality(Modality.WINDOW_MODAL);
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
+
     private void updateManageGroupButtonVisibility() {
         if (isGroupMode && selectedConversationGroup != null && me != null) {
-            boolean isCreator = selectedConversationGroup.getCreatedBy() != null &&
-                    selectedConversationGroup.getCreatedBy().getId().equals(me.getId());
+            boolean isCreator = selectedConversationGroup.getCreatedBy() != null && selectedConversationGroup.getCreatedBy().getId().equals(me.getId());
             btnManageGroup.setVisible(isCreator);
             btnManageGroup.setManaged(isCreator);
         } else {
@@ -1380,6 +1407,7 @@ public class ChatController implements ChatCallView {
             btnManageGroup.setManaged(false);
         }
     }
+
     public void updateGroupSilent(ChatGroup group) {
         if (group == null) return;
 
@@ -1410,7 +1438,7 @@ public class ChatController implements ChatCallView {
             }
 
 
-            String label = group.getId() + "@"+ group.getName();
+            String label = group.getId() + "@" + group.getName();
 
             boolean existsInList = false;
             for (int i = 0; i < myGroupsList.size(); i++) {
@@ -1444,14 +1472,97 @@ public class ChatController implements ChatCallView {
 
     @FXML
     void onGroupInfoClick(ActionEvent event) {
-        if (conversationManager != null) {
-            conversationManager.onGroupInfoClick();
-        }
+        if (selectedConversationGroup == null) return;
+        ContextMenu contextMenu = new ContextMenu();
+        MenuItem viewMembersItem = new MenuItem("Thành viên trong đoạn chat");
+        viewMembersItem.setOnAction(e -> showGroupMembers());
+        MenuItem leaveGroupItem = new MenuItem("Rời nhóm");
+        leaveGroupItem.setOnAction(e -> handleLeaveGroup());
+
+        contextMenu.getItems().addAll(viewMembersItem, leaveGroupItem);
+        contextMenu.show(btnGroupInfo, javafx.geometry.Side.BOTTOM, 0, 5);
     }
 
-    public void updateGroupSilent(ChatGroup group) {
-        if (conversationManager != null) {
-            conversationManager.updateGroupSilent(group);
+    private void showGroupMembers() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Thông tin nhóm");
+        alert.setHeaderText(null);
+        alert.setGraphic(null);
+
+        VBox root = new VBox(15);
+        root.setAlignment(Pos.TOP_CENTER);
+        root.setPadding(new Insets(10, 25, 10, 25));
+
+        root.setPrefWidth(350);
+        root.setPrefHeight(450);
+
+        Label titleLabel = new Label("DANH SÁCH THÀNH VIÊN");
+        titleLabel.getStyleClass().add("header-label");
+
+        VBox groupInfoBox = new VBox(2);
+        groupInfoBox.setAlignment(Pos.CENTER);
+        Label labelNhom = new Label("NHÓM");
+        labelNhom.setStyle("-fx-text-fill: #7a829a; -fx-font-size: 11px; -fx-font-weight: bold;");
+        Label groupName = new Label(selectedConversationGroup.getName().toUpperCase());
+        groupName.setStyle("-fx-text-fill: #b388ff; -fx-font-size: 18px; -fx-font-weight: bold;");
+        groupInfoBox.getChildren().addAll(labelNhom, groupName);
+
+        Label listTitle = new Label("DANH SÁCH THÀNH VIÊN");
+        listTitle.setStyle("-fx-text-fill: #7a829a; -fx-font-size: 11px; -fx-font-weight: bold;");
+        HBox listTitleWrapper = new HBox(listTitle);
+        listTitleWrapper.setAlignment(Pos.CENTER_LEFT);
+
+        ListView<User> lv = new ListView<>();
+        lv.getStyleClass().add("list-view");
+
+        VBox.setVgrow(lv, javafx.scene.layout.Priority.ALWAYS);
+
+        lv.setItems(FXCollections.observableArrayList(selectedConversationGroup.getMembers()));
+        lv.setCellFactory(param -> new ListCell<User>() {
+            @Override
+            protected void updateItem(User user, boolean empty) {
+                super.updateItem(user, empty);
+                if (empty || user == null) {
+                    setGraphic(null);
+                    setText(null);
+                } else {
+                    String role = (user.getId().equals(selectedConversationGroup.getCreatedBy().getId())) ? " (Trưởng nhóm)" : "";
+                    Label name = new Label(user.getNickname() + role + " (@" + user.getUsername() + ")");
+                    name.setStyle("-fx-text-fill: white; -fx-font-size: 14px;");
+
+                    HBox cell = new HBox(10, name);
+                    cell.setAlignment(Pos.CENTER_LEFT);
+                    cell.setPadding(new Insets(5, 0, 5, 5));
+                    setGraphic(cell);
+                }
+            }
+        });
+
+        root.getChildren().addAll(titleLabel, groupInfoBox, listTitleWrapper, lv);
+        alert.getDialogPane().setContent(root);
+
+        java.net.URL cssUrl = getClass().getResource("/org/proptit/localchat/create_group.css");
+        if (cssUrl != null) {
+            alert.getDialogPane().getStylesheets().add(cssUrl.toExternalForm());
+            alert.getDialogPane().getStyleClass().add("dialog-pane");
         }
+
+        alert.show();
+    }
+
+    private void handleLeaveGroup() {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Bạn có chắc chắn muốn rời khỏi nhóm này không?", ButtonType.YES, ButtonType.NO);
+        confirm.setHeaderText(null);
+        java.net.URL cssUrl = getClass().getResource("/org/proptit/localchat/create_group.css");
+        if (cssUrl != null) confirm.getDialogPane().getStylesheets().add(cssUrl.toExternalForm());
+
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.YES) {
+                client.sendData(new DataPacket(TypeDataPacket.LEAVE_GROUP_REQUEST, selectedConversationGroup.getId()));
+                btnTabAll.fire();
+                contactNameTopBar.setText("");
+                vboxMessage.getChildren().clear();
+            }
+        });
     }
 }
