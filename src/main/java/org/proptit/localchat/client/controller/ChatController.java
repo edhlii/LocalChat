@@ -14,6 +14,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -574,7 +576,7 @@ public class ChatController implements ChatCallView {
     }
 
 
-    private void addMessageToScreen(String text, boolean isMe, String time, User me) {
+    private void addMessageToScreen(String text, boolean isMe, String time, User sender) {
         Label lblMessage = new Label(text);
         lblMessage.setWrapText(true);
         lblMessage.setMaxWidth(400);
@@ -582,7 +584,7 @@ public class ChatController implements ChatCallView {
 
         lblMessage.setFont(Font.font("System", 16));
 
-        Label lblTime = new Label(time);
+        Label lblTime = new Label(isMe ? time : (sender.getNickname() + " | " + time));
         lblTime.getStyleClass().add("chat-time");
 
         if (isMe) {
@@ -590,27 +592,51 @@ public class ChatController implements ChatCallView {
         } else {
             lblMessage.setStyle("-fx-background-color: #1E2435; -fx-text-fill: white; -fx-background-radius: 15px; -fx-padding: 8px 12px;");
         }
+        ContextMenu contextMenu = new ContextMenu();
+        MenuItem copyItem = new MenuItem("Copy tin nhắn");
+        copyItem.setOnAction(e -> {
+            Clipboard clipboard = Clipboard.getSystemClipboard();
+            ClipboardContent content = new ClipboardContent();
+            content.putString(lblMessage.getText());
+            clipboard.setContent(content);
+        });
+
+        contextMenu.getItems().add(copyItem);
+        lblMessage.setContextMenu(contextMenu);
+
+
 
         VBox messageGroup = new VBox(3);
-        messageGroup.setFillWidth(false);
-
-        if (!isMe) {
-            messageGroup.getChildren().add(lblTime);
-            messageGroup.setAlignment(Pos.TOP_LEFT);
-        } else {
-            messageGroup.getChildren().add(lblTime);
-            messageGroup.setAlignment(Pos.TOP_RIGHT);
-        }
-
-        messageGroup.getChildren().add(lblMessage);
-        HBox hboxContainer = new HBox(messageGroup);
+        HBox hboxContainer = new HBox(10);
         hboxContainer.setPadding(new Insets(5, 10, 5, 10));
         messageGroup.setFillWidth(false);
 
-        if (isMe) {
-            hboxContainer.setAlignment(Pos.CENTER_RIGHT);
-        } else {
+
+        if (!isMe) {
+            StackPane avatarPane = new StackPane();
+            Circle avatarCircle = new Circle(16, Color.web("#2A3042"));
+            avatarCircle.setStroke(Color.WHITE);
+            avatarCircle.setStrokeWidth(1);
+
+
+            if (sender != null && sender.getAvatar() != null && sender.getAvatar().length > 0) {
+                Image img = new Image(new ByteArrayInputStream(sender.getAvatar()));
+                avatarCircle.setFill(new javafx.scene.paint.ImagePattern(img));
+                avatarPane.getChildren().add(avatarCircle);
+            } else {
+                setDefaultAvatar(avatarPane, avatarCircle, sender.getNickname(), 12);
+            }
+
+            messageGroup.getChildren().addAll(lblTime, lblMessage);
+            messageGroup.setAlignment(Pos.TOP_LEFT);
+            hboxContainer.getChildren().addAll(avatarPane, messageGroup);
             hboxContainer.setAlignment(Pos.CENTER_LEFT);
+
+        } else {
+            messageGroup.getChildren().addAll(lblTime, lblMessage);
+            messageGroup.setAlignment(Pos.TOP_RIGHT);
+            hboxContainer.getChildren().add(messageGroup);
+            hboxContainer.setAlignment(Pos.CENTER_RIGHT);
         }
         vboxMessage.getChildren().add(hboxContainer);
     }
