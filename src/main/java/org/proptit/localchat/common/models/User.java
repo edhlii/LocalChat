@@ -27,6 +27,9 @@ public class User implements Serializable {
     }
 
 
+
+
+
     public byte[] getAvatar() {
         return avatar;
     }
@@ -35,7 +38,8 @@ public class User implements Serializable {
         this.avatar = avatar;
     }
 
-    public User(String username) {
+    public User(String username)
+    {
         this.username = username;
     }
 

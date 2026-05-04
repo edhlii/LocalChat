@@ -63,11 +63,13 @@ public class ClientHandler implements Runnable {
             AuthService authService = new AuthService(new UserDao(), new MessageDao());
 
             Object receivedData;
-            while ((receivedData = in.readObject()) != null) {
-                DataPacket data = (DataPacket) receivedData;
-                switch (data.getTypeDataPacket()) {
+            while ((receivedData = in.readObject()) != null)
+            {
+                DataPacket data = (DataPacket)receivedData;
+                switch (data.getTypeDataPacket())
+                {
                     case TypeDataPacket.LOGIN_REQUEST:
-                        authService.handleLogin(this, (User) data.getData());
+                        authService.handleLogin(this, (User)data.getData());
                         break;
                     case TypeDataPacket.CHAT_MESSAGE:
                         Message msg = (Message) data.getData();
@@ -115,27 +117,32 @@ public class ClientHandler implements Runnable {
                         List<User> onlineUsers = server.getOnlineUsers();
                         sendData(new DataPacket(TypeDataPacket.RETURN_ONLINE_USERS, onlineUsers));
                         break;
-                    case TypeDataPacket.DELETE_USER_REQUEST: {
-                        int id = (int) data.getData();
+                    case TypeDataPacket.DELETE_USER_REQUEST:
+                    {
+                        int id = (int)data.getData();
                         userDao.deleteUser(id);
                         break;
                     }
                     case TypeDataPacket.ADD_USER_REQUEST:
-                        User user = (User) data.getData();
-                        if (userDao.findByUsername(user.getUsername()) == null) {
+                        User user = (User)data.getData();
+                        if(userDao.findByUsername(user.getUsername()) == null)
+                        {
                             user.setPassword(PasswordUtils.hashPassword(user.getPassword()));
                             userDao.addUser(user);
                             DataPacket errorPacket = new DataPacket(TypeDataPacket.ADD_ACCOUNT_SUCCESS, userDao.findByUsername(user.getUsername()));
                             sendData(errorPacket);
-                        } else {
+                        }
+                        else
+                        {
                             DataPacket errorPacket = new DataPacket(TypeDataPacket.ADD_ACCOUNT_FAILURE, null);
                             sendData(errorPacket);
                         }
                         break;
-                    case TypeDataPacket.GET_HISTORY_REQUEST: {
+                    case TypeDataPacket.GET_HISTORY_REQUEST:
+                    {
                         Integer partnerId = (Integer) data.getData();
                         List<Message> history;
-                        if (partnerId == null)
+                        if(partnerId == null)
                             history = messageDao.getBroadCastHistory();
                         else
                             history = messageDao.getHistory(this.user.getId(), partnerId);
@@ -143,13 +150,15 @@ public class ClientHandler implements Runnable {
                         break;
                     }
 
-                    case TypeDataPacket.DOWNLOAD_IMAGE_REQUEST: {
+                    case TypeDataPacket.DOWNLOAD_IMAGE_REQUEST:
+                    {
                         String fileName = (String) data.getData();
                         try {
 
                             Path path = Paths.get(StorageConfig.UPLOAD_DIR + fileName);
                             ImageMessage imageMessage = new ImageMessage(null, Files.readAllBytes(path), fileName);
                             imageMessage.setTypeMessage(TypeMessage.IMAGE);
+
 
 
                             DataPacket response = new DataPacket(TypeDataPacket.DOWNLOAD_IMAGE_RESPONSE, imageMessage);
@@ -161,14 +170,17 @@ public class ClientHandler implements Runnable {
                         break;
                     }
                     case TypeDataPacket.DOWNLOAD_FILE_REQUEST:
-                        try {
+                        try
+                        {
                             String fileName = (String) data.getData();
                             Path path = Paths.get(StorageConfig.UPLOAD_DIR + fileName);
                             FileMessage fileMessage = new FileMessage(null, Files.readAllBytes(path), fileName);
                             fileMessage.setTypeMessage(TypeMessage.FILE);
                             DataPacket response = new DataPacket(TypeDataPacket.DOWNLOAD_FILE_RESPONSE, fileMessage);
                             this.sendData(response);
-                        } catch (Exception e) {
+                        }
+                        catch (Exception e)
+                        {
                             System.out.println("loi doc file");
                         }
 
@@ -186,11 +198,12 @@ public class ClientHandler implements Runnable {
                         User updateUser = (User) data.getData();
                         updateUser.setPassword(PasswordUtils.hashPassword(updateUser.getPassword()));
                         boolean isUpdated = userDao.updatePasswordUser(updateUser);
-                        if (isUpdated) {
+                        if(isUpdated) {
                             this.user.setPassword(updateUser.getPassword());
                             sendData(new DataPacket(TypeDataPacket.UPDATE_PASS_SUCCESS, userDao.findByUsername(this.user.getUsername())));
                             server.broadcastOnlineUsers();
-                        } else {
+                        }
+                        else {
                             sendData(new DataPacket(TypeDataPacket.UPDATE_PASS_FAILURE, "Cập nhật thất bại!"));
                         }
                         break;
@@ -251,7 +264,9 @@ public class ClientHandler implements Runnable {
                             sendData(new DataPacket(TypeDataPacket.UPDATE_PROFILE_SUCCESS, null));
                             System.out.println("Cập nhật thành công");
                             server.broadcastOnlineUsers();
-                        } else {
+                        }
+                        else
+                        {
                             sendData(new DataPacket(TypeDataPacket.UPDATE_PROFILE_FAILURE, null));
                             System.out.println("Cập nhật thất bại");
                         }

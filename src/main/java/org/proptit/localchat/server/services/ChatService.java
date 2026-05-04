@@ -29,7 +29,8 @@ public class ChatService {
                 }
             }
             return;
-        } else if (msg.isBroadcast()) {
+        }
+        else if (msg.isBroadcast()) {
             if (sender.isManager()) {
                 sendAll(senderHandler, msg);
             } else {

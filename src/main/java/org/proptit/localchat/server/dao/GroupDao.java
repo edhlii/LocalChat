@@ -44,27 +44,18 @@ public class GroupDao {
 
         } catch (Exception e) {
             if (conn != null) {
-                try {
-                    conn.rollback();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                try { conn.rollback(); } catch (Exception ex) { ex.printStackTrace(); }
             }
             System.err.println("Lỗi khi tạo nhóm!");
             e.printStackTrace();
         } finally {
             if (conn != null) {
-                try {
-                    conn.setAutoCommit(true);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                try { conn.setAutoCommit(true); } catch (Exception ex) { ex.printStackTrace(); }
             }
         }
         return -1;
     }
-
-    //    public List<ChatGroup> getGroupsByUserId(int userId) {
+//    public List<ChatGroup> getGroupsByUserId(int userId) {
 //        List<ChatGroup> myGroups = new ArrayList<>();
 //        String sql = "SELECT cg.id, cg.name, cg.created_by FROM chat_groups cg " +
 //                "JOIN group_members gm ON cg.id = gm.group_id " +
@@ -123,7 +114,7 @@ public class GroupDao {
     }
 
     public ChatGroup getGroupById(int groupId) {
-        try (Connection conn = DbConnection.openConnection()) {
+        try (Connection conn = DbConnection.openConnection()){
             String sql = "SELECT id, name, created_by FROM chat_groups WHERE id = ?";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setInt(1, groupId);
@@ -139,7 +130,6 @@ public class GroupDao {
         }
         return null;
     }
-
     public List<Integer> getMemberIdsByGroupId(int groupId) {
         List<Integer> memberIds = new ArrayList<>();
         String sql = "SELECT user_id FROM group_members WHERE group_id = ?";
@@ -160,7 +150,7 @@ public class GroupDao {
 
     public List<User> getFullMembersByGroupId(int groupId) {
 
-        try (Connection conn = DbConnection.openConnection()) {
+        try (Connection conn = DbConnection.openConnection()){
             List<User> members = new ArrayList<>();
 
             String sql = "SELECT u.id, u.nickname, u.username FROM users u " +
@@ -216,7 +206,6 @@ public class GroupDao {
             return false;
         }
     }
-
     public boolean leaveGroup(int userId, int groupId) {
         String sql = "DELETE FROM group_members WHERE user_id = ? AND group_id = ?";
         try (Connection conn = DbConnection.openConnection();

@@ -25,8 +25,7 @@ public class MemberManagementController {
 
     @FXML
     private VBox vboxMemberList;
-    @FXML
-    private TextField txtSearchPeople;
+    @FXML private TextField txtSearchPeople;
 
     public void init(SocketClient client, User me) {
         this.client = client;
@@ -105,7 +104,7 @@ public class MemberManagementController {
                 confirm.setHeaderText("Do you want to delete this account?");
 
                 confirm.getDialogPane().setStyle("-fx-background-color: #161B28; -fx-base: #161B28;");
-                confirm.getDialogPane().lookupAll(".label").forEach(node -> ((Label) node).setStyle("-fx-text-fill: white;"));
+                confirm.getDialogPane().lookupAll(".label").forEach(node -> ((Label)node).setStyle("-fx-text-fill: white;"));
 
                 ButtonType btnYes = new ButtonType("YES", ButtonBar.ButtonData.YES);
                 ButtonType btnNo = new ButtonType("NO", ButtonBar.ButtonData.NO);
@@ -126,7 +125,6 @@ public class MemberManagementController {
 
         vboxMemberList.getChildren().add(memberItem);
     }
-
     @FXML
     void onAddMemberClick(ActionEvent event) {
         Dialog<User> dialog = new Dialog<>();
@@ -170,6 +168,7 @@ public class MemberManagementController {
                 } else {
                     setText(item);
                     setStyle("-fx-background-color: #0B0F19; -fx-text-fill: white; -fx-padding: 8;");
+                    // Hiệu ứng khi di chuột qua item trong danh sách sổ xuống
                     setOnMouseEntered(e -> setStyle("-fx-background-color: #1E2435; -fx-text-fill: #AD7BFF; -fx-padding: 8;"));
                     setOnMouseExited(e -> setStyle("-fx-background-color: #0B0F19; -fx-text-fill: white; -fx-padding: 8;"));
                 }
@@ -187,22 +186,14 @@ public class MemberManagementController {
                 }
             }
         });
-        Label l1 = new Label("Username:");
-        l1.setStyle("-fx-text-fill: #8B92A5; -fx-font-weight: bold;");
-        Label l2 = new Label("Password:");
-        l2.setStyle("-fx-text-fill: #8B92A5; -fx-font-weight: bold;");
-        Label l3 = new Label("Nickname:");
-        l3.setStyle("-fx-text-fill: #8B92A5; -fx-font-weight: bold;");
-        Label l4 = new Label("Role:");
-        l4.setStyle("-fx-text-fill: #8B92A5; -fx-font-weight: bold;");
-        grid.add(l1, 0, 0);
-        grid.add(txtUsername, 1, 0);
-        grid.add(l2, 0, 1);
-        grid.add(txtPassword, 1, 1);
-        grid.add(l3, 0, 2);
-        grid.add(txtNickname, 1, 2);
-        grid.add(l4, 0, 3);
-        grid.add(cbRole, 1, 3);
+        Label l1 = new Label("Username:"); l1.setStyle("-fx-text-fill: #8B92A5; -fx-font-weight: bold;");
+        Label l2 = new Label("Password:"); l2.setStyle("-fx-text-fill: #8B92A5; -fx-font-weight: bold;");
+        Label l3 = new Label("Nickname:"); l3.setStyle("-fx-text-fill: #8B92A5; -fx-font-weight: bold;");
+        Label l4 = new Label("Role:"); l4.setStyle("-fx-text-fill: #8B92A5; -fx-font-weight: bold;");
+        grid.add(l1, 0, 0); grid.add(txtUsername, 1, 0);
+        grid.add(l2, 0, 1); grid.add(txtPassword, 1, 1);
+        grid.add(l3, 0, 2); grid.add(txtNickname, 1, 2);
+        grid.add(l4, 0, 3); grid.add(cbRole, 1, 3);
         dialogPane.setContent(grid);
         Node btnCreate = dialogPane.lookupButton(btnAddType);
         btnCreate.setDisable(true);

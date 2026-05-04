@@ -77,7 +77,17 @@ public class ChatCallManager {
         }
 
         view.showCallWindow(selectedConversationUser, "Calling...");
-        sendCallSignal(new CallSignal(callId, CallAction.INVITE, me.getUsername(), me.getNickname(), selectedConversationUser.getUsername(), null, 0, 0, videoPort));
+        sendCallSignal(new CallSignal(
+                callId,
+                CallAction.INVITE,
+                me.getUsername(),
+                me.getNickname(),
+                selectedConversationUser.getUsername(),
+                null,
+            0,
+            0,
+            videoPort
+        ));
     }
 
     public void receiveCallSignal(CallSignal signal) {
@@ -143,7 +153,16 @@ public class ChatCallManager {
 
             screenShareSession.startSending(remoteMediaHost, remoteScreenPort);
             localScreenSharing = true;
-            sendCallSignal(new CallSignal(activeCallId, CallAction.SHARE_START, me.getUsername(), me.getNickname(), activeCallPeer.getUsername(), null, 0, 0));
+            sendCallSignal(new CallSignal(
+                    activeCallId,
+                    CallAction.SHARE_START,
+                    me.getUsername(),
+                    me.getNickname(),
+                    activeCallPeer.getUsername(),
+                    null,
+                    0,
+                    0
+            ));
             view.updateCallStatus("Connected - Sharing screen");
             return;
         }
@@ -167,14 +186,32 @@ public class ChatCallManager {
 
     private void handleIncomingInvite(CallSignal signal) {
         if (activeCallId != null || outgoingCallId != null) {
-            sendCallSignal(new CallSignal(signal.getCallId(), CallAction.REJECT, me.getUsername(), me.getNickname(), signal.getFromUsername(), null, 0, 0));
+            sendCallSignal(new CallSignal(
+                    signal.getCallId(),
+                    CallAction.REJECT,
+                    me.getUsername(),
+                    me.getNickname(),
+                    signal.getFromUsername(),
+                    null,
+                    0,
+                    0
+            ));
             return;
         }
 
         User caller = view.resolveUser(signal.getFromUsername(), signal.getFromNickname());
         boolean accepted = view.confirmIncomingCall(caller);
         if (!accepted) {
-            sendCallSignal(new CallSignal(signal.getCallId(), CallAction.REJECT, me.getUsername(), me.getNickname(), signal.getFromUsername(), null, 0, 0));
+            sendCallSignal(new CallSignal(
+                    signal.getCallId(),
+                    CallAction.REJECT,
+                    me.getUsername(),
+                    me.getNickname(),
+                    signal.getFromUsername(),
+                    null,
+                    0,
+                    0
+            ));
             return;
         }
 
@@ -189,7 +226,17 @@ public class ChatCallManager {
             activeCallId = signal.getCallId();
             activeCallPeer = caller;
             view.showCallWindow(caller, "Connecting...");
-            sendCallSignal(new CallSignal(signal.getCallId(), CallAction.ACCEPT, me.getUsername(), me.getNickname(), signal.getFromUsername(), view.resolveLocalAddress(), udpPort, screenPort, videoPort));
+            sendCallSignal(new CallSignal(
+                    signal.getCallId(),
+                    CallAction.ACCEPT,
+                    me.getUsername(),
+                    me.getNickname(),
+                    signal.getFromUsername(),
+                    view.resolveLocalAddress(),
+                    udpPort,
+                    screenPort,
+                    videoPort
+            ));
 
             if (videoPort > 0) {
                 view.setVideoCallAvailable(true);
@@ -198,7 +245,16 @@ public class ChatCallManager {
             ex.printStackTrace();
             cleanupCallState(false);
             view.showError("Unable to access call devices.");
-            sendCallSignal(new CallSignal(signal.getCallId(), CallAction.REJECT, me.getUsername(), me.getNickname(), signal.getFromUsername(), null, 0, 0));
+            sendCallSignal(new CallSignal(
+                    signal.getCallId(),
+                    CallAction.REJECT,
+                    me.getUsername(),
+                    me.getNickname(),
+                    signal.getFromUsername(),
+                    null,
+                    0,
+                    0
+            ));
         }
     }
 
@@ -207,7 +263,9 @@ public class ChatCallManager {
             return;
         }
 
-        User peer = outgoingCallPeer != null ? outgoingCallPeer : view.resolveUser(signal.getFromUsername(), signal.getFromNickname());
+        User peer = outgoingCallPeer != null
+                ? outgoingCallPeer
+                : view.resolveUser(signal.getFromUsername(), signal.getFromNickname());
 
         try {
             int udpPort = ensureVoiceSessionOpened();
@@ -226,7 +284,17 @@ public class ChatCallManager {
             remoteVideoPort = signal.getVideoUdpPort();
 
             view.showCallWindow(peer, "Connecting...");
-            sendCallSignal(new CallSignal(activeCallId, CallAction.READY, me.getUsername(), me.getNickname(), signal.getFromUsername(), view.resolveLocalAddress(), udpPort, screenPort, videoPort));
+            sendCallSignal(new CallSignal(
+                    activeCallId,
+                    CallAction.READY,
+                    me.getUsername(),
+                    me.getNickname(),
+                    signal.getFromUsername(),
+                    view.resolveLocalAddress(),
+                    udpPort,
+                    screenPort,
+                    videoPort
+            ));
 
             startVoiceStreaming(signal.getHost(), signal.getUdpPort());
             if (remoteVideoPort > 0) {
@@ -352,7 +420,17 @@ public class ChatCallManager {
 
         if (activeCallId != null && activeCallPeer != null) {
             try {
-                sendCallSignal(new CallSignal(activeCallId, CallAction.VIDEO_START, me.getUsername(), me.getNickname(), activeCallPeer.getUsername(), null, 0, 0, remoteVideoPort));
+                sendCallSignal(new CallSignal(
+                        activeCallId,
+                        CallAction.VIDEO_START,
+                        me.getUsername(),
+                        me.getNickname(),
+                        activeCallPeer.getUsername(),
+                        null,
+                        0,
+                        0,
+                        remoteVideoPort
+                ));
             } catch (Exception signalEx) {
                 signalEx.printStackTrace();
             }
@@ -374,7 +452,17 @@ public class ChatCallManager {
         view.updateCallStatus("Connected");
 
         if (notifyPeer && activeCallId != null && activeCallPeer != null) {
-            sendCallSignal(new CallSignal(activeCallId, CallAction.VIDEO_STOP, me.getUsername(), me.getNickname(), activeCallPeer.getUsername(), null, 0, 0, remoteVideoPort));
+            sendCallSignal(new CallSignal(
+                    activeCallId,
+                    CallAction.VIDEO_STOP,
+                    me.getUsername(),
+                    me.getNickname(),
+                    activeCallPeer.getUsername(),
+                    null,
+                    0,
+                    0,
+                    remoteVideoPort
+            ));
         }
     }
 
@@ -413,7 +501,16 @@ public class ChatCallManager {
         view.updateCallStatus("Connected");
 
         if (notifyPeer && activeCallId != null && activeCallPeer != null) {
-            sendCallSignal(new CallSignal(activeCallId, CallAction.SHARE_STOP, me.getUsername(), me.getNickname(), activeCallPeer.getUsername(), null, 0, 0));
+            sendCallSignal(new CallSignal(
+                    activeCallId,
+                    CallAction.SHARE_STOP,
+                    me.getUsername(),
+                    me.getNickname(),
+                    activeCallPeer.getUsername(),
+                    null,
+                    0,
+                    0
+            ));
         }
     }
 
@@ -425,10 +522,21 @@ public class ChatCallManager {
 
         try {
             if (notifyPeer) {
-                String target = activeCallPeer != null ? activeCallPeer.getUsername() : (outgoingCallPeer != null ? outgoingCallPeer.getUsername() : null);
+                String target = activeCallPeer != null
+                        ? activeCallPeer.getUsername()
+                        : (outgoingCallPeer != null ? outgoingCallPeer.getUsername() : null);
                 String callId = activeCallId != null ? activeCallId : outgoingCallId;
                 if (target != null && callId != null) {
-                    sendCallSignal(new CallSignal(callId, CallAction.HANGUP, me.getUsername(), me.getNickname(), target, null, 0, 0));
+                    sendCallSignal(new CallSignal(
+                            callId,
+                            CallAction.HANGUP,
+                            me.getUsername(),
+                            me.getNickname(),
+                            target,
+                            null,
+                            0,
+                            0
+                    ));
                 }
             }
 

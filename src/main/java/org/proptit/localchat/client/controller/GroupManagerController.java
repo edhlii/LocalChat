@@ -19,16 +19,11 @@ import java.util.stream.Collectors;
 
 public class GroupManagerController {
 
-    @FXML
-    private Label lblHeader;
-    @FXML
-    private Label lblGroupName;
-    @FXML
-    private Label lblListTitle;
-    @FXML
-    private ListView<User> lvMembers;
-    @FXML
-    private Button btnConfirm;
+    @FXML private Label lblHeader;
+    @FXML private Label lblGroupName;
+    @FXML private Label lblListTitle;
+    @FXML private ListView<User> lvMembers;
+    @FXML private Button btnConfirm;
 
     private SocketClient client;
     private User me;
@@ -56,7 +51,11 @@ public class GroupManagerController {
             btnConfirm.setStyle("-fx-background-color: #ff5252; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
         }
 
+
         List<User> displayList = new ArrayList<>();
+//        Set<Integer> currentMemberIds = group.getMembers().stream()
+//                .map(User::getId)
+//                .collect(Collectors.toSet());
 
         Set<Integer> currentMemberIds = new HashSet<>();
         for (User user : group.getMembers()) {

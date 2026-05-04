@@ -26,9 +26,7 @@ public class LoginController {
 
     private SocketClient socketClient;
 
-    public void setSocketClient(SocketClient client) {
-        this.socketClient = client;
-    }
+    public void setSocketClient(SocketClient client) { this.socketClient = client; }
 
     @FXML
     void onLoginButtonClick() {
@@ -51,15 +49,13 @@ public class LoginController {
                     MainWindowController mainWindowController = loader.getController();
                     mainWindowController.setup(socketClient, (User) data);
                     mainWindowController.setClient(socketClient);
-                    mainWindowController.setMe((User) data);
+                    mainWindowController.setMe((User)data);
                     socketClient.setController(mainWindowController);
 
                     stage.setScene(new Scene(root));
-                    stage.setTitle("LocalChat - " + ((User) data).getNickname());
+                    stage.setTitle("LocalChat - " + ((User)data).getNickname());
 
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                } catch (IOException e) { e.printStackTrace(); }
             } else {
                 lblMessage.setVisible(true);
                 lblMessage.setManaged(true);

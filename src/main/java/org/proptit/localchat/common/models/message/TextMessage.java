@@ -29,13 +29,13 @@ public class TextMessage extends Message implements Serializable {
         msg.setTypeMessage(TypeMessage.TEXT);
         return msg;
     }
-
     @Override
-    public String getFileName() {
+    public String getFileName()
+    {
         return null;
     }
-
-    public void setFileName(String fileName) {
+    public void setFileName(String fileName)
+    {
 
     }
 

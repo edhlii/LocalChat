@@ -16,16 +16,11 @@ import java.util.List;
 
 public class CreateGroupController {
 
-    @FXML
-    private TextField txtGroupName;
-    @FXML
-    private ListView<User> lvMembers;
-    @FXML
-    private Label lblError;
-    @FXML
-    private Button btnCancel;
-    @FXML
-    private Button btnCreate;
+    @FXML private TextField txtGroupName;
+    @FXML private ListView<User> lvMembers;
+    @FXML private Label lblError;
+    @FXML private Button btnCancel;
+    @FXML private Button btnCreate;
 
     private SocketClient client;
     private User me;

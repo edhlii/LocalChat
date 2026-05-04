@@ -5,7 +5,6 @@ import java.io.File;
 public class StorageConfig {
     private static final String PROJECT_PATH = System.getProperty("user.dir");
     public static final String UPLOAD_DIR = PROJECT_PATH + File.separator + "server_data" + File.separator + "uploads" + File.separator;
-
     static {
         File dir = new File(UPLOAD_DIR);
         if (!dir.exists()) {
