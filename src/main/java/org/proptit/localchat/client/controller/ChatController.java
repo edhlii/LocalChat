@@ -14,22 +14,11 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
-import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.embed.swing.SwingFXUtils;
-
-import javax.imageio.ImageIO;
 
 import org.proptit.localchat.common.models.ChatGroup;
 import org.proptit.localchat.client.networks.SocketClient;
@@ -42,13 +31,10 @@ import org.proptit.localchat.common.models.message.FileMessage;
 import org.proptit.localchat.common.models.message.ImageMessage;
 import org.proptit.localchat.common.models.message.Message;
 import org.proptit.localchat.common.models.message.TextMessage;
-import org.proptit.localchat.common.utils.FileUtils;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -72,7 +58,6 @@ public class ChatController implements ChatCallView {
     private final Map<String, Button> pendingFileButtons = new HashMap<>();
     private List<ChatGroup> myGroupsList = new ArrayList<>();
     private final Map<String, ChatGroup> conversationGroupMap = new HashMap<>();
-    private static final String ANNOUNCEMENT_LABEL = "Thông báo chung";
     private final Set<Integer> usersWithNewMessages = new HashSet<>();
     private ChatCallManager callManager;
     private Stage callStage;
@@ -125,7 +110,7 @@ public class ChatController implements ChatCallView {
         if (lvChatList != null) {
             lvChatList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
                 if (newValue == null) return;
-                if (newValue.equals(ANNOUNCEMENT_LABEL)) {
+                if (newValue.equals(ChatUiConstants.LABEL_ANNOUNCEMENT)) {
                     usersWithNewMessages.remove(0);
                     lvChatList.refresh();
 
@@ -135,7 +120,7 @@ public class ChatController implements ChatCallView {
                     selectedConversationGroup = null;
                     clearMessageArea();
 
-                    contactNameTopBar.setText(ANNOUNCEMENT_LABEL);
+                    contactNameTopBar.setText(ChatUiConstants.LABEL_ANNOUNCEMENT);
                     btnGroupInfo.setVisible(false);
                     btnGroupInfo.setManaged(false);
 
@@ -247,10 +232,8 @@ public class ChatController implements ChatCallView {
 
 
         lvChatList.getItems().clear();
-        lvChatList.getItems().clear();
 
-
-        lvChatList.getItems().add(ANNOUNCEMENT_LABEL);
+        lvChatList.getItems().add(ChatUiConstants.LABEL_ANNOUNCEMENT);
 
 
         for (User user : allMembers) {
@@ -277,7 +260,7 @@ public class ChatController implements ChatCallView {
             this.allMembers = members;
             if (!isGroupMode) {
                 lvChatList.getItems().clear();
-                lvChatList.getItems().add(ANNOUNCEMENT_LABEL);
+                lvChatList.getItems().add(ChatUiConstants.LABEL_ANNOUNCEMENT);
 
                 for (User u : allMembers) {
                     if (u.getId() == me.getId()) continue;
@@ -296,7 +279,7 @@ public class ChatController implements ChatCallView {
             renderChatListByKeyword(txtSearchPeopleChat != null ? txtSearchPeopleChat.getText() : "");
 
             if (!lvChatList.getItems().isEmpty() && (txtSearchPeopleChat == null || txtSearchPeopleChat.getText().isEmpty())) {
-                lvChatList.getSelectionModel().select(0);
+                lvChatList.getSelectionModel().select(ChatUiConstants.LABEL_ANNOUNCEMENT);
             }
         });
     }
@@ -308,212 +291,13 @@ public class ChatController implements ChatCallView {
             lvOnlinePeople.setMinHeight(105);
             lvOnlinePeople.setMaxHeight(105);
 
-            lvOnlinePeople.setCellFactory(param -> new ListCell<String>() {
-                @Override
-                protected void updateItem(String item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (empty || item == null || item.equals("No one online")) {
-                        setGraphic(null);
-                        setText(null);
-                        setStyle("-fx-background-color: transparent;");
-                    } else {
-                        VBox root = new VBox(5);
-                        root.setAlignment(Pos.CENTER);
-                        root.setPrefWidth(75);
-
-                        StackPane avatarContainer = new StackPane();
-                        avatarContainer.setMaxSize(52, 52);
-
-                        Circle avatarCircle = new Circle(26, Color.web("#2A3042"));
-                        avatarCircle.setStroke(Color.WHITE);
-                        avatarCircle.setStrokeWidth(2);
-
-
-                        String name = item.contains("(@") ? item.substring(0, item.indexOf("(@")).trim() : item;
-                        User u = conversationUserMap.get(item);
-
-                        if (u != null && u.getAvatar() != null && u.getAvatar().length != 0) {
-                            try {
-                                Image img = new Image(new ByteArrayInputStream(u.getAvatar()));
-
-                                if (!img.isError()) {
-                                    avatarCircle.setFill(new javafx.scene.paint.ImagePattern(img));
-                                    avatarContainer.getChildren().add(avatarCircle);
-                                } else {
-                                    setDefaultAvatar(avatarContainer, avatarCircle, name, 22);
-                                }
-                            } catch (Exception e) {
-
-                                setDefaultAvatar(avatarContainer, avatarCircle, name, 22);
-                            }
-                        } else {
-
-                            setDefaultAvatar(avatarContainer, avatarCircle, name, 22);
-                        }
-
-
-                        Circle onlineDot = new Circle(7, Color.web("#23A559"));
-                        onlineDot.setStroke(Color.web("#0B0F19"));
-                        onlineDot.setStrokeWidth(2.5);
-                        StackPane.setAlignment(onlineDot, Pos.BOTTOM_RIGHT);
-                        avatarContainer.getChildren().add(onlineDot);
-
-                        String nickname = item.contains("(@") ? item.substring(0, item.indexOf("(@")).trim() : item;
-                        if (nickname.length() > 10) {
-                            nickname = nickname.substring(0, 9) + "...";
-                        }
-
-                        Label nickLabel = new Label(nickname);
-                        nickLabel.setTextFill(Color.web("#E4E6EB"));
-                        nickLabel.setFont(Font.font("System", 12));
-                        nickLabel.setAlignment(Pos.CENTER);
-
-                        root.getChildren().addAll(avatarContainer, nickLabel);
-                        setGraphic(root);
-                        setText(null);
-                    }
-                }
-            });
+            lvOnlinePeople.setCellFactory(ChatCellFactory.createOnlinePeopleCellFactory(conversationUserMap, onlineUserIds));
         }
 
         if (lvChatList != null) {
-            lvChatList.setCellFactory(param -> new ListCell<String>() {
-                @Override
-                protected void updateItem(String item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (empty || item == null || item.equals("No conversations")) {
-                        setGraphic(null);
-                        setText(null);
-                        setTooltip(null);
-                    } else if (item.equals(ANNOUNCEMENT_LABEL)) {
-                        HBox root = new HBox(12);
-                        root.setAlignment(Pos.CENTER_LEFT);
-                        root.setPadding(new Insets(8, 12, 8, 12));
-
-                        Label icon = new Label("\uD83D\uDCE2");
-                        icon.setStyle("-fx-font-size: 20px; -fx-text-fill: #FFFFFF;");
-
-                        VBox textInfo = new VBox(2);
-                        textInfo.setAlignment(Pos.CENTER_LEFT);
-
-
-                        Label nameLbl = new Label("Thông báo chung");
-                        nameLbl.setTextFill(javafx.scene.paint.Color.web("#E67E22"));
-                        nameLbl.setFont(javafx.scene.text.Font.font("System", FontWeight.BOLD, 14));
-
-                        textInfo.getChildren().add(nameLbl);
-
-                        if (usersWithNewMessages.contains(0)) {
-                            Label newMsgNotify = new Label("Có tin nhắn mới");
-                            newMsgNotify.setFont(javafx.scene.text.Font.font("System", FontWeight.BOLD, 11));
-                            newMsgNotify.setTextFill(javafx.scene.paint.Color.WHITE);
-                            textInfo.getChildren().add(newMsgNotify);
-
-                        }
-
-                        root.getChildren().addAll(icon, textInfo);
-                        setGraphic(root);
-                        setText(null);
-                    } else {
-                        HBox root = new HBox(12);
-                        root.setAlignment(Pos.CENTER_LEFT);
-                        root.setPadding(new Insets(8, 12, 8, 12));
-
-                        StackPane avatarStack = new StackPane();
-                        Circle avatarCircle = new Circle(20, Color.web("#2A3042"));
-                        avatarCircle.setStroke(Color.WHITE);
-                        avatarCircle.setStrokeWidth(1);
-
-                        VBox textInfo = new VBox(2);
-                        textInfo.setAlignment(Pos.CENTER_LEFT);
-
-                        if (isGroupMode) {
-                            ChatGroup g = conversationGroupMap.get(item);
-                            String name = item.contains("@") ? item.substring(item.indexOf("@") + 1).trim() : item;
-                            String displayName = name;
-
-
-                            setDefaultAvatar(avatarStack, avatarCircle, displayName, 14);
-
-                            Label nameLbl = new Label(displayName);
-                            nameLbl.setTextFill(Color.WHITE);
-                            nameLbl.setFont(Font.font("System", FontWeight.BOLD, 14));
-
-                            if (g != null && usersWithNewMessages.contains(-g.getId())) {
-                                Label newMsgNotify = new Label("Có tin nhắn mới");
-                                newMsgNotify.setFont(Font.font("System", FontWeight.BOLD, 11));
-                                newMsgNotify.setTextFill(Color.WHITE);
-                                textInfo.getChildren().add(newMsgNotify);
-                            }
-
-                            textInfo.getChildren().add(0, nameLbl);
-                        } else {
-                            String name = item.contains("(@") ? item.substring(0, item.indexOf("(@")).trim() : item;
-                            User u = conversationUserMap.get(item);
-                            if (u != null && u.getAvatar() != null && u.getAvatar().length != 0) {
-                                try {
-                                    Image img = new Image(new ByteArrayInputStream(u.getAvatar()));
-
-                                    if (!img.isError()) {
-                                        avatarCircle.setFill(new javafx.scene.paint.ImagePattern(img));
-                                        avatarStack.getChildren().clear();
-                                        avatarStack.getChildren().add(avatarCircle);
-                                    } else {
-                                        setDefaultAvatar(avatarStack, avatarCircle, name, 14);
-                                    }
-                                } catch (Exception e) {
-                                    setDefaultAvatar(avatarStack, avatarCircle, name, 14);
-                                }
-                            } else {
-                                setDefaultAvatar(avatarStack, avatarCircle, name, 14);
-                            }
-
-
-                            if (u != null && onlineUserIds.contains(u.getId())) {
-                                Circle onlineDot = new Circle(6, Color.web("#23A559"));
-                                onlineDot.setStroke(Color.web("#1E2435"));
-                                onlineDot.setStrokeWidth(2);
-
-
-                                StackPane.setAlignment(onlineDot, Pos.BOTTOM_RIGHT);
-                                avatarStack.getChildren().add(onlineDot);
-                            }
-
-                            Label nameLbl = new Label(name);
-                            nameLbl.setTextFill(Color.WHITE);
-                            nameLbl.setFont(Font.font("System", FontWeight.BOLD, 14));
-                            textInfo.getChildren().add(nameLbl);
-
-
-                            if (u != null && usersWithNewMessages.contains(u.getId())) {
-                                Label newMsgNotify = new Label("Có tin nhắn mới");
-                                newMsgNotify.setFont(Font.font("System", FontWeight.BOLD, 11));
-                                newMsgNotify.setTextFill(javafx.scene.paint.Color.WHITE);
-                                textInfo.getChildren().add(newMsgNotify);
-                                nameLbl.setTextFill(Color.web("#AD7BFF"));
-                            }
-
-                            Tooltip tip = new Tooltip(u.getUsername());
-                            tip.setShowDelay(javafx.util.Duration.millis(200));
-                            setTooltip(tip);
-                        }
-                        root.getChildren().addAll(avatarStack, textInfo);
-                        setGraphic(root);
-                        setText(null);
-                    }
-                }
-            });
+            lvChatList.setCellFactory(ChatCellFactory.createChatListCellFactory(
+                conversationUserMap, conversationGroupMap, usersWithNewMessages, onlineUserIds, isGroupMode));
         }
-    }
-
-    private void setDefaultAvatar(StackPane stack, Circle circle, String name, int fontSize) {
-        stack.getChildren().clear();
-        circle.setFill(Color.web("#2A3042"));
-        String initial = (name == null || name.isEmpty()) ? "?" : name.substring(0, 1).toUpperCase();
-        Label initialLabel = new Label(initial);
-        initialLabel.setTextFill(Color.WHITE);
-        initialLabel.setFont(Font.font("System", FontWeight.BOLD, fontSize));
-        stack.getChildren().addAll(circle, initialLabel);
     }
 
     @FXML
@@ -523,7 +307,7 @@ public class ChatController implements ChatCallView {
             Message msg = null;
             String selectedItem = lvChatList.getSelectionModel().getSelectedItem();
             if (selectedItem == null) return;
-            if (selectedItem.equals(ANNOUNCEMENT_LABEL)) {
+            if (selectedItem.equals(ChatUiConstants.LABEL_ANNOUNCEMENT)) {
                 msg = TextMessage.createBroadcast(me, messageText);
                 addMessageToScreen(messageText, true, msg.getSentAt(), me);
 
@@ -577,146 +361,20 @@ public class ChatController implements ChatCallView {
 
 
     private void addMessageToScreen(String text, boolean isMe, String time, User sender) {
-        Label lblMessage = new Label(text);
-        lblMessage.setWrapText(true);
-        lblMessage.setMaxWidth(400);
-        lblMessage.setMinHeight(Region.USE_PREF_SIZE);
-
-        lblMessage.setFont(Font.font("System", 16));
-
-        Label lblTime = new Label(isMe ? time : (sender.getNickname() + " | " + time));
-        lblTime.getStyleClass().add("chat-time");
-
-        if (isMe) {
-            lblMessage.setStyle("-fx-background-color: #AD7BFF; -fx-text-fill: white; -fx-background-radius: 15px; -fx-padding: 8px 12px;");
-        } else {
-            lblMessage.setStyle("-fx-background-color: #1E2435; -fx-text-fill: white; -fx-background-radius: 15px; -fx-padding: 8px 12px;");
-        }
-        ContextMenu contextMenu = new ContextMenu();
-        MenuItem copyItem = new MenuItem("Copy tin nhắn");
-        copyItem.setOnAction(e -> {
-            Clipboard clipboard = Clipboard.getSystemClipboard();
-            ClipboardContent content = new ClipboardContent();
-            content.putString(lblMessage.getText());
-            clipboard.setContent(content);
-        });
-
-        contextMenu.getItems().add(copyItem);
-        lblMessage.setContextMenu(contextMenu);
-
-
-
-        VBox messageGroup = new VBox(3);
-        HBox hboxContainer = new HBox(10);
-        hboxContainer.setPadding(new Insets(5, 10, 5, 10));
-        messageGroup.setFillWidth(false);
-
-
-        if (!isMe) {
-            StackPane avatarPane = new StackPane();
-            Circle avatarCircle = new Circle(16, Color.web("#2A3042"));
-            avatarCircle.setStroke(Color.WHITE);
-            avatarCircle.setStrokeWidth(1);
-
-
-            if (sender != null && sender.getAvatar() != null && sender.getAvatar().length > 0) {
-                Image img = new Image(new ByteArrayInputStream(sender.getAvatar()));
-                avatarCircle.setFill(new javafx.scene.paint.ImagePattern(img));
-                avatarPane.getChildren().add(avatarCircle);
-            } else {
-                setDefaultAvatar(avatarPane, avatarCircle, sender.getNickname(), 12);
-            }
-
-            messageGroup.getChildren().addAll(lblTime, lblMessage);
-            messageGroup.setAlignment(Pos.TOP_LEFT);
-            hboxContainer.getChildren().addAll(avatarPane, messageGroup);
-            hboxContainer.setAlignment(Pos.CENTER_LEFT);
-
-        } else {
-            messageGroup.getChildren().addAll(lblTime, lblMessage);
-            messageGroup.setAlignment(Pos.TOP_RIGHT);
-            hboxContainer.getChildren().add(messageGroup);
-            hboxContainer.setAlignment(Pos.CENTER_RIGHT);
-        }
-        vboxMessage.getChildren().add(hboxContainer);
+        Label messageNode = ChatMessageBuilder.buildTextMessage(text, isMe);
+        HBox container = ChatMessageBuilder.buildMessageContainer(messageNode, sender, isMe, time);
+        vboxMessage.getChildren().add(container);
     }
 
     private void addImageToScreen(ImageView imageView, boolean isMe, String time, User sender) {
-
-        imageView.setFitWidth(250);
+        imageView.setFitWidth(ChatUiConstants.IMAGE_DISPLAY_WIDTH);
         imageView.setPreserveRatio(true);
-
-
-        Label lblTime = new Label(isMe ? time : (sender.getNickname() + " | " + time));
-        lblTime.getStyleClass().add("chat-time");
-
-
-        ContextMenu imageMenu = new ContextMenu();
-        MenuItem saveImageItem = new MenuItem("Tải ảnh xuống");
-
-        saveImageItem.setOnAction(e -> {
-            if (imageView.getImage() == null) return;
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Lưu ảnh tải về");
-            fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("PNG Files", "*.png"), new FileChooser.ExtensionFilter("JPG Files", "*.jpg"));
-            fileChooser.setInitialFileName("downloaded_image.png");
-
-            Stage stage = (Stage) imageView.getScene().getWindow();
-            File file = fileChooser.showSaveDialog(stage);
-
-            if (file != null) {
-                try {
-                    ImageIO.write(SwingFXUtils.fromFXImage(imageView.getImage(), null), "png", file);
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION, "Đã lưu ảnh thành công!");
-                    alert.setHeaderText(null);
-                    alert.show();
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                    Alert alert = new Alert(Alert.AlertType.ERROR, "Lỗi khi lưu ảnh!");
-                    alert.setHeaderText(null);
-                    alert.show();
-                }
-            }
-        });
-
-        imageMenu.getItems().add(saveImageItem);
-
-        imageView.setOnContextMenuRequested(e -> {
-            imageMenu.show(imageView, e.getScreenX(), e.getScreenY());
-        });
-
-        VBox messageGroup = new VBox(3);
-        HBox hboxContainer = new HBox(10);
-        hboxContainer.setPadding(new Insets(5, 10, 5, 10));
-
-        if (!isMe) {
-            StackPane avatarPane = new StackPane();
-            Circle avatarCircle = new Circle(16, Color.web("#2A3042"));
-            avatarCircle.setStroke(Color.WHITE);
-            avatarCircle.setStrokeWidth(1);
-
-
-            if (sender != null && sender.getAvatar() != null && sender.getAvatar().length > 0) {
-                Image img = new Image(new ByteArrayInputStream(sender.getAvatar()));
-                avatarCircle.setFill(new javafx.scene.paint.ImagePattern(img));
-                avatarPane.getChildren().add(avatarCircle);
-            } else {
-                setDefaultAvatar(avatarPane, avatarCircle, sender.getNickname(), 12);
-            }
-
-            messageGroup.getChildren().addAll(lblTime, imageView);
-            messageGroup.setAlignment(Pos.TOP_LEFT);
-
-            hboxContainer.getChildren().addAll(avatarPane, messageGroup);
-            hboxContainer.setAlignment(Pos.CENTER_LEFT);
-        } else {
-            messageGroup.getChildren().addAll(lblTime, imageView);
-            messageGroup.setAlignment(Pos.TOP_RIGHT);
-
-            hboxContainer.getChildren().add(messageGroup);
-            hboxContainer.setAlignment(Pos.CENTER_RIGHT);
-        }
-        vboxMessage.getChildren().add(hboxContainer);
+        
+        Stage stage = (Stage) imageView.getScene().getWindow();
+        ChatMessageBuilder.addImageSaveMenu(imageView, stage);
+        
+        HBox container = ChatMessageBuilder.buildMessageContainer(imageView, sender, isMe, time);
+        vboxMessage.getChildren().add(container);
     }
 
     private void clearMessageArea() {
@@ -741,7 +399,7 @@ public class ChatController implements ChatCallView {
 
             boolean isCurrent = false;
             if (selectedItem != null) {
-                if (isBroadcastMsg && selectedItem.equals(ANNOUNCEMENT_LABEL)) {
+                if (isBroadcastMsg && selectedItem.equals(ChatUiConstants.LABEL_ANNOUNCEMENT)) {
                     isCurrent = true;
                 } else if (isPrivateMsg && !isGroupMode && selectedConversationUser != null && msg.getSender().getId().equals(selectedConversationUser.getId())) {
                     isCurrent = true;
@@ -766,8 +424,8 @@ public class ChatController implements ChatCallView {
             } else {
                 if (isBroadcastMsg) {
                     usersWithNewMessages.add(0);
-                    int idx = lvChatList.getItems().indexOf(ANNOUNCEMENT_LABEL);
-                    if (idx != -1) lvChatList.getItems().set(idx, ANNOUNCEMENT_LABEL);
+                    int idx = lvChatList.getItems().indexOf(ChatUiConstants.LABEL_ANNOUNCEMENT);
+                    if (idx != -1) lvChatList.getItems().set(idx, ChatUiConstants.LABEL_ANNOUNCEMENT);
 
                 } else if (isPrivateMsg) {
                     usersWithNewMessages.add(msg.getSender().getId());
@@ -818,150 +476,76 @@ public class ChatController implements ChatCallView {
     void onFileButtonClick(ActionEvent event) {
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
 
-        File file = FileUtils.chooseFile(stage);
+        try {
+            byte[] fileBytes = ChatFileManager.chooseAndReadFile(stage);
+            if (fileBytes == null) return;
 
-        if (file != null) {
-            try {
-                byte[] fileBytes = Files.readAllBytes(file.toPath());
-                String fileName = file.getName();
+            String fileName = "file";
+            String extension = "";
 
-                String extension = "";
-                int i = fileName.lastIndexOf('.');
-                if (i > 0) {
-                    extension = fileName.substring(i + 1).toLowerCase();
-                }
+            String selectedItem = lvChatList.getSelectionModel().getSelectedItem();
+            if (selectedItem == null) return;
 
-                boolean isImage = extension.matches("(png|jpg|jpeg|gif)");
+            boolean isImage = ChatFileManager.isImage(fileName);
 
-                String selectedItem = lvChatList.getSelectionModel().getSelectedItem();
-                if (selectedItem == null) return;
+            Message msg = null;
 
-                Message msg = null;
-
-                if (isImage) {
-                    if (selectedItem.equals(ANNOUNCEMENT_LABEL)) {
-                        msg = ImageMessage.createBroadcast(me, fileBytes, extension);
-                    } else if (isGroupMode) {
-                        if (selectedConversationGroup == null) return;
-                        msg = ImageMessage.createGroup(me, selectedConversationGroup, fileBytes, extension);
-                    } else {
-                        if (selectedConversationUser == null) return;
-                        msg = ImageMessage.createPrivate(me, selectedConversationUser, fileBytes, extension);
-                    }
-                    addImageToScreen(new ImageView(new Image(new ByteArrayInputStream(fileBytes))), true, msg.getSentAt(), me);
+            if (isImage) {
+                if (selectedItem.equals(ChatUiConstants.LABEL_ANNOUNCEMENT)) {
+                    msg = ImageMessage.createBroadcast(me, fileBytes, extension);
+                } else if (isGroupMode) {
+                    if (selectedConversationGroup == null) return;
+                    msg = ImageMessage.createGroup(me, selectedConversationGroup, fileBytes, extension);
                 } else {
-                    if (selectedItem.equals(ANNOUNCEMENT_LABEL)) {
-                        msg = FileMessage.createBroadcast(me, fileBytes, fileName, extension);
-                    } else if (isGroupMode) {
-                        if (selectedConversationGroup == null) return;
-                        msg = FileMessage.createGroup(me, selectedConversationGroup, fileBytes, fileName, extension);
-                    } else {
-                        if (selectedConversationUser == null) return;
-                        msg = FileMessage.createPrivate(me, selectedConversationUser, fileBytes, fileName, extension);
-                    }
-                    addFileToScreen(null, fileName, fileBytes, true, msg.getSentAt(), me);
+                    if (selectedConversationUser == null) return;
+                    msg = ImageMessage.createPrivate(me, selectedConversationUser, fileBytes, extension);
                 }
-                if (msg != null) {
-                    client.sendData(new DataPacket(TypeDataPacket.CHAT_MESSAGE, msg));
-
+                ImageView imageView = ChatMessageBuilder.buildImageMessage(fileBytes);
+                ChatMessageBuilder.addImageSaveMenu(imageView, stage);
+                addImageToScreen(imageView, true, msg.getSentAt(), me);
+            } else {
+                if (selectedItem.equals(ChatUiConstants.LABEL_ANNOUNCEMENT)) {
+                    msg = FileMessage.createBroadcast(me, fileBytes, fileName, extension);
+                } else if (isGroupMode) {
+                    if (selectedConversationGroup == null) return;
+                    msg = FileMessage.createGroup(me, selectedConversationGroup, fileBytes, fileName, extension);
+                } else {
+                    if (selectedConversationUser == null) return;
+                    msg = FileMessage.createPrivate(me, selectedConversationUser, fileBytes, fileName, extension);
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
-                System.out.println("Lỗi khi đọc file!");
+                addFileToScreen(null, fileName, fileBytes, true, msg.getSentAt(), me);
             }
+            if (msg != null) {
+                client.sendData(new DataPacket(TypeDataPacket.CHAT_MESSAGE, msg));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Lỗi khi đọc file!");
         }
     }
 
     private void addFileToScreen(String serverUUID, String fileName, byte[] fileData, boolean isMe, String time, User sender) {
-
-        Label lblTime = new Label(isMe ? time : (sender.getNickname() + " | " + time));
-        lblTime.setStyle("-fx-font-size: 10px; -fx-text-fill: #919191;");
-
-
-        HBox fileBox = new HBox(10);
-        fileBox.setAlignment(Pos.CENTER_LEFT);
-        fileBox.setStyle("-fx-background-color: #1E2435; -fx-background-radius: 10px; -fx-padding: 10px; -fx-border-color: #2A3042; -fx-border-radius: 10px;");
-
-        Label lblFileName = new Label(fileName);
-        lblFileName.setWrapText(true);
-        lblFileName.setMaxWidth(200);
-        lblFileName.setStyle("-fx-font-weight: bold; -fx-text-fill: white;");
-
-        Button btnDownload = new Button("Tải về");
-        btnDownload.setStyle("-fx-background-color: #AD7BFF; -fx-text-fill: black; -fx-background-radius: 5px; -fx-cursor: hand;");
-
-        btnDownload.setOnAction(e -> {
-            if (fileData != null) {
-                System.out.println("hello");
-                downloadFile(fileName, fileData);
-            } else {
-                btnDownload.setText("Đang lấy...");
-                btnDownload.setDisable(true);
-                pendingFileButtons.put(serverUUID, btnDownload);
-                client.sendData(new DataPacket(TypeDataPacket.DOWNLOAD_FILE_REQUEST, serverUUID));
+        HBox fileBox = ChatMessageBuilder.buildFileMessage(fileName, fileData, serverUUID, new ChatMessageBuilder.ChatFileDownloadListener() {
+            @Override
+            public void onFileReady(String name, byte[] data) {
+                Stage stage = (Stage) vboxMessage.getScene().getWindow();
+                ChatFileManager.saveFile(name, data, stage);
             }
 
+            @Override
+            public void onRequestDownload(String uuid, Label button) {
+                pendingFileButtons.put(uuid, null);
+                client.sendData(new DataPacket(TypeDataPacket.DOWNLOAD_FILE_REQUEST, uuid));
+            }
         });
-
-        fileBox.getChildren().addAll(lblFileName, btnDownload);
-
-        VBox messageGroup = new VBox(3);
-        HBox hboxContainer = new HBox(10);
-        hboxContainer.setPadding(new Insets(5, 10, 5, 10));
-
-        if (!isMe) {
-            StackPane avatarPane = new StackPane();
-            Circle avatarCircle = new Circle(16, Color.web("#2A3042"));
-            avatarCircle.setStroke(Color.WHITE);
-            avatarCircle.setStrokeWidth(1);
-
-
-            if (sender != null && sender.getAvatar() != null && sender.getAvatar().length > 0) {
-                Image img = new Image(new ByteArrayInputStream(sender.getAvatar()));
-                avatarCircle.setFill(new javafx.scene.paint.ImagePattern(img));
-                avatarPane.getChildren().add(avatarCircle);
-            } else {
-                setDefaultAvatar(avatarPane, avatarCircle, sender.getNickname(), 12);
-            }
-
-            messageGroup.getChildren().addAll(lblTime, fileBox);
-            messageGroup.setAlignment(Pos.TOP_LEFT);
-
-            hboxContainer.getChildren().addAll(avatarPane, messageGroup);
-            hboxContainer.setAlignment(Pos.CENTER_LEFT);
-        } else {
-            messageGroup.getChildren().addAll(lblTime, fileBox);
-            messageGroup.setAlignment(Pos.TOP_RIGHT);
-
-            hboxContainer.getChildren().add(messageGroup);
-            hboxContainer.setAlignment(Pos.CENTER_RIGHT);
-        }
-
-
-        vboxMessage.getChildren().add(hboxContainer);
+        
+        HBox container = ChatMessageBuilder.buildMessageContainer(fileBox, sender, isMe, time);
+        vboxMessage.getChildren().add(container);
     }
 
     private void downloadFile(String fileName, byte[] fileData) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Lưu file");
-        fileChooser.setInitialFileName(fileName);
-
         Stage stage = (Stage) vboxMessage.getScene().getWindow();
-        File saveFile = fileChooser.showSaveDialog(stage);
-
-        if (saveFile != null) {
-            try {
-                Files.write(saveFile.toPath(), fileData);
-                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Đã lưu file thành công!");
-                alert.setHeaderText(null);
-                alert.show();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-                Alert alert = new Alert(Alert.AlertType.ERROR, "Lỗi khi lưu file!");
-                alert.setHeaderText(null);
-                alert.show();
-            }
-        }
+        ChatFileManager.saveFile(fileName, fileData, stage);
     }
 
 
@@ -1250,7 +834,7 @@ public class ChatController implements ChatCallView {
         clearMessageArea();
         lvChatList.getItems().clear();
 
-        lvChatList.getItems().add(ANNOUNCEMENT_LABEL);
+        lvChatList.getItems().add(ChatUiConstants.LABEL_ANNOUNCEMENT);
 
         Collection<User> usersToDisplay = allMembers;
         List<User> availableConversations = new ArrayList<>();
@@ -1261,7 +845,7 @@ public class ChatController implements ChatCallView {
         }
 
         if (availableConversations.isEmpty()) {
-            lvChatList.getItems().add("No conversations");
+            lvChatList.getItems().add(ChatUiConstants.LABEL_NO_CONVERSATIONS);
         } else {
             for (User user : availableConversations) {
                 String label = user.getNickname() + " (@" + user.getUsername() + ")";
@@ -1270,7 +854,7 @@ public class ChatController implements ChatCallView {
             }
         }
         Platform.runLater(() -> {
-            lvChatList.getSelectionModel().select(ANNOUNCEMENT_LABEL);
+            lvChatList.getSelectionModel().select(ChatUiConstants.LABEL_ANNOUNCEMENT);
         });
     }
 
@@ -1589,4 +1173,5 @@ public class ChatController implements ChatCallView {
             }
         });
     }
+
 }
