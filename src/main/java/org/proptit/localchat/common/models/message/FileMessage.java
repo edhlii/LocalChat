@@ -9,36 +9,28 @@ import java.io.Serializable;
 public class FileMessage extends Message implements Serializable {
     private byte[] fileData;
     private String fileName;
-    private String fileExtension;
-
-    public FileMessage(User sender, byte[] fileData, String fileName, String fileExtension) {
-        super(sender);
-        this.fileData = fileData;
-        this.fileName = fileName;
-        this.fileExtension = fileExtension;
-        typeMessage = TypeMessage.FILE;
-    }
 
     public FileMessage(User sender, byte[] fileData, String fileName) {
         super(sender);
-        this.fileName = fileName;
         this.fileData = fileData;
+        this.fileName = fileName;
         typeMessage = TypeMessage.FILE;
     }
+
 
     public FileMessage(User sender) {
         super(sender);
     }
 
-    public static FileMessage createBroadcast(User admin, byte[] fileData, String fileName, String fileExtension) {
-        FileMessage msg = new FileMessage(admin, fileData, fileName, fileExtension);
+    public static FileMessage createBroadcast(User admin, byte[] fileData, String fileName) {
+        FileMessage msg = new FileMessage(admin, fileData, fileName);
         msg.isBroadcast = true;
         msg.setTypeMessage(TypeMessage.FILE);
         return msg;
     }
 
-    public static FileMessage createPrivate(User sender, User receiver, byte[] fileData, String fileName, String fileExtension) {
-        FileMessage msg = new FileMessage(sender, fileData, fileName, fileExtension);
+    public static FileMessage createPrivate(User sender, User receiver, byte[] fileData, String fileName) {
+        FileMessage msg = new FileMessage(sender, fileData, fileName);
         msg.receiverNickname = receiver.getNickname();
         msg.setReceiver(receiver);
         msg.setTypeMessage(TypeMessage.FILE);
@@ -46,8 +38,8 @@ public class FileMessage extends Message implements Serializable {
         return msg;
     }
 
-    public static FileMessage createGroup(User sender, ChatGroup group, byte[] fileData, String fileName, String extension) {
-        FileMessage msg = new FileMessage(sender, fileData, fileName, extension);
+    public static FileMessage createGroup(User sender, ChatGroup group, byte[] fileData, String fileName) {
+        FileMessage msg = new FileMessage(sender, fileData, fileName);
         msg.setGroupId(group.getId());
         msg.isBroadcast = false;
         msg.setTypeMessage(TypeMessage.FILE);
@@ -62,25 +54,10 @@ public class FileMessage extends Message implements Serializable {
     public String getFileName() {
         return fileName;
     }
-
-    public String getFileExtension() {
-        return fileExtension;
-    }
-
     public void setFileData(byte[] fileData) {
         this.fileData = fileData;
     }
-
     public void setFileName(String fileName) {
         this.fileName = fileName;
-    }
-
-    public void setFileExtension(String fileExtension) {
-        this.fileExtension = fileExtension;
-    }
-
-    @Override
-    public String toString() {
-        return "[" + sentAt + "] " + sender.getNickname() + " đã gửi file: " + fileName;
     }
 }

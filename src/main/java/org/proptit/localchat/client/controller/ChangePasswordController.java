@@ -46,20 +46,19 @@ public class ChangePasswordController {
 
         if (currentPass.isEmpty() || newPass.isEmpty() || confirmPass.isEmpty()) {
             lblError.setStyle("-fx-text-fill: #23A559;");
-            lblError.setText("Vui lòng điền đầy đủ...");
+            lblError.setText("Please fill in all fields...");
             return;
         }
 
         if (!newPass.equals(confirmPass)) {
             lblError.setStyle("-fx-text-fill: #23A559;");
-            lblError.setText("Mật khẩu không khớp...");
+            lblError.setText("Passwords do not match...");
             return;
         }
 
         if (!PasswordUtils.checkPassword(currentPass, me.getPassword())) {
-            System.out.println(me.getPassword());
             lblError.setStyle("-fx-text-fill: #23A559;");
-            lblError.setText("Mật khẩu không đúng...");
+            lblError.setText("Incorrect current password...");
             return;
         }
 

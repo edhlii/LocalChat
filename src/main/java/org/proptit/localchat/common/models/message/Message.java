@@ -56,7 +56,6 @@ public abstract class Message implements Serializable {
     }
 
     public boolean isBroadcast() {
-        //return isBroadcast;
         return receiver == null && groupId == null;
     }
 

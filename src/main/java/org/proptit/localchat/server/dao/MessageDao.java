@@ -7,6 +7,7 @@ import org.proptit.localchat.common.models.message.FileMessage;
 import org.proptit.localchat.common.models.message.ImageMessage;
 import org.proptit.localchat.common.models.message.Message;
 import org.proptit.localchat.common.models.message.TextMessage;
+import org.proptit.localchat.server.utils.ServerLogger;
 
 import java.sql.*;
 import java.time.format.DateTimeFormatter;
@@ -51,7 +52,7 @@ public class MessageDao {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            ServerLogger.error("Database", "Failed to save " + msg.getTypeMessage() + " message from User ID: " + msg.getSender().getId());
         }
         return -1;
     }
@@ -112,7 +113,7 @@ public class MessageDao {
             }
             return history;
         } catch (SQLException e) {
-            e.printStackTrace();
+            ServerLogger.error("Database", "Failed to load history for users: " + user1Id + " & " + user2Id);
         }
         return null;
     }
@@ -163,7 +164,7 @@ public class MessageDao {
             }
             return history;
         } catch (SQLException e) {
-            e.printStackTrace();
+            ServerLogger.error("Database", "Failed to load Broadcast history.");
         }
         return null;
     }
@@ -217,7 +218,7 @@ public class MessageDao {
             }
             return history;
         } catch (SQLException e) {
-            e.printStackTrace();
+            ServerLogger.error("Database", "Failed to load history for Group ID: " + groupId);
         }
         return new ArrayList<>();
     }
@@ -251,7 +252,7 @@ public class MessageDao {
             }
             return notifyIds;
         } catch (Exception e) {
-            e.printStackTrace();
+            ServerLogger.error("Database", "Failed to fetch offline notifications for user: " + myId);
         }
         return null;
     }
@@ -286,10 +287,9 @@ public class MessageDao {
             ps.setInt(12, groupId);
 
             ps.executeUpdate();
-            System.out.println("DEBUG: Đã cập nhật mốc đọc cho " + (partnerId == 0 ? "Thông báo chung" : "User " + partnerId));
 
         } catch (Exception e) {
-            e.printStackTrace();
+            ServerLogger.error("Database", "Failed to update read status for User ID: " + myId);
         }
     }
 
