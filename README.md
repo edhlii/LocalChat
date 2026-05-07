@@ -22,6 +22,8 @@ Team hoạt động theo Gitflow để quản lý code. Mỗi thành viên sẽ 
   - `main`: Chứa code ổn định, đã qua kiểm tra và test kỹ lưỡng
   - `feature/`: Các nhánh chứa code đang phát triển, short-live, sau khi hoàn thành sẽ review và merge vào `main`. 
 
+[Sơ đồ commit](gitgraph.txt)
+
 ## 2. Giới Thiệu Dự Án
 
 **Mô tả:** Một ứng dụng chat Java gọn nhẹ hỗ trợ nhắn tin văn bản, chat nhóm, gọi thoại/video và chia sẻ màn hình. Repository này chứa cả thành phần client và server được sử dụng để chạy thử nghiệm và phát triển ở môi trường local.
