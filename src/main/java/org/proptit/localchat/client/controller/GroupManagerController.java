@@ -45,14 +45,14 @@ public class GroupManagerController {
         lblGroupName.setText(group.getName());
 
         if (mode.equals("ADD")) {
-            lblHeader.setText("THÊM THÀNH VIÊN");
-            lblListTitle.setText("DANH SÁCH THÀNH VIÊN");
-            btnConfirm.setText("THÊM");
+            lblHeader.setText("ADD MEMBERS");
+            lblListTitle.setText("SELECT MEMBERS");
+            btnConfirm.setText("ADD");
             btnConfirm.setStyle("-fx-background-color: #AD7BFF; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
         } else {
-            lblHeader.setText("XÓA THÀNH VIÊN");
-            lblListTitle.setText("DANH SÁCH THÀNH VIÊN");
-            btnConfirm.setText("XÓA");
+            lblHeader.setText("DELETE MEMBERS");
+            lblListTitle.setText("CURRENT MEMBERS");
+            btnConfirm.setText("DELETE");
             btnConfirm.setStyle("-fx-background-color: #ff5252; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
         }
 

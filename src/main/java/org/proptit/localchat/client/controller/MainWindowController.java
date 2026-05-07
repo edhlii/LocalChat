@@ -22,18 +22,13 @@ public class MainWindowController {
     private HBox chatArea;
     @FXML
     private AnchorPane memberManagerArea;
-
     @FXML
     private Button btnNavMembers;
-
     @FXML
     private ChatController chatAreaController;
     @FXML
     private MemberManagementController memberManagerAreaController;
-
     private UserSettingsController userSettingsController;
-
-
     private SocketClient client;
     private User me;
 

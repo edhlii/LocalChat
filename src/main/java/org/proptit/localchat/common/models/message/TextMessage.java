@@ -34,9 +34,7 @@ public class TextMessage extends Message implements Serializable {
     public String getFileName() {
         return null;
     }
-
     public void setFileName(String fileName) {
-
     }
 
     public static TextMessage createGroup(User sender, ChatGroup group, String content) {
@@ -44,7 +42,6 @@ public class TextMessage extends Message implements Serializable {
         msg.setGroupId(group.getId());
         msg.isBroadcast = false;
         msg.setTypeMessage(TypeMessage.TEXT);
-
         return msg;
     }
 }

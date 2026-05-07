@@ -131,13 +131,13 @@ public class MemberManagementController {
     void onAddMemberClick(ActionEvent event) {
         Dialog<User> dialog = new Dialog<>();
         dialog.setTitle("Add New Account");
+        dialog.getDialogPane().setMinWidth(300);
         DialogPane dialogPane = dialog.getDialogPane();
         dialogPane.setStyle("-fx-background-color: #161B28; -fx-border-color: #2A3042; -fx-border-width: 1;");
         try {
             String cssPath = getClass().getResource("/org/proptit/localchat/modal.css").toExternalForm();
             dialogPane.getStylesheets().add(cssPath);
         } catch (Exception e) {
-            System.out.println("Không tìm thấy file CSS, dùng style trực tiếp.");
         }
         dialogPane.lookupAll(".label").forEach(node -> node.setStyle("-fx-text-fill: white;"));
         ButtonType btnAddType = new ButtonType("Create", ButtonBar.ButtonData.OK_DONE);
@@ -209,7 +209,7 @@ public class MemberManagementController {
         btnCreate.setStyle("-fx-background-color: #AD7BFF; -fx-text-fill: black; -fx-font-weight: bold; -fx-background-radius: 6; -fx-cursor: hand;");
         Node btnCancel = dialogPane.lookupButton(ButtonType.CANCEL);
         btnCancel.setStyle("-fx-background-color: transparent; -fx-text-fill: white; -fx-border-color: #2A3042; -fx-border-radius: 6; -fx-cursor: hand;");
-        String usernameRegex = "^[a-zA-Z0-9._]+";
+        String usernameRegex = "^[a-zA-Z0-9._]+$";
         ChangeListener<String> validationListener = (observable, oldValue, newValue) -> {
             String username = txtUsername.getText().trim();
             String password = txtPassword.getText().trim();

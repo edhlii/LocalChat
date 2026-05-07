@@ -15,8 +15,6 @@ import java.util.function.Consumer;
 
 public class CallWindowController {
     @FXML
-    private Button btnAddParticipant;
-    @FXML
     private Button btnCamera;
     @FXML
     private Button btnEndCall;
@@ -24,8 +22,6 @@ public class CallWindowController {
     private Button btnMic;
     @FXML
     private Button btnShareScreen;
-    @FXML
-    private Button btnToggleView;
     @FXML
     private Label callStatusLabel;
     @FXML
@@ -38,10 +34,6 @@ public class CallWindowController {
     private Label participantPeerLabel;
     @FXML
     private Label remoteVideoPlaceholderLabel;
-    @FXML
-    private StackPane localPreviewPane;
-    @FXML
-    private Pane remoteVideoPane;
     @FXML
     private ImageView remoteScreenImageView;
     @FXML

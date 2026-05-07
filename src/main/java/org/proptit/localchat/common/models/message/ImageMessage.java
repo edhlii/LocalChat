@@ -57,8 +57,4 @@ public class ImageMessage extends Message implements Serializable {
     public void setFileName(String fileName) {
         this.fileName = fileName;
     }
-
-    public String toString() {
-        return "[" + sentAt + "] " + sender.getNickname() + " đã gửi một ảnh: " + fileName;
-    }
 }

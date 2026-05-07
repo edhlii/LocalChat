@@ -54,19 +54,10 @@ public class FileMessage extends Message implements Serializable {
     public String getFileName() {
         return fileName;
     }
-
-
     public void setFileData(byte[] fileData) {
         this.fileData = fileData;
     }
-
     public void setFileName(String fileName) {
         this.fileName = fileName;
-    }
-
-
-    @Override
-    public String toString() {
-        return "[" + sentAt + "] " + sender.getNickname() + " đã gửi file: " + fileName;
     }
 }

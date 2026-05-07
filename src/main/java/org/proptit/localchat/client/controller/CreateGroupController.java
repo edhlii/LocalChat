@@ -80,12 +80,12 @@ public class CreateGroupController {
         List<User> selectedUsers = new ArrayList<>(selectedMembersForGroup);
 
         if (groupName.isEmpty()) {
-            lblError.setText("Vui lòng nhập tên nhóm!");
+            lblError.setText("Please enter a group name!");
             return;
         }
 
         if (selectedUsers.isEmpty()) {
-            lblError.setText("Vui lòng chọn ít nhất 1 thành viên!");
+            lblError.setText("Please select at least one member!");
             return;
         }
 
@@ -96,7 +96,7 @@ public class CreateGroupController {
         client.sendData(new DataPacket(TypeDataPacket.CREATE_GROUP_REQUEST, newGroup));
 
         lblError.setStyle("-fx-text-fill: green;");
-        lblError.setText("Đang tạo nhóm...");
+        lblError.setText("Processing...");
         btnCreate.setDisable(true);
     }
 

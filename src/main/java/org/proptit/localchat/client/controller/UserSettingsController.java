@@ -98,7 +98,7 @@ public class UserSettingsController {
     @FXML
     void onChangeAvatarClick(MouseEvent event) {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Chọn ảnh đại diện...");
+        fileChooser.setTitle("Choose Avatar");
         fileChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg")
         );
@@ -108,7 +108,7 @@ public class UserSettingsController {
             try {
                 if (selectedFile.length() > 1024 * 1024) {
                     lblError.setStyle("-fx-text-fill: #FF5C5C;");
-                    lblError.setText("Vui lòng chọn ảnh < 1MB...");
+                    lblError.setText("Image size must be less than 1MB");
                     return;
                 }
 

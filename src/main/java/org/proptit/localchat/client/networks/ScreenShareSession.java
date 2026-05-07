@@ -154,9 +154,8 @@ public class ScreenShareSession {
                 } else {
                     frameMap.entrySet().removeIf(entry -> entry.getKey() < frameId - 2);
                 }
-            } catch (SocketTimeoutException ignore) {
-                // timeout keeps the loop responsive while waiting for data
-            } catch (IOException ex) {
+            }
+            catch (Exception ex) {
                 if (opened) {
                     ex.printStackTrace();
                 }
@@ -182,7 +181,6 @@ public class ScreenShareSession {
             return bounds;
         }
 
-        // fallback
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         return new Rectangle(0, 0, screenSize.width, screenSize.height);
     }

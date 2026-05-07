@@ -64,7 +64,7 @@ public class SocketClient implements Runnable {
                 handleServerPacket((DataPacket) response);
             }
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println("Can not connect to Server: " + e.getMessage());
+            e.printStackTrace();
         } finally {
             closeEverything();
         }
@@ -73,39 +73,48 @@ public class SocketClient implements Runnable {
     private void handleServerPacket(DataPacket data) {
         switch (data.getTypeDataPacket()) {
             case TypeDataPacket.LOGIN_SUCCESS:
+            {
                 this.user = (User) data.getData();
-
                 loginController.handleLoginResult(true, this.user);
                 break;
+            }
             case TypeDataPacket.LOGIN_FAILED:
+            {
                 loginController.handleLoginResult(false, data.getData());
                 break;
+            }
             case TypeDataPacket.CHAT_MESSAGE:
+            {
                 Message msg = (Message) data.getData();
                 if (controller != null) {
                     Platform.runLater(() -> {
                         controller.receiveMessage(msg);
                     });
-                } else {
-                    System.out.println("The interface is not ready yet: " + msg.toString());
                 }
                 break;
+            }
             case TypeDataPacket.RETURN_ALL_USERS:
+            {
                 controller.updateMemberList((List<User>) data.getData());
                 break;
+            }
             case TypeDataPacket.RETURN_ONLINE_USERS:
+            {
                 if (controller != null) {
                     controller.updateOnlinePeople((List<User>) data.getData());
                 }
                 break;
+            }
             case TypeDataPacket.ADD_ACCOUNT_SUCCESS:
+            {
                 User user = (User) data.getData();
                 Platform.runLater(() -> {
                     controller.addMemberToUI(user);
                 });
                 break;
-
+            }
             case TypeDataPacket.ADD_ACCOUNT_FAILURE:
+            {
                 Platform.runLater(() -> {
                     Alert alert = new Alert(Alert.AlertType.ERROR);
                     alert.setTitle("Create account failure...");
@@ -114,11 +123,15 @@ public class SocketClient implements Runnable {
                     alert.showAndWait();
                 });
                 break;
+            }
             case TypeDataPacket.RETURN_HISTORY:
+            {
                 List<Message> history = (List<Message>) data.getData();
                 controller.getChatAreaController().loadHistory(history);
                 break;
-            case TypeDataPacket.DOWNLOAD_IMAGE_RESPONSE: {
+            }
+            case TypeDataPacket.DOWNLOAD_IMAGE_RESPONSE:
+            {
                 ImageMessage imageMessage = (ImageMessage) data.getData();
                 ImageView targetIv = pendingImages.get(imageMessage.getFileName());
                 if (targetIv != null && imageMessage.getImageData() != null) {
@@ -128,13 +141,17 @@ public class SocketClient implements Runnable {
                         pendingImages.remove(imageMessage.getFileName());
                     });
                 }
+
+                break;
             }
-            break;
             case TypeDataPacket.DOWNLOAD_FILE_RESPONSE:
+            {
                 FileMessage fileMessage = (FileMessage) data.getData();
                 controller.getChatAreaController().handleFileDownloadResponse(fileMessage.getFileName(), fileMessage.getFileData());
                 break;
+            }
             case TypeDataPacket.RETURN_CHAT_CONTACTS:
+            {
                 List<User> contactList = (List<User>) data.getData();
                 if (controller != null) {
                     Platform.runLater(() -> {
@@ -142,43 +159,53 @@ public class SocketClient implements Runnable {
                     });
                 }
                 break;
+            }
             case TypeDataPacket.CALL_SIGNAL:
+            {
                 if (controller != null) {
                     CallSignal signal = (CallSignal) data.getData();
                     Platform.runLater(() -> controller.receiveCallSignal(signal));
                 }
                 break;
+            }
             case TypeDataPacket.UPDATE_PASS_SUCCESS:
+            {
                 this.user = (User) data.getData();
                 controller.setMe((User) data.getData());
                 controller.getUserSettingsController().setMe((User) data.getData());
                 controller.getUserSettingsController().getChangePasswordController().closeWindow();
                 break;
+            }
             case UPDATE_PROFILE_SUCCESS:
+            {
                 User updatedUser = (User) data.getData();
                 if (controller != null) {
                     controller.getUserSettingsController().closeWindow(updatedUser);
                 }
                 break;
+            }
             case RETURN_OFFLINE_NOTIFICATIONS:
+            {
                 List<Integer> unreadIds = (List<Integer>) data.getData();
 
                 Platform.runLater(() -> {
                     if (controller != null && controller.getChatAreaController() != null) {
                         controller.getChatAreaController().setOfflineMessages(unreadIds);
-                    } else {
-                        System.err.println("LỖI: Controller chưa sẵn sàng để hiện thông báo!");
                     }
                 });
 
                 break;
+            }
             case CREATE_GROUP_SUCCESS:
+            {
                 ChatGroup newGroup = (ChatGroup) data.getData();
                 ChatController.getInstance().onGroupCreatedSuccess(newGroup);
                 break;
+            }
             case CREATE_GROUP_FAILURE:
+            {
                 Platform.runLater(() -> {
-                    Alert alert = new Alert(Alert.AlertType.ERROR, "Lỗi tạo nhóm: ");
+                    Alert alert = new Alert(Alert.AlertType.ERROR, "Failed to create group: ");
                     alert.setHeaderText(null);
                     String css = getClass().getResource("/org/proptit/localchat/create_group.css").toExternalForm();
                     alert.getDialogPane().getStylesheets().add(css);
@@ -188,19 +215,24 @@ public class SocketClient implements Runnable {
                     javafx.stage.Window.getWindows().stream()
                             .filter(w -> w instanceof Stage)
                             .map(w -> (Stage) w)
-                            .filter(stage -> "Tạo Nhóm Mới".equals(stage.getTitle()))
+                            .filter(stage -> "Create New Group".equals(stage.getTitle()))
                             .findFirst()
                             .ifPresent(Stage::close);
                 });
                 break;
+            }
             case RETURN_MY_GROUPS:
+            {
                 List<ChatGroup> loadedGroups = (List<ChatGroup>) data.getData();
                 ChatController.getInstance().setMyGroupsList(loadedGroups);
                 break;
+            }
             case UPDATE_GROUP_SUCCESS:
+            {
                 ChatGroup updatedGroup = (ChatGroup) data.getData();
                 ChatController.getInstance().updateGroupSilent(updatedGroup);
                 break;
+            }
         }
     }
 
@@ -236,16 +268,9 @@ public class SocketClient implements Runnable {
 
 
     public void sendRequestDownload(String fileName, ImageView imageView) {
-
         pendingImages.put(fileName, imageView);
-
-
         DataPacket packet = new DataPacket(TypeDataPacket.DOWNLOAD_IMAGE_REQUEST, fileName);
-
-
         this.sendData(packet);
-
-        System.out.println("Đang xin Server file: " + fileName);
     }
 
 }
