@@ -177,9 +177,8 @@ public class SocketClient implements Runnable {
                 ChatController.getInstance().onGroupCreatedSuccess(newGroup);
                 break;
             case CREATE_GROUP_FAILURE:
-                String errorMsg = (String) data.getData();
                 Platform.runLater(() -> {
-                    Alert alert = new Alert(Alert.AlertType.ERROR, "Lỗi tạo nhóm: " + errorMsg);
+                    Alert alert = new Alert(Alert.AlertType.ERROR, "Lỗi tạo nhóm: ");
                     alert.setHeaderText(null);
                     String css = getClass().getResource("/org/proptit/localchat/create_group.css").toExternalForm();
                     alert.getDialogPane().getStylesheets().add(css);

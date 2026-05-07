@@ -5,6 +5,7 @@ import org.proptit.localchat.common.enums.TypeDataPacket;
 import org.proptit.localchat.common.models.DataPacket;
 import org.proptit.localchat.common.models.call.CallSignal;
 import org.proptit.localchat.server.services.ChatService;
+import org.proptit.localchat.server.utils.ServerLogger;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -32,17 +33,17 @@ public class SocketServer implements Runnable {
     public void run() {
         try {
             serverSocket = new ServerSocket(PORT);
-            System.out.println("--- SERVER'S PORT " + PORT + " ---");
+            ServerLogger.info("System", "Server is starting on PORT: " + PORT);
             while (isRunning) {
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("Log: New connection from " + clientSocket.getInetAddress());
+                ServerLogger.info("Network", "New socket connection from: " + clientSocket.getInetAddress());
 
                 ClientHandler handler = new ClientHandler(clientSocket, this);
                 clients.add(handler);
                 new Thread(handler).start();
             }
         } catch (IOException e) {
-            System.err.println("Log: Server error: " + e.getMessage());
+            ServerLogger.error("System", "Server Runtime Error: " + e.getMessage());
         } finally {
             stopServer();
         }
@@ -55,6 +56,7 @@ public class SocketServer implements Runnable {
     }
 
     public void removeClient(ClientHandler handler) {
+        ServerLogger.warn("Network", "User [" + handler.getUser().getUsername() + "] disconnected");
         clients.remove(handler);
         broadcastOnlineUsers();
     }
@@ -68,6 +70,7 @@ public class SocketServer implements Runnable {
 
     public void broadcastOnlineUsers() {
         List<org.proptit.localchat.common.models.User> onlineUsers = getOnlineUsers();
+        ServerLogger.info("System", "Broadcasting online list. Current online count: " + onlineUsers.size());
         DataPacket packet = new DataPacket(TypeDataPacket.RETURN_ONLINE_USERS, onlineUsers);
         broadcast(packet);
     }

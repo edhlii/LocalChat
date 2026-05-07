@@ -2,6 +2,7 @@ package org.proptit.localchat.server.dao;
 
 
 import org.proptit.localchat.common.models.User;
+import org.proptit.localchat.server.utils.ServerLogger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -21,11 +22,9 @@ public class UserDao {
                 users.add(mapRowToUser(rs));
             return users;
         } catch (Exception ex) {
-            ex.printStackTrace();
-
+            ServerLogger.error("Database", "Failed to fetch all users from database.");
         }
         return null;
-
     }
 
     public boolean deleteUser(int userId) {
@@ -36,8 +35,7 @@ public class UserDao {
             ps.setInt(1, userId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            System.out.println("Loi DB ko xoa duoc");
-            e.printStackTrace();
+            ServerLogger.error("Database", "Failed to delete User ID: " + userId);
         }
         return false;
     }
@@ -54,7 +52,7 @@ public class UserDao {
             return ps.executeUpdate() > 0;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            ServerLogger.error("Database", "Failed to add new user: " + user.getUsername());
         }
         return false;
     }
@@ -78,7 +76,7 @@ public class UserDao {
                 );
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            ServerLogger.error("Database", "Error finding user by username: " + username);
         }
         return null;
     }
@@ -105,8 +103,7 @@ public class UserDao {
 
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            System.err.println("Lỗi DB khi cập nhật thông tin mật khẩu user!");
-            e.printStackTrace();
+            ServerLogger.error("Database", "Failed to update password for User ID: " + user.getId());
         }
         return false;
     }
@@ -120,8 +117,7 @@ public class UserDao {
             ps.setInt(3, userId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Lỗi DB khi cập nhật thông tin user!");
-            e.printStackTrace();
+            ServerLogger.error("Database", "Failed to update profile for User ID: " + userId + " - " + e.getMessage());
         }
         return false;
     }

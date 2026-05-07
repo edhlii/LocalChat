@@ -1,6 +1,7 @@
 package org.proptit.localchat.server.services;
 
 import org.proptit.localchat.server.config.StorageConfig;
+import org.proptit.localchat.server.utils.ServerLogger;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,8 +21,13 @@ public class StorageFileService {
         }
         String fileName = UUID.randomUUID().toString() + extension;
         Path filePath = Paths.get(StorageConfig.UPLOAD_DIR + fileName);
-        Files.write(filePath, fileData);
-        System.out.println(">>> [FILE] Đã lưu file thành công: " + fileName);
+        try{
+            ServerLogger.info("Storage", "Saved: " + fileName);
+            Files.write(filePath, fileData);
+        } catch (IOException e) {
+            ServerLogger.error("Storage", "Save failed: " + originalName);
+            throw e;
+        }
         return fileName;
     }
 }

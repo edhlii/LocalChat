@@ -840,24 +840,24 @@ public class ChatController implements ChatCallView {
 
                 if (isImage) {
                     if (selectedItem.equals(ANNOUNCEMENT_LABEL)) {
-                        msg = ImageMessage.createBroadcast(me, fileBytes, extension);
+                        msg = ImageMessage.createBroadcast(me, fileBytes, fileName);
                     } else if (isGroupMode) {
                         if (selectedConversationGroup == null) return;
-                        msg = ImageMessage.createGroup(me, selectedConversationGroup, fileBytes, extension);
+                        msg = ImageMessage.createGroup(me, selectedConversationGroup, fileBytes, fileName);
                     } else {
                         if (selectedConversationUser == null) return;
-                        msg = ImageMessage.createPrivate(me, selectedConversationUser, fileBytes, extension);
+                        msg = ImageMessage.createPrivate(me, selectedConversationUser, fileBytes, fileName);
                     }
                     addImageToScreen(new ImageView(new Image(new ByteArrayInputStream(fileBytes))), true, msg.getSentAt(), me);
                 } else {
                     if (selectedItem.equals(ANNOUNCEMENT_LABEL)) {
-                        msg = FileMessage.createBroadcast(me, fileBytes, fileName, extension);
+                        msg = FileMessage.createBroadcast(me, fileBytes, fileName);
                     } else if (isGroupMode) {
                         if (selectedConversationGroup == null) return;
-                        msg = FileMessage.createGroup(me, selectedConversationGroup, fileBytes, fileName, extension);
+                        msg = FileMessage.createGroup(me, selectedConversationGroup, fileBytes, fileName);
                     } else {
                         if (selectedConversationUser == null) return;
-                        msg = FileMessage.createPrivate(me, selectedConversationUser, fileBytes, fileName, extension);
+                        msg = FileMessage.createPrivate(me, selectedConversationUser, fileBytes, fileName);
                     }
                     addFileToScreen(null, fileName, fileBytes, true, msg.getSentAt(), me);
                 }

@@ -1,5 +1,7 @@
 package org.proptit.localchat.server.config;
 
+import org.proptit.localchat.server.utils.ServerLogger;
+
 import java.io.File;
 
 public class StorageConfig {
@@ -10,12 +12,12 @@ public class StorageConfig {
         File dir = new File(UPLOAD_DIR);
         if (!dir.exists()) {
             if (dir.mkdirs()) {
-                System.out.println(">>> [STORAGE] Đã tạo thư mục lưu trữ thành công tại: " + UPLOAD_DIR);
+                ServerLogger.info("Storage", "Storage directory created at: " + UPLOAD_DIR);
             } else {
-                System.err.println(">>> [STORAGE] LỖI: Không thể tạo thư mục lưu trữ!");
+                ServerLogger.error("Storage", "Could not create storage directory!");
             }
         } else {
-            System.out.println(">>> [STORAGE] Thư mục lưu trữ đã sẵn sàng tại: " + UPLOAD_DIR);
+            ServerLogger.info("Storage", "Storage system is ready at: " + UPLOAD_DIR);
         }
     }
 }
