@@ -5,9 +5,9 @@
 **Tên Dự Án:** LocalChat
 
 **Thành Viên Nhóm:**
-- Nguyễn Đức Anh
-- Nguyễn Văn Quang
-- Lê Đình Hiếu
+- [Nguyễn Đức Anh](https://github.com/DucAnh31)
+- [Nguyễn Văn Quang](https://github.com/QuangNV1204)
+- [Lê Đình Hiếu](https://github.com/edhlii)
 
 ### Mô hình làm việc
 
