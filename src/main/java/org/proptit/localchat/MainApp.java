@@ -29,7 +29,7 @@ public class MainApp extends Application {
             port = Integer.parseInt(prop.getProperty("server_port", "1204"));
             System.out.println("FINDED");
         } catch (IOException ex) {
-            System.out.println("Không tìm thấy file config, dùng IP mặc định.");
+            System.out.println("No configuration file found, using default IP address.");
         }
 
         SocketClient client = new SocketClient(host, port, null);
