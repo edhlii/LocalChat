@@ -161,7 +161,16 @@ Các file hữu ích
 ## 5. Ảnh và Video Demo
 
 **Ảnh Demo:**
-![alt text](image.png)
+
+![alt text](image-1.png)
+
+![alt text](image-2.png)
+
+![alt text](image-3.png)
+
+![alt text](image-4.png)
+
+![alt text](image-5.png)
 
 **Video Demo:**
 [LocalChat Video demo](https://www.youtube.com/watch?v=2X_t_JbJrLI)
