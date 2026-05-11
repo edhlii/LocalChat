@@ -8,6 +8,8 @@
 - [Nguyễn Đức Anh](https://github.com/DucAnh31)
 - [Nguyễn Văn Quang](https://github.com/QuangNV1204)
 - [Lê Đình Hiếu](https://github.com/edhlii)
+- [Mông Thế Lực](https://github.com/dragonite2631) - Cố vấn
+- [Giáp Minh Hiếu](https://github.com/HieuGM) - Cố vấn
 
 ### Mô hình làm việc
 
