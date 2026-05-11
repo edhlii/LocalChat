@@ -55,94 +55,92 @@ Team hoạt động theo Gitflow để quản lý code. Mỗi thành viên sẽ 
 ### 4.2 Cấu trúc dự án
 
 ```
-├── src
-│   └── main
-│       ├── java
-│       │   └── org
-│       │       └── proptit
-│       │           └── localchat
-│       │               ├── MainApp.java
-│       │               ├── RunApp.java
-│       │               ├── client
-│       │               │   ├── controller
-│       │               │   │   ├── CallWindowController.java
-│       │               │   │   ├── ChangePasswordController.java
-│       │               │   │   ├── ChatCallManager.java
-│       │               │   │   ├── ChatCallView.java
-│       │               │   │   ├── ChatController.java
-│       │               │   │   ├── CreateGroupController.java
-│       │               │   │   ├── GroupManagerController.java
-│       │               │   │   ├── LoginController.java
-│       │               │   │   ├── MainWindowController.java
-│       │               │   │   ├── MemberManagementController.java
-│       │               │   │   └── UserSettingsController.java
-│       │               │   └── networks
-│       │               │       ├── ScreenShareSession.java
-│       │               │       ├── SocketClient.java
-│       │               │       ├── VideoCallSession.java
-│       │               │       └── VoiceCallSession.java
-│       │               ├── common
-│       │               │   ├── enums
-│       │               │   │   ├── TypeDataPacket.java
-│       │               │   │   └── TypeMessage.java
-│       │               │   ├── models
-│       │               │   │   ├── ChatGroup.java
-│       │               │   │   ├── DataPacket.java
-│       │               │   │   ├── User.java
-│       │               │   │   ├── call
-│       │               │   │   │   ├── CallAction.java
-│       │               │   │   │   └── CallSignal.java
-│       │               │   │   └── message
-│       │               │   │       ├── FileMessage.java
-│       │               │   │       ├── ImageMessage.java
-│       │               │   │       ├── Message.java
-│       │               │   │       └── TextMessage.java
-│       │               │   └── utils
-│       │               │       ├── FileUtils.java
-│       │               │       └── PasswordUtils.java
-│       │               └── server
-│       │                   ├── ServerRun.java
-│       │                   ├── config
-│       │                   │   └── StorageConfig.java
-│       │                   ├── controller
-│       │                   │   └── ClientHandler.java
-│       │                   ├── dao
-│       │                   │   ├── DbConfig.java
-│       │                   │   ├── DbConnection.java
-│       │                   │   ├── GroupDao.java
-│       │                   │   ├── MessageDao.java
-│       │                   │   └── UserDao.java
-│       │                   ├── networks
-│       │                   │   └── SocketServer.java
-│       │                   ├── services
-│       │                   │   ├── AuthService.java
-│       │                   │   ├── ChatService.java
-│       │                   │   └── StorageFileService.java
-│       │                   └── utils
-│       │                       └── ServerLogger.java
-│       └── resources
-│           └── org
-│               └── proptit
-│                   └── localchat
-│                       ├── call_window.fxml
-│                       ├── change_password.fxml
-│                       ├── chat.css
-│                       ├── chat_view.fxml
-│                       ├── create_group.css
-│                       ├── create_group.fxml
-│                       ├── images
-│                       │   ├── banner.png
-│                       │   └── localchat.png
-│                       ├── login.css
-│                       ├── login_view.fxml
-│                       ├── main.css
-│                       ├── main_window.fxml
-│                       ├── manage_group.fxml
-│                       ├── member.css
-│                       ├── member_management_view.fxml
-│                       ├── modal.css
-│                       └── user_setting.fxml
-...
+└── main
+    ├── java
+    │   └── org
+    │       └── proptit
+    │           └── localchat
+    │               ├── client
+    │               │   ├── controller
+    │               │   │   ├── CallWindowController.java
+    │               │   │   ├── ChangePasswordController.java
+    │               │   │   ├── ChatCallManager.java
+    │               │   │   ├── ChatCallView.java
+    │               │   │   ├── ChatController.java
+    │               │   │   ├── CreateGroupController.java
+    │               │   │   ├── GroupManagerController.java
+    │               │   │   ├── LoginController.java
+    │               │   │   ├── MainWindowController.java
+    │               │   │   ├── MemberManagementController.java
+    │               │   │   └── UserSettingsController.java
+    │               │   └── networks
+    │               │       ├── ScreenShareSession.java
+    │               │       ├── SocketClient.java
+    │               │       ├── VideoCallSession.java
+    │               │       └── VoiceCallSession.java
+    │               ├── common
+    │               │   ├── enums
+    │               │   │   ├── TypeDataPacket.java
+    │               │   │   └── TypeMessage.java
+    │               │   ├── models
+    │               │   │   ├── call
+    │               │   │   │   ├── CallAction.java
+    │               │   │   │   └── CallSignal.java
+    │               │   │   ├── ChatGroup.java
+    │               │   │   ├── DataPacket.java
+    │               │   │   ├── message
+    │               │   │   │   ├── FileMessage.java
+    │               │   │   │   ├── ImageMessage.java
+    │               │   │   │   ├── Message.java
+    │               │   │   │   └── TextMessage.java
+    │               │   │   └── User.java
+    │               │   └── utils
+    │               │       ├── FileUtils.java
+    │               │       └── PasswordUtils.java
+    │               ├── MainApp.java
+    │               ├── RunApp.java
+    │               └── server
+    │                   ├── config
+    │                   │   └── StorageConfig.java
+    │                   ├── controller
+    │                   │   └── ClientHandler.java
+    │                   ├── dao
+    │                   │   ├── DbConfig.java
+    │                   │   ├── DbConnection.java
+    │                   │   ├── GroupDao.java
+    │                   │   ├── MessageDao.java
+    │                   │   └── UserDao.java
+    │                   ├── networks
+    │                   │   └── SocketServer.java
+    │                   ├── ServerRun.java
+    │                   ├── services
+    │                   │   ├── AuthService.java
+    │                   │   ├── ChatService.java
+    │                   │   └── StorageFileService.java
+    │                   └── utils
+    │                       └── ServerLogger.java
+    └── resources
+        └── org
+            └── proptit
+                └── localchat
+                    ├── call_window.fxml
+                    ├── change_password.fxml
+                    ├── chat.css
+                    ├── chat_view.fxml
+                    ├── create_group.css
+                    ├── create_group.fxml
+                    ├── images
+                    │   ├── banner.png
+                    │   └── localchat.png
+                    ├── login.css
+                    ├── login_view.fxml
+                    ├── main.css
+                    ├── main_window.fxml
+                    ├── manage_group.fxml
+                    ├── member.css
+                    ├── member_management_view.fxml
+                    ├── modal.css
+                    └── user_setting.fxml
 ```
 
 Diễn giải:
@@ -152,13 +150,13 @@ Diễn giải:
 - `server` — Code phía server (controllers, DAOs, services, networking)
 - `common` — Các model, enum và tiện ích dùng chung
 - `src/main/resources/org/proptit/localchat` — Các file view FXML và CSS
-- `buildDB` — Script khởi tạo SQL local
+- `database/setupsql` — Script khởi tạo SQL local
 
 Các file hữu ích
 
 - `src/main/java/org/proptit/localchat/RunApp.java` — Entry point
 - `src/main/java/org/proptit/localchat/server/ServerRun.java` — Điểm khởi chạy của server
-- `buildDB/build_local_sql.sql` — Cấu trúc DB và dữ liệu mẫu (seed data)
+- `database/setupsql` — Cấu trúc DB và dữ liệu mẫu (seed data)
 
 ## 5. Ảnh và Video Demo
 
@@ -188,7 +186,7 @@ Khi nhắn tin quá dài, khung chat sẽ che mất đoạn hiển thị danh b�
 
 ### Kết Quả
 
-- Fix thành công.
+- Fix thành công
 
 ## 7. Kết Luận
 
